@@ -1,11 +1,11 @@
 'use client';
 
+import { ROUTES } from '@/src/config/constants';
+import { AuthProvider, useAuth } from '@/src/features/auth';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/app/context/AuthContext';
-import { ROUTES } from '@/app/constants';
 import { useEffect } from 'react';
 
-export default function Home() {
+function HomeContent() {
   const router = useRouter();
   const { isAuthenticated, loading } = useAuth();
 
@@ -28,5 +28,13 @@ export default function Home() {
         <p className="text-gray-600">Redirigiendo...</p>
       </div>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <AuthProvider>
+      <HomeContent />
+    </AuthProvider>
   );
 }
