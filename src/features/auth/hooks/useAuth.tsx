@@ -11,9 +11,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  // Ensure client-side only
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Initialize auth state from localStorage
   useEffect(() => {
+    if (!mounted) return;
+
     const initializeAuth = async () => {
       try {
         const token = localStorage.getItem(TOKEN_KEY);
@@ -32,7 +40,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     initializeAuth();
-  }, []);
+  }, [mounted]);
 
   const login = async (credentials: LoginCredentials) => {
     setLoading(true);
