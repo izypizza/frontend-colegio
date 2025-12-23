@@ -5,14 +5,16 @@ export interface User {
   name: string;
   role: UserRole;
   avatar?: string;
+  isActive?: boolean;
   createdAt: string;
 }
 
 export enum UserRole {
   ADMIN = 'admin',
-  TEACHER = 'teacher',
-  STUDENT = 'student',
-  PARENT = 'parent',
+  AUXILIAR = 'auxiliar',
+  DOCENTE = 'docente',
+  PADRE = 'padre',
+  ESTUDIANTE = 'estudiante',
 }
 
 // Auth types

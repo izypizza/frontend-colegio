@@ -1,10 +1,15 @@
 // Estudiante
 export interface Estudiante {
   id: number;
+  user_id?: number;
   nombre: string;
+  dni?: string;
   fecha_nacimiento: string;
+  direccion?: string;
+  telefono?: string;
   seccion_id: number;
   seccion?: Seccion;
+  padres?: Padre[];
   created_at: string;
   updated_at: string;
 }
@@ -12,8 +17,13 @@ export interface Estudiante {
 // Docente
 export interface Docente {
   id: number;
+  user_id?: number;
   nombre: string;
-  especialidad: string;
+  email?: string;
+  telefono?: string;
+  dni?: string;
+  direccion?: string;
+  especialidad?: string;
   created_at: string;
   updated_at: string;
 }
@@ -21,9 +31,14 @@ export interface Docente {
 // Padre
 export interface Padre {
   id: number;
+  user_id?: number;
   nombre: string;
-  telefono: string;
   email?: string;
+  telefono?: string;
+  dni?: string;
+  direccion?: string;
+  ocupacion?: string;
+  estudiantes?: Estudiante[];
   created_at: string;
   updated_at: string;
 }
@@ -119,4 +134,16 @@ export interface Calificacion {
   periodo_academico?: PeriodoAcademico;
   created_at: string;
   updated_at: string;
+}
+
+// Dashboard Stats
+export interface DashboardStats {
+  estudiantes: number;
+  docentes: number;
+  padres: number;
+  materias: number;
+  secciones: number;
+  grados: number;
+  asistencias_hoy?: number;
+  calificaciones_pendientes?: number;
 }

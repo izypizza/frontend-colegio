@@ -15,6 +15,9 @@ export default function EstudiantesPage() {
     nombre: '',
     fecha_nacimiento: '',
     seccion_id: '',
+    dni: '',
+    telefono: '',
+    direccion: '',
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -41,7 +44,7 @@ export default function EstudiantesPage() {
 
   const handleCreate = () => {
     setEditingItem(null);
-    setFormData({ nombre: '', fecha_nacimiento: '', seccion_id: '' });
+    setFormData({ nombre: '', fecha_nacimiento: '', seccion_id: '', dni: '', telefono: '', direccion: '' });
     setIsModalOpen(true);
   };
 
@@ -51,6 +54,9 @@ export default function EstudiantesPage() {
       nombre: item.nombre,
       fecha_nacimiento: item.fecha_nacimiento,
       seccion_id: item.seccion_id.toString(),
+      dni: item.dni || '',
+      telefono: item.telefono || '',
+      direccion: item.direccion || '',
     });
     setIsModalOpen(true);
   };
@@ -76,6 +82,9 @@ export default function EstudiantesPage() {
         nombre: formData.nombre,
         fecha_nacimiento: formData.fecha_nacimiento,
         seccion_id: parseInt(formData.seccion_id),
+        dni: formData.dni,
+        telefono: formData.telefono,
+        direccion: formData.direccion,
       };
 
       if (editingItem) {
@@ -137,16 +146,7 @@ export default function EstudiantesPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={editingItem ? 'Editar Estudiante' : 'Nuevo Estudiante'}
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
-              Cancelar
-            </Button>
-            <Button variant="primary" onClick={handleSubmit}>
-              Guardar
-            </Button>
-          </>
-        }
+        size="lg"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
@@ -156,11 +156,29 @@ export default function EstudiantesPage() {
             required
           />
           <Input
+            label="DNI"
+            value={formData.dni}
+            onChange={(e) => setFormData({ ...formData, dni: e.target.value })}
+            placeholder="12345678"
+          />
+          <Input
             label="Fecha de Nacimiento"
             type="date"
             value={formData.fecha_nacimiento}
             onChange={(e) => setFormData({ ...formData, fecha_nacimiento: e.target.value })}
             required
+          />
+          <Input
+            label="Teléfono"
+            value={formData.telefono}
+            onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+            placeholder="987654321"
+          />
+          <Input
+            label="Dirección"
+            value={formData.direccion}
+            onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
+            placeholder="Av. Principal 123"
           />
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">Sección</label>
@@ -177,6 +195,15 @@ export default function EstudiantesPage() {
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4">
+            <Button variant="secondary" type="button" onClick={() => setIsModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button variant="primary" type="submit">
+              {editingItem ? 'Actualizar' : 'Guardar'}
+            </Button>
           </div>
         </form>
       </Modal>
