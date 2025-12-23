@@ -14,6 +14,9 @@ export default function PadresPage() {
     nombre: '',
     telefono: '',
     email: '',
+    dni: '',
+    direccion: '',
+    ocupacion: '',
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -36,7 +39,14 @@ export default function PadresPage() {
 
   const handleCreate = () => {
     setEditingItem(null);
-    setFormData({ nombre: '', telefono: '', email: '' });
+    setFormData({ 
+      nombre: '', 
+      telefono: '', 
+      email: '',
+      dni: '',
+      direccion: '',
+      ocupacion: '',
+    });
     setIsModalOpen(true);
   };
 
@@ -46,6 +56,9 @@ export default function PadresPage() {
       nombre: item.nombre,
       telefono: item.telefono || '',
       email: item.email || '',
+      dni: item.dni || '',
+      direccion: item.direccion || '',
+      ocupacion: item.ocupacion || '',
     });
     setIsModalOpen(true);
   };
@@ -118,16 +131,7 @@ export default function PadresPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={editingItem ? 'Editar Padre' : 'Nuevo Padre'}
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
-              Cancelar
-            </Button>
-            <Button variant="primary" onClick={handleSubmit}>
-              Guardar
-            </Button>
-          </>
-        }
+        size="lg"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
@@ -137,18 +141,45 @@ export default function PadresPage() {
             required
           />
           <Input
-            label="Teléfono"
-            type="tel"
-            value={formData.telefono}
-            onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+            label="DNI"
+            value={formData.dni}
+            onChange={(e) => setFormData({ ...formData, dni: e.target.value })}
+            placeholder="12345678"
           />
           <Input
             label="Email"
             type="email"
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            placeholder="padre@email.com"
           />
-        </form>
+          <Input
+            label="Teléfono"
+            type="tel"
+            value={formData.telefono}
+            onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+            placeholder="987654321"
+          />
+          <Input
+            label="Dirección"
+            value={formData.direccion}
+            onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
+            placeholder="Av. Principal 123"
+          />
+          <Input
+            label="Ocupación"
+            value={formData.ocupacion}
+            onChange={(e) => setFormData({ ...formData, ocupacion: e.target.value })}
+            placeholder="Ingeniero, Doctor, etc."
+          />
+          <div className="flex justify-end gap-3 pt-4">
+            <Button variant="secondary" type="button" onClick={() => setIsModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button variant="primary" type="submit">
+              {editingItem ? 'Actualizar' : 'Guardar'}
+            </Button>
+          </div>        </form>
       </Modal>
     </div>
   );

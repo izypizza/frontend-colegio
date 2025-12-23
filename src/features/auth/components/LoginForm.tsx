@@ -129,8 +129,8 @@ export const LoginForm: React.FC = () => {
         <div className="mt-4 pt-6 border-t border-gray-200">
           <div className="text-xs text-gray-500 space-y-1">
             <p className="font-semibold">Credenciales de prueba:</p>
-            <p>Admin: admin@colegio.pe / admin123</p>
-            <p>Docente: docente@colegio.pe / docente123</p>
+            <p>Admin: admin@colegio.pe / password</p>
+            <p>Docente: docente@colegio.pe / password</p>
           </div>
         </div>
       </Card>

@@ -59,3 +59,26 @@ export const asignacionService = new CrudService<AsignacionDocenteMateria>('/asi
 export const horarioService = new CrudService<Horario>('/horarios');
 export const asistenciaService = new CrudService<Asistencia>('/asistencias');
 export const calificacionService = new CrudService<Calificacion>('/calificaciones');
+
+// Dashboard Service
+export const dashboardService = {
+  getStats: async () => {
+    const [estudiantes, docentes, padres, materias, secciones, grados] = await Promise.all([
+      estudianteService.getAll(),
+      docenteService.getAll(),
+      padreService.getAll(),
+      materiaService.getAll(),
+      seccionService.getAll(),
+      gradoService.getAll(),
+    ]);
+
+    return {
+      estudiantes: estudiantes.length,
+      docentes: docentes.length,
+      padres: padres.length,
+      materias: materias.length,
+      secciones: secciones.length,
+      grados: grados.length,
+    };
+  },
+};

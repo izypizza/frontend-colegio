@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React from 'react';
+import { useAuth } from '@/src/features/auth/hooks/useAuth';
+import { UserRole } from '@/src/types';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -13,12 +15,14 @@ interface MenuItem {
   label: string;
   href: string;
   icon: React.ReactNode;
+  roles: UserRole[]; // Roles que pueden ver este item
 }
 
 const menuItems: MenuItem[] = [
   {
     label: 'Dashboard',
     href: '/dashboard',
+    roles: [UserRole.ADMIN, UserRole.AUXILIAR, UserRole.DOCENTE, UserRole.PADRE, UserRole.ESTUDIANTE],
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -33,6 +37,7 @@ const menuItems: MenuItem[] = [
   {
     label: 'Estudiantes',
     href: '/dashboard/estudiantes',
+    roles: [UserRole.ADMIN, UserRole.AUXILIAR],
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -47,6 +52,7 @@ const menuItems: MenuItem[] = [
   {
     label: 'Docentes',
     href: '/dashboard/docentes',
+    roles: [UserRole.ADMIN],
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -61,13 +67,14 @@ const menuItems: MenuItem[] = [
   {
     label: 'Padres',
     href: '/dashboard/padres',
+    roles: [UserRole.ADMIN],
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth={2}
-          d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+          d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 4 0 014 0z"
         />
       </svg>
     ),
@@ -75,6 +82,7 @@ const menuItems: MenuItem[] = [
   {
     label: 'Grados',
     href: '/dashboard/grados',
+    roles: [UserRole.ADMIN],
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -89,6 +97,7 @@ const menuItems: MenuItem[] = [
   {
     label: 'Secciones',
     href: '/dashboard/secciones',
+    roles: [UserRole.ADMIN],
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -103,6 +112,7 @@ const menuItems: MenuItem[] = [
   {
     label: 'Materias',
     href: '/dashboard/materias',
+    roles: [UserRole.ADMIN],
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -117,6 +127,7 @@ const menuItems: MenuItem[] = [
   {
     label: 'Periodos',
     href: '/dashboard/periodos',
+    roles: [UserRole.ADMIN],
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -131,6 +142,7 @@ const menuItems: MenuItem[] = [
   {
     label: 'Horarios',
     href: '/dashboard/horarios',
+    roles: [UserRole.ADMIN, UserRole.AUXILIAR, UserRole.DOCENTE, UserRole.PADRE, UserRole.ESTUDIANTE],
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -145,6 +157,7 @@ const menuItems: MenuItem[] = [
   {
     label: 'Calificaciones',
     href: '/dashboard/calificaciones',
+    roles: [UserRole.ADMIN, UserRole.AUXILIAR, UserRole.DOCENTE, UserRole.PADRE, UserRole.ESTUDIANTE],
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -159,6 +172,7 @@ const menuItems: MenuItem[] = [
   {
     label: 'Asistencias',
     href: '/dashboard/asistencias',
+    roles: [UserRole.ADMIN, UserRole.AUXILIAR, UserRole.DOCENTE],
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -174,6 +188,13 @@ const menuItems: MenuItem[] = [
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const pathname = usePathname();
+  const { user } = useAuth();
+
+  // Filtrar items del menú según el rol del usuario
+  const visibleMenuItems = menuItems.filter((item) => {
+    if (!user) return false;
+    return item.roles.includes(user.role);
+  });
 
   return (
     <>
@@ -194,7 +215,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b">
-            <h2 className="text-xl font-bold text-gray-800">Sistema Escolar</h2>
+            <div>
+              <h2 className="text-xl font-bold text-gray-800">Sistema Escolar</h2>
+              {user && (
+                <p className="text-xs text-gray-500 mt-1 capitalize">
+                  {user.role === 'admin' && '👨‍💼 Administrador'}
+                  {user.role === 'auxiliar' && '🧑‍💼 Auxiliar'}
+                  {user.role === 'docente' && '👨‍🏫 Docente'}
+                  {user.role === 'padre' && '👨‍👩‍👧 Padre de Familia'}
+                  {user.role === 'estudiante' && '👨‍🎓 Estudiante'}
+                </p>
+              )}
+            </div>
             <button
               onClick={onClose}
               className="lg:hidden text-gray-600 hover:text-gray-800"
@@ -213,7 +245,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           {/* Navigation */}
           <nav className="flex-1 p-4 overflow-y-auto">
             <ul className="space-y-2">
-              {menuItems.map((item) => {
+              {visibleMenuItems.map((item) => {
                 const isActive = pathname === item.href;
                 return (
                   <li key={item.href}>

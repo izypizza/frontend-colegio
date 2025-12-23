@@ -136,16 +136,7 @@ export default function PeriodosPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={editingItem ? 'Editar Periodo' : 'Nuevo Periodo'}
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
-              Cancelar
-            </Button>
-            <Button variant="primary" onClick={handleSubmit}>
-              Guardar
-            </Button>
-          </>
-        }
+        size="lg"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
@@ -177,6 +168,15 @@ export default function PeriodosPage() {
             onChange={(e) => setFormData({ ...formData, fecha_fin: e.target.value })}
             required
           />
+
+          <div className="flex justify-end gap-3 pt-4">
+            <Button variant="secondary" type="button" onClick={() => setIsModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button variant="primary" type="submit">
+              {editingItem ? 'Actualizar' : 'Guardar'}
+            </Button>
+          </div>
         </form>
       </Modal>
     </div>
