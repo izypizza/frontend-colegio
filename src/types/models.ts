@@ -47,6 +47,7 @@ export interface Padre {
 export interface Grado {
   id: number;
   nombre: string;
+  nivel?: string;
   created_at: string;
   updated_at: string;
 }
@@ -56,6 +57,8 @@ export interface Seccion {
   id: number;
   nombre: string;
   grado_id: number;
+  capacidad?: number;
+  turno?: string;
   grado?: Grado;
   created_at: string;
   updated_at: string;

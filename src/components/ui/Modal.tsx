@@ -51,9 +51,9 @@ export const Modal: React.FC<ModalProps> = ({
       onClick={onClose}
     >
       <div className="flex items-center justify-center min-h-screen px-4 py-6">
-        {/* Overlay con animación */}
+        {/* Overlay con blur y transparencia */}
         <div
-          className="fixed inset-0 bg-gray-900 bg-opacity-50 transition-opacity"
+          className="fixed inset-0 backdrop-blur-md transition-opacity"
           aria-hidden="true"
         />
 

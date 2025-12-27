@@ -1,457 +1,490 @@
-# Sistema de Gestión Escolar - Frontend
+# 🎓 Sistema de Gestión Escolar - Frontend
 
-Interfaz web moderna para la gestión integral de instituciones educativas. Cliente del sistema desarrollado con las últimas tecnologías web.
-
-## 🚀 Stack Tecnológico
-
-| Tecnología | Versión | Propósito |
-|------------|---------|-----------|
-| **Next.js** | 16.0.10 | Framework React con App Router y Turbopack |
-| **React** | 19.2.0 | Biblioteca UI con Server Components |
-| **TypeScript** | 5.x | Tipado estático y seguridad de tipos |
-| **Tailwind CSS** | 4.x | Framework de estilos utility-first |
-| **Laravel Sanctum** | - | Autenticación por tokens con backend |
-| **Fetch API** | Nativo | Cliente HTTP moderno del navegador |
+Aplicación web moderna desarrollada con **Next.js 16**, **React 19** y **TypeScript** para la gestión integral de instituciones educativas. Interfaz intuitiva con diseño responsive y sistema de roles completo.
 
 ## ✨ Características Principales
 
-### Sistema de Roles (5 Roles Implementados)
+### 🎨 Interfaz Moderna
+- **Diseño atractivo** con gradientes y animaciones suaves
+- **Responsive** - Funciona en móvil, tablet y desktop
+- **Componentes reutilizables** - Sistema de diseño consistente
+- **Vistas múltiples** - Grid y lista intercambiables
+- **Filtros avanzados** - Búsqueda y filtrado en tiempo real
+- **Estadísticas visuales** - Cards con métricas importantes
 
-| Rol | Acceso | Permisos |
-|-----|--------|----------|
-| 🔐 **Admin** | Total | Gestión completa: usuarios, configuración, reportes, todos los módulos |
-| 👔 **Auxiliar** | Administrativo | Estudiantes, padres, asistencias, calificaciones, secciones |
-| 👨‍🏫 **Docente** | Académico | Materias propias, asistencias de sus cursos, calificaciones |
-| 👨‍👩‍👧 **Padre** | Consulta | Información de hijos (calificaciones, asistencias, horarios) |
-| 🎓 **Estudiante** | Consulta | Información personal (notas, horarios, asistencias) |
+### 👥 Sistema de Roles (5 Roles)
 
-### Control de Acceso y Seguridad
+| Rol | Permisos | Funcionalidades |
+|-----|----------|-----------------|
+| 🔐 **Admin** | Control total | CRUD completo de todos los módulos |
+| 👔 **Auxiliar** | Administrativo | Estudiantes, padres, asistencias, calificaciones |
+| 👨‍🏫 **Docente** | Académico | Mis clases, estudiantes, calificaciones, asistencias |
+| 👨‍👩‍👧 **Padre** | Consulta | Información de mis hijos (notas, asistencias) |
+| 🎓 **Estudiante** | Consulta | Mi perfil, notas, asistencias, horarios |
 
-✅ **Hooks personalizados para permisos:**
-```typescript
-import { useRolePermissions } from '@/features/auth/hooks/useRolePermissions';
+### 📊 Módulos Implementados
 
-const { hasAdminAccess, hasRole, getPermissions, getAccessibleRoutes } = useRolePermissions();
+#### Gestión Académica
+- ✅ **Grados** - Vista cards con estadísticas por nivel
+- ✅ **Secciones** - Grid/Lista con capacidad y turno
+- ✅ **Materias** - Catálogo completo
+- ✅ **Horarios** - Calendario por sección
+- ✅ **Períodos Académicos** - Bimestres/Trimestres
 
-// Verificar acceso administrativo
-if (hasAdminAccess(user.role)) { /* Admin o Auxiliar */ }
+#### Gestión de Personas
+- ✅ **Estudiantes** - CRUD con matrícula
+- ✅ **Docentes** - Perfil con especialidad
+- ✅ **Padres** - Relación con estudiantes
+- ✅ **Asignaciones** - Docente-Materia-Sección
 
-// Verificar rol específico
-if (hasRole(user.role, [UserRole.DOCENTE])) { /* Solo docentes */ }
+#### Sistema de Evaluación
+- ✅ **Calificaciones** - Registro por período
+- ✅ **Asistencias** - Control diario
+- ✅ **Reportes** - Boletines y estadísticas
 
-// Obtener permisos del rol
-const permissions = getPermissions(user.role);
-if (permissions.canManageStudents) { /* Gestionar estudiantes */ }
-```
+#### Portales Personalizados
+- ✅ **Portal Docente** - Mis clases, estudiantes, calificaciones
+- ✅ **Portal Estudiante** - Mis notas, asistencias, horarios
+- ✅ **Portal Padre** - Seguimiento de hijos
 
-✅ **Componente RoleGuard para protección de UI:**
-```tsx
-import { RoleGuard } from '@/components/auth/RoleGuard';
+#### Sistemas Adicionales
+- ✅ **Biblioteca Digital** - Catálogo y préstamos
+- ✅ **Elecciones Escolares** - Votación estudiantil
+- ✅ **Dashboard** - Estadísticas por rol
 
-<RoleGuard allowedRoles={[UserRole.ADMIN, UserRole.AUXILIAR]}>
-  <AdminPanel />
-</RoleGuard>
-```
+## 🚀 Tecnologías
 
-### Arquitectura y Funcionalidades
+### Core
+- **Next.js 16** - Framework React con App Router
+- **React 19** - Biblioteca UI con Server Components
+- **TypeScript 5** - Tipado estático
+- **Tailwind CSS 4** - Framework de estilos
 
-- ✅ **Autenticación completa** - Login con Laravel Sanctum, gestión de tokens
-- ✅ **Protección de rutas** - Middleware de autenticación y redirección automática
-- ✅ **Sidebar dinámico** - Menú filtrado según rol del usuario
-- ✅ **Modales CRUD** - Formularios de creación/edición en ventanas modales
-- ✅ **Feature-based architecture** - Código organizado por funcionalidades
-- ✅ **Componentes UI reutilizables** - Button, Input, Card, Modal, Table, Alert, Toast
-- ✅ **API Client centralizado** - Gestión consistente de peticiones HTTP
-- ✅ **Tipos TypeScript** - 100% tipado para seguridad y autocompletado
-- ✅ **Diseño responsive** - Adaptable a móviles, tablets y escritorio
+### Herramientas
+- **ESLint** - Linting de código
+- **PostCSS** - Procesamiento CSS
+- **Turbopack** - Build tool ultra rápido
 
-## 📦 Instalación y Configuración
+## 📦 Instalación
 
-### Prerrequisitos
+### Requisitos
+- Node.js >= 18.0
+- npm >= 9.0 o yarn >= 1.22
+- Backend API corriendo en http://localhost:8000
 
-- Node.js 20+ instalado
-- npm o yarn como gestor de paquetes
-- Backend Laravel ejecutándose en `http://localhost:8000`
-
-### Pasos de Instalación
-
+### Paso 1: Clonar e Instalar
 ```bash
-# 1. Clonar el repositorio
-git clone <url-repositorio>
+# Clonar repositorio
+git clone https://github.com/tu-usuario/frontend-colegio.git
 cd frontend-colegio
 
-# 2. Instalar dependencias
+# Instalar dependencias
 npm install
-
-# 3. Configurar variables de entorno
-cp .env.example .env.local
-
-# Editar .env.local:
-NEXT_PUBLIC_API_URL=http://localhost:8000/api
-NEXT_PUBLIC_APP_NAME="Sistema Colegio"
-NEXT_PUBLIC_APP_VERSION="1.0.0"
-
-# 4. Ejecutar en desarrollo (con Turbopack)
-npm run dev
-
-# La aplicación estará disponible en http://localhost:3000
+# o
+yarn install
 ```
 
-### Credenciales de Prueba
+### Paso 2: Configurar Variables de Entorno
+Crear `.env.local`:
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_API_TIMEOUT=30000
+```
 
-Usa estas credenciales para probar diferentes roles:
-
-| Rol | Email | Contraseña |
-|-----|-------|------------|
-| 👨‍💼 Admin | admin@colegio.pe | password |
-| 👔 Auxiliar | auxiliar@colegio.pe | password |
-| 👨‍🏫 Docente | docente@colegio.pe | password |
-| 👨‍👩‍👧 Padre | padre@colegio.pe | password |
-| 🎓 Estudiante | estudiante@colegio.pe | password |
-
-### Comandos Disponibles
-
+### Paso 3: Iniciar Servidor de Desarrollo
 ```bash
-# Desarrollo
-npm run dev              # Iniciar servidor de desarrollo con Turbopack
-npm run dev:debug        # Desarrollo con modo debug activado
-
-# Producción
-npm run build            # Compilar para producción
-npm start                # Ejecutar build de producción
-npm run export           # Generar exportación estática
-
-# Utilidades
-npm run lint             # Verificar código con ESLint
-npm run lint:fix         # Corregir errores de linting automáticamente
-npm run type-check       # Verificar tipos TypeScript
+npm run dev
+# o
+yarn dev
 ```
 
-## 🗂️ Estructura del Proyecto
+Abrir [http://localhost:3000](http://localhost:3000)
+
+## 🔑 Usuarios de Prueba
+
+| Email | Password | Rol | Descripción |
+|-------|----------|-----|-------------|
+| admin@colegio.pe | password | Admin | Control total del sistema |
+| auxiliar@colegio.pe | password | Auxiliar | Personal administrativo |
+| docente@colegio.pe | password | Docente | Profesor con 4 asignaciones |
+| padre@colegio.pe | password | Padre | Padre con 2 hijos |
+| estudiante@colegio.pe | password | Estudiante | Estudiante matriculado |
+
+## 📁 Estructura del Proyecto
 
 ```
 frontend-colegio/
-├── app/                          # App Router de Next.js 16
-│   ├── (auth)/login/             # Página de autenticación
-│   ├── dashboard/                # Módulos del dashboard
-│   │   ├── estudiantes/          # ✅ CRUD con modales
-│   │   ├── docentes/             # ✅ CRUD con modales
-│   │   ├── padres/               # ✅ CRUD con modales
-│   │   ├── asistencias/          # ✅ Registro con modales
-│   │   ├── calificaciones/       # ✅ Gestión con modales
-│   │   ├── grados/               # ✅ CRUD con modales
-│   │   ├── secciones/            # ✅ CRUD con modales
-│   │   ├── materias/             # ✅ CRUD con modales
-│   │   ├── horarios/             # ✅ CRUD con modales
-│   │   └── periodos/             # ✅ CRUD con modales
+├── app/                          # App Router de Next.js
+│   ├── (auth)/                   # Grupo de rutas de autenticación
+│   │   └── login/
+│   │       └── page.tsx          # Página de login
+│   ├── dashboard/                # Aplicación principal
+│   │   ├── layout.tsx            # Layout con sidebar y navbar
+│   │   ├── page.tsx              # Dashboard principal
+│   │   ├── asistencias/          # Módulo de asistencias
+│   │   ├── biblioteca/           # Sistema de biblioteca
+│   │   ├── calificaciones/       # Gestión de notas
+│   │   ├── docente/              # Portal docente
+│   │   │   ├── mis-clases/
+│   │   │   └── mis-estudiantes/
+│   │   ├── docentes/             # CRUD docentes
+│   │   ├── elecciones/           # Sistema de votación
+│   │   ├── estudiante/           # Portal estudiante
+│   │   │   ├── mis-asistencias/
+│   │   │   └── mis-calificaciones/
+│   │   ├── estudiantes/          # CRUD estudiantes
+│   │   ├── grados/               # Gestión de grados (REDISEÑADO)
+│   │   ├── horarios/             # Horarios escolares
+│   │   ├── materias/             # Catálogo de materias
+│   │   ├── padre/                # Portal padre
+│   │   │   ├── calificaciones/
+│   │   │   └── mis-hijos/
+│   │   ├── padres/               # CRUD padres
+│   │   ├── periodos/             # Períodos académicos
+│   │   ├── prestamos/            # Préstamos biblioteca
+│   │   └── secciones/            # Gestión de secciones (REDISEÑADO)
+│   ├── globals.css               # Estilos globales
 │   ├── layout.tsx                # Layout raíz
-│   └── globals.css               # Estilos globales Tailwind
-│
+│   └── page.tsx                  # Página de inicio
 ├── src/
 │   ├── components/
-│   │   ├── auth/                 # Componentes de autenticación
-│   │   │   └── RoleGuard.tsx     # ✅ Protección por roles
-│   │   ├── layout/               # Componentes de layout
+│   │   ├── auth/
+│   │   │   └── RoleGuard.tsx     # Protección por roles
+│   │   ├── layout/
 │   │   │   ├── DashboardLayout.tsx
-│   │   │   ├── Navbar.tsx        # ✅ Header con usuario
-│   │   │   └── Sidebar.tsx       # ✅ Menú dinámico por rol
-│   │   └── ui/                   # Sistema de componentes base
-│   │       ├── Alert.tsx         # ✅ Alertas contextuales
-│   │       ├── Button.tsx        # ✅ Botones con variantes
-│   │       ├── Card.tsx          # ✅ Tarjetas contenedoras
-│   │       ├── Input.tsx         # ✅ Campos de formulario
-│   │       ├── Modal.tsx         # ✅ Ventanas modales (z-index fix)
-│   │       ├── Table.tsx         # ✅ Tablas responsivas
-│   │       └── Toast.tsx         # ✅ Notificaciones temporales
-│   │
-│   ├── features/                 # Organización por features
+│   │   │   ├── Navbar.tsx        # Barra superior
+│   │   │   └── Sidebar.tsx       # Menú lateral por rol
+│   │   └── ui/                   # Componentes reutilizables
+│   │       ├── Alert.tsx
+│   │       ├── Button.tsx
+│   │       ├── Card.tsx
+│   │       ├── Input.tsx
+│   │       ├── Modal.tsx
+│   │       ├── Select.tsx
+│   │       └── Table.tsx
+│   ├── config/
+│   │   └── constants.ts          # Constantes globales
+│   ├── features/
 │   │   └── auth/
-│   │       ├── components/
-│   │       │   └── LoginForm.tsx # ✅ Formulario de login
 │   │       ├── hooks/
-│   │       │   ├── useAuth.tsx   # ✅ Context de autenticación
-│   │       │   ├── useRedirect.ts
-│   │       │   └── useRolePermissions.ts # ✅ Permisos por rol
+│   │       │   └── useAuth.tsx   # Hook de autenticación
 │   │       └── services/
-│   │           └── auth.service.ts # ✅ API de autenticación
-│   │
-│   ├── lib/                      # Librerías y utilidades
-│   │   ├── api-client.ts         # ✅ Cliente HTTP centralizado
-│   │   ├── services.ts           # ✅ Servicios base
-│   │   └── utils.ts              # ✅ Funciones auxiliares
-│   │
-│   ├── types/                    # Tipos TypeScript
-│   │   ├── index.ts              # Tipos generales
-│   │   └── models.ts             # ✅ Modelos sincronizados con backend
-│   │
-│   └── config/
-│       └── constants.ts          # ✅ Constantes de configuración
-│
-├── public/                       # Assets estáticos
-├── .env.local                    # Variables de entorno (no en git)
-├── next.config.ts                # Configuración de Next.js
-├── tailwind.config.ts            # Configuración de Tailwind CSS 4
-├── tsconfig.json                 # Configuración de TypeScript
-├── eslint.config.mjs             # Configuración de ESLint
-├── postcss.config.mjs            # Configuración de PostCSS
-└── package.json                  # Dependencias del proyecto
+│   │           └── authService.ts
+│   ├── lib/
+│   │   ├── api-client.ts         # Cliente HTTP con Fetch API
+│   │   ├── services.ts           # Servicios API (17 servicios)
+│   │   └── utils.ts              # Utilidades
+│   └── types/
+│       ├── index.ts
+│       └── models.ts             # Interfaces TypeScript (27 modelos)
+├── public/                       # Archivos estáticos
+├── .env.local                    # Variables de entorno
+├── next.config.ts                # Configuración Next.js
+├── tailwind.config.ts            # Configuración Tailwind
+├── tsconfig.json                 # Configuración TypeScript
+└── package.json                  # Dependencias
 ```
 
-## 🔌 Integración con Backend
+## 🎨 Componentes UI
 
-### Configuración de API
+### Sistema de Diseño
+Todos los componentes siguen un sistema de diseño consistente:
 
-El frontend se conecta al backend Laravel mediante el cliente HTTP centralizado:
+#### Button
+```tsx
+<Button variant="primary" size="md" onClick={handleClick}>
+  Guardar
+</Button>
 
+// Variants: primary, secondary, danger, success, ghost
+// Sizes: sm, md, lg
+```
+
+#### Card
+```tsx
+<Card className="hover:shadow-lg">
+  <h3>Título</h3>
+  <p>Contenido</p>
+</Card>
+```
+
+#### Modal
+```tsx
+<Modal 
+  isOpen={isOpen} 
+  onClose={onClose}
+  title="Título del Modal"
+  size="lg"
+  footer={<Button onClick={save}>Guardar</Button>}
+>
+  <Content />
+</Modal>
+
+// Sizes: sm, md, lg, xl
+```
+
+#### Table
+```tsx
+<Table
+  columns={columns}
+  data={data}
+  loading={loading}
+  onEdit={handleEdit}
+  onDelete={handleDelete}
+/>
+```
+
+#### Alert
+```tsx
+<Alert 
+  type="success" 
+  message="Operación exitosa"
+  onClose={() => setAlert(null)}
+/>
+
+// Types: success, error, warning, info
+```
+
+## 🔐 Autenticación
+
+### Sistema de Autenticación
+- **Laravel Sanctum** - Tokens de sesión
+- **LocalStorage** - Almacenamiento de tokens
+- **Middleware** - Protección de rutas
+- **RoleGuard** - Control por roles
+
+### Hook useAuth
+```tsx
+const { user, login, logout, isAuthenticated } = useAuth();
+
+// Login
+await login({ email, password });
+
+// Logout
+await logout();
+
+// Verificar rol
+if (user?.role === 'admin') { ... }
+```
+
+### Protección de Rutas
+```tsx
+// Proteger página completa
+<RoleGuard allowedRoles={['admin', 'auxiliar']}>
+  <AdminContent />
+</RoleGuard>
+
+// Condicional en componente
+{isAdmin && <Button>Editar</Button>}
+```
+
+## 📊 Servicios API
+
+### Cliente HTTP
 ```typescript
 // src/lib/api-client.ts
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+class ApiClient {
+  async get<T>(endpoint: string): Promise<T>
+  async post<T>(endpoint: string, data: any): Promise<T>
+  async put<T>(endpoint: string, data: any): Promise<T>
+  async delete(endpoint: string): Promise<void>
+}
+```
 
-export const apiClient = {
-  get: async (endpoint) => { /* ... */ },
-  post: async (endpoint, data) => { /* ... */ },
-  put: async (endpoint, data) => { /* ... */ },
-  delete: async (endpoint) => { /* ... */ },
+### Servicios Disponibles (17)
+```typescript
+// src/lib/services.ts
+export const gradoService = new CrudService<Grado>('/grados');
+export const seccionService = new CrudService<Seccion>('/secciones');
+export const materiaService = new CrudService<Materia>('/materias');
+export const estudianteService = new CrudService<Estudiante>('/estudiantes');
+export const docenteService = new CrudService<Docente>('/docentes');
+export const padreService = new CrudService<Padre>('/padres');
+export const horarioService = new CrudService<Horario>('/horarios');
+export const asistenciaService = new CrudService<Asistencia>('/asistencias');
+export const calificacionService = new CrudService<Calificacion>('/calificaciones');
+export const periodoService = new CrudService<PeriodoAcademico>('/periodos');
+export const asignacionService = new CrudService<AsignacionDocenteMateria>('/asignaciones');
+export const libroService = new CrudService<Libro>('/libros');
+export const prestamoService = new CrudService<PrestamoLibro>('/prestamos');
+export const eleccionService = new CrudService<Eleccion>('/elecciones');
+
+// Portales especializados
+export const docentePortalService = { ... };
+export const estudiantePortalService = { ... };
+export const padrePortalService = { ... };
+```
+
+## 🎯 Funcionalidades Destacadas
+
+### 1. Secciones Dinámicas (Rediseñado)
+- Vista Grid/Lista intercambiable
+- Filtros por grado
+- Búsqueda en tiempo real
+- Estadísticas en header
+- Ver estudiantes por sección
+- Badges de turno coloridos
+
+### 2. Grados Modernos (Rediseñado)
+- Cards atractivos con iconos
+- Estadísticas por nivel
+- Ver secciones asociadas
+- Validación de eliminación
+- Gradientes coloridos
+
+### 3. Dashboard por Rol
+- **Admin**: Estadísticas globales, gráficos, acceso total
+- **Docente**: Mis clases, estudiantes pendientes, calendario
+- **Estudiante**: Mis notas recientes, horarios, próximas evaluaciones
+- **Padre**: Resumen de hijos, alertas, comunicados
+
+### 4. Portal Docente
+- Mis asignaciones (materias y secciones)
+- Mis estudiantes agrupados
+- Registro rápido de asistencias
+- Registro de calificaciones
+- Filtros por materia y fecha
+
+### 5. Portal Estudiante
+- Mi perfil académico
+- Mis calificaciones por período
+- Historial de asistencias
+- Mi horario semanal
+- Descargar boletín
+
+### 6. Portal Padre
+- Lista de mis hijos
+- Calificaciones de todos
+- Asistencias individuales
+- Reportes descargables
+
+## 🎨 Temas y Estilos
+
+### Paleta de Colores
+```css
+/* Colores principales */
+--primary: #04ADBF;      /* Azul turquesa */
+--secondary: #F2F0CE;    /* Beige suave */
+--danger: #F22727;       /* Rojo */
+--success: #10B981;      /* Verde */
+
+/* Gradientes */
+.gradient-blue-purple {
+  background: linear-gradient(to right, #04ADBF, #9333EA);
+}
+
+.gradient-green-teal {
+  background: linear-gradient(to right, #10B981, #14B8A6);
+}
+```
+
+### Iconos
+SVG inline con Heroicons (24px, 2px stroke)
+
+## 🚀 Scripts Disponibles
+
+```bash
+# Desarrollo
+npm run dev          # Servidor de desarrollo (http://localhost:3000)
+
+# Producción
+npm run build        # Compilar para producción
+npm run start        # Servidor de producción
+
+# Calidad de código
+npm run lint         # Ejecutar ESLint
+npm run type-check   # Verificar tipos TypeScript
+
+# Formato
+npm run format       # Formatear con Prettier
+```
+
+## 🔧 Configuración
+
+### next.config.ts
+```typescript
+const nextConfig = {
+  reactStrictMode: true,
+  images: {
+    domains: ['localhost'],
+  },
 };
 ```
 
-### Endpoints Disponibles
-
-| Método | Endpoint | Descripción | Roles |
-|--------|----------|-------------|-------|
-| POST | `/auth/login` | Iniciar sesión | Público |
-| GET | `/auth/me` | Obtener usuario actual | Autenticado |
-| POST | `/auth/logout` | Cerrar sesión | Autenticado |
-| GET | `/estudiantes` | Listar estudiantes | Admin, Auxiliar |
-| POST | `/estudiantes` | Crear estudiante | Admin, Auxiliar |
-| PUT | `/estudiantes/{id}` | Actualizar estudiante | Admin, Auxiliar |
-| DELETE | `/estudiantes/{id}` | Eliminar estudiante | Admin |
-| GET | `/docentes` | Listar docentes | Admin, Auxiliar |
-| POST | `/docentes` | Crear docente | Admin |
-| PUT | `/docentes/{id}` | Actualizar docente | Admin |
-| DELETE | `/docentes/{id}` | Eliminar docente | Admin |
-| GET | `/padres` | Listar padres | Admin, Auxiliar |
-| GET | `/calificaciones` | Listar calificaciones | Según rol |
-| GET | `/asistencias` | Listar asistencias | Según rol |
-
-### Sincronización de Datos
-
-**Estado actual (Backend):**
-- ✅ 187 usuarios registrados en base de datos
-- ✅ 15 docentes con `user_id` vinculado
-- ✅ 50 padres con `user_id` vinculado
-- ✅ 118 estudiantes con `user_id` vinculado
-- ✅ 0 registros huérfanos (100% sincronizado)
-
-**Modelos TypeScript sincronizados:**
+### tailwind.config.ts
 ```typescript
-// src/types/models.ts
-
-export enum UserRole {
-  ADMIN = 'admin',
-  AUXILIAR = 'auxiliar',
-  DOCENTE = 'docente',
-  PADRE = 'padre',
-  ESTUDIANTE = 'estudiante',
-}
-
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  avatar?: string;
-  isActive: boolean;
-}
-
-export interface Estudiante {
-  id: number;
-  user_id?: number;
-  nombre: string;
-  fecha_nacimiento: string;
-  seccion_id: number;
-  dni?: string;
-  telefono?: string;
-  direccion?: string;
-}
-
-export interface Docente {
-  id: number;
-  user_id?: number;
-  nombre: string;
-  especialidad: string;
-  email?: string;
-  telefono?: string;
-  dni?: string;
-  direccion?: string;
-}
-
-export interface Padre {
-  id: number;
-  user_id?: number;
-  nombre: string;
-  email?: string;
-  telefono?: string;
-  dni?: string;
-  direccion?: string;
-  ocupacion?: string;
-}
+module.exports = {
+  content: ['./app/**/*.{js,ts,jsx,tsx}', './src/**/*.{js,ts,jsx,tsx}'],
+  theme: {
+    extend: {
+      colors: {
+        primary: '#04ADBF',
+        secondary: '#F2F0CE',
+      },
+    },
+  },
+};
 ```
 
-## 📊 Módulos Implementados
+## 📱 Responsive Design
 
-### ✅ Completados con CRUD y Modales
+- **Mobile First** - Diseñado primero para móviles
+- **Breakpoints**: sm (640px), md (768px), lg (1024px), xl (1280px)
+- **Grid Responsive**: 1 col (mobile), 2 cols (tablet), 3 cols (desktop)
+- **Sidebar Colapsable** en móviles
+- **Tablas Horizontales** con scroll en móviles
 
-| Módulo | Crear | Leer | Actualizar | Eliminar | Filtros |
-|--------|-------|------|------------|----------|---------|
-| **Estudiantes** | ✅ | ✅ | ✅ | ✅ | ⏳ |
-| **Docentes** | ✅ | ✅ | ✅ | ✅ | ⏳ |
-| **Padres** | ✅ | ✅ | ✅ | ✅ | ⏳ |
-| **Grados** | ✅ | ✅ | ✅ | ✅ | ⏳ |
-| **Secciones** | ✅ | ✅ | ✅ | ✅ | ⏳ |
-| **Materias** | ✅ | ✅ | ✅ | ✅ | ⏳ |
-| **Horarios** | ✅ | ✅ | ✅ | ✅ | ⏳ |
-| **Asistencias** | ✅ | ✅ | ✅ | ✅ | ⏳ |
-| **Calificaciones** | ✅ | ✅ | ✅ | ✅ | ⏳ |
-| **Períodos** | ✅ | ✅ | ✅ | ✅ | ⏳ |
+## 🐛 Troubleshooting
 
-### Características de los Módulos
-
-- **Modales funcionalmente** - Botones de creación/edición abren ventanas modales sin bugs
-- **Formularios dentro de modales** - Botones de acción colocados correctamente dentro del form
-- **Diseño responsive** - Tablas y formularios adaptables a diferentes tamaños de pantalla
-- **Validación de datos** - Campos requeridos y formatos validados
-- **Feedback visual** - Alertas de éxito/error en operaciones CRUD
-
-## 🎯 Roadmap y Mejoras Futuras
-
-### Prioridad Alta 🔴
-
-- [ ] **Búsqueda y filtrado avanzado** - Buscar por nombre, DNI, sección en todas las tablas
-- [ ] **Paginación** - Implementar paginación en tablas con muchos registros
-- [ ] **Validación robusta** - Usar react-hook-form + zod para validación de formularios
-- [ ] **Confirmación de eliminación** - Modales de confirmación antes de eliminar registros
-- [ ] **Manejo de errores mejorado** - Mensajes de error más descriptivos y amigables
-
-### Prioridad Media 🟡
-
-- [ ] **Dashboard con gráficos** - Chart.js o Recharts para visualizaciones
-- [ ] **Reportes en PDF** - Generación de boletines y reportes imprimibles
-- [ ] **Exportación a Excel** - Descargar listados y reportes en formato Excel
-- [ ] **Modo oscuro** - Implementar dark mode con toggle
-- [ ] **Optimización de performance** - React Query o SWR para cache de datos
-- [ ] **Loading states mejorados** - Skeletons en lugar de spinners genéricos
-- [ ] **Infinite scroll** - En listas muy largas para mejor UX
-
-### Prioridad Baja 🟢
-
-- [ ] **Notificaciones en tiempo real** - WebSockets para notificaciones push
-- [ ] **Sistema de mensajería** - Chat interno entre usuarios
-- [ ] **App móvil** - React Native para Android/iOS
-- [ ] **Internacionalización** - Soporte multi-idioma (i18n)
-- [ ] **Testing completo** - Jest + React Testing Library + Playwright
-- [ ] **CI/CD** - GitHub Actions para deploy automatizado
-
-## 🐛 Problemas Resueltos
-
-### Arreglos Implementados
-
-- ✅ **Error de hidratación React** - Solucionado moviendo viewport a exportación separada
-- ✅ **CORS bloqueado** - Configurado correctamente en backend Laravel
-- ✅ **Modales bugueados** - z-index ajustado a 9999, prevención de scroll, click handling correcto
-- ✅ **Botones fuera del form** - Movidos dentro de los formularios en todos los modales
-- ✅ **Menú estático** - Sidebar ahora filtra opciones dinámicamente según rol del usuario
-- ✅ **Token no persistente** - Guardado en localStorage con manejo de expiración
-
-## 🚀 Despliegue en Producción
-
-### Build de Producción
-
+### Error: "Cannot connect to API"
 ```bash
-# 1. Compilar la aplicación
-npm run build
-
-# 2. Iniciar servidor de producción
-npm start
-
-# O usando PM2
-pm2 start npm --name "frontend-colegio" -- start
+# Verificar que el backend esté corriendo
+# Verificar NEXT_PUBLIC_API_URL en .env.local
 ```
 
-### Variables de Entorno Producción
-
-```env
-NODE_ENV=production
-NEXT_PUBLIC_API_URL=https://api.tu-dominio.com/api
-NEXT_PUBLIC_APP_NAME="Sistema Colegio Túpac Amaru"
-NEXT_PUBLIC_APP_VERSION="1.0.0"
-```
-
-### Deploy en Vercel
-
+### Error: "Module not found"
 ```bash
-# Instalar Vercel CLI
-npm i -g vercel
-
-# Deploy
-vercel --prod
+rm -rf node_modules package-lock.json
+npm install
 ```
 
-### Optimizaciones Recomendadas
-
+### Error: "Type error"
 ```bash
-# Antes del deploy:
-npm run lint              # Verificar código
-npm run type-check        # Verificar tipos
-npm run build             # Compilar
-
-# Optimizaciones automáticas de Next.js 16:
-# ✅ Turbopack en desarrollo
-# ✅ Server Components por defecto
-# ✅ Image optimization con next/image
-# ✅ Code splitting automático
-# ✅ Tree shaking de dependencias
+npm run type-check
 ```
 
-## 🤝 Contribución y Estándares
-
-### Convenciones de Código
-
-- **Componentes** - PascalCase (`DashboardLayout.tsx`)
-- **Funciones/variables** - camelCase (`getUserData`)
-- **Constantes** - UPPER_SNAKE_CASE (`API_URL`)
-- **Archivos CSS** - kebab-case (`dashboard-layout.css`)
-- **TypeScript** - Tipos explícitos en funciones públicas
-- **Comentarios** - Explicar "por qué", no "qué"
-
-### Flujo de Trabajo Git
-
+### Errores de CORS
 ```bash
-# 1. Crear rama para feature
-git checkout -b feature/nombre-funcionalidad
-
-# 2. Hacer commits descriptivos
-git commit -m "feat: agregar filtro de búsqueda en estudiantes"
-git commit -m "fix: corregir modal que no cerraba"
-git commit -m "refactor: optimizar renderizado de tabla"
-
-# 3. Push y crear Pull Request
-git push origin feature/nombre-funcionalidad
+# Verificar que el backend permita el origen del frontend
+# Ver config/cors.php en el backend
 ```
 
-### Estructura de Commits
+## 📄 Licencia
 
-- `feat:` - Nueva funcionalidad
-- `fix:` - Corrección de bug
-- `refactor:` - Refactorización sin cambio de funcionalidad
-- `style:` - Cambios de formato (no afectan código)
-- `docs:` - Cambios en documentación
-- `test:` - Agregar o modificar tests
-- `chore:` - Tareas de mantenimiento
+Este proyecto es de código abierto bajo licencia MIT.
+
+## 👨‍💻 Contribuir
+
+1. Fork el proyecto
+2. Crea una rama (`git checkout -b feature/nueva-funcionalidad`)
+3. Commit cambios (`git commit -m 'Agregar funcionalidad'`)
+4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
+5. Abre un Pull Request
+
+## 🎯 Roadmap
+
+- [ ] PWA (Progressive Web App)
+- [ ] Notificaciones push
+- [ ] Chat en tiempo real
+- [ ] Videollamadas integradas
+- [ ] App móvil nativa
+- [ ] Modo oscuro
+- [ ] Multi-idioma
+
+## 📞 Contacto
+
+Para soporte o consultas, contactar al equipo de desarrollo.
 
 ---
 
-**Desarrollado con ❤️ para el Sistema Escolar Túpac Amaru**  
-**Última actualización:** 16 de diciembre de 2025  
-**Versión:** 1.0.0  
-**Estado:** ✅ En Producción
+**Desarrollado con ❤️ para instituciones educativas**

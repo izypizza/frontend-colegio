@@ -3,24 +3,59 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  
+  /* Paleta de Colores del Colegio Túpac Amaru */
+  --color-primary: #04ADBF;      /* Azul Turquesa */
+  --color-secondary: #F22727;    /* Rojo */
+  --color-accent: #FEFCD6;       /* Amarillo Suave */
+  --color-light: #F2F0CE;        /* Beige Claro */
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-roboto);
+  
+  /* Colores personalizados del colegio */
+  --color-colegio-primary: #04ADBF;
+  --color-colegio-primary-dark: #038a9a;
+  --color-colegio-secondary: #F22727;
+  --color-colegio-secondary-dark: #c91f1f;
+  --color-colegio-accent: #FEFCD6;
+  --color-colegio-light: #F2F0CE;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+/* Estilos para mejor legibilidad */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-roboto), sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* Responsive mejorado */
+@media (max-width: 640px) {
+  body {
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  body {
+    font-size: 15px;
+  }
+}
+
+@media (min-width: 1025px) {
+  body {
+    font-size: 16px;
+  }
 }

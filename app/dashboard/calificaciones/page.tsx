@@ -6,11 +6,14 @@ import {
     estudianteService,
     materiaService,
     periodoService,
+    docentePortalService,
 } from '@/src/lib/services';
 import { Calificacion, Estudiante, Materia, PeriodoAcademico } from '@/src/types/models';
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/src/features/auth';
 
 export default function CalificacionesPage() {
+  const { user } = useAuth();
   const [calificaciones, setCalificaciones] = useState<Calificacion[]>([]);
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [materias, setMaterias] = useState<Materia[]>([]);
@@ -34,18 +37,51 @@ export default function CalificacionesPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [calificacionesData, estudiantesData, materiasData, periodosData] = await Promise.all([
-        calificacionService.getAll(),
-        estudianteService.getAll(),
-        materiaService.getAll(),
-        periodoService.getAll(),
-      ]);
-      setCalificaciones(calificacionesData);
-      setEstudiantes(estudiantesData);
-      setMaterias(materiasData);
-      setPeriodos(periodosData);
-    } catch {
-      setError('Error al cargar los datos');
+      setError(null);
+      
+      if (user?.role === 'docente') {
+        // Docentes usan endpoints del portal
+        const [calificacionesData, estudiantesData, asignacionesData, periodosData] = await Promise.all([
+          docentePortalService.misCalificaciones(),
+          docentePortalService.misEstudiantes(),
+          docentePortalService.misAsignaciones(),
+          periodoService.getAll(),
+        ]);
+        
+        console.log('Calificaciones:', calificacionesData);
+        console.log('Estudiantes:', estudiantesData);
+        console.log('Asignaciones:', asignacionesData);
+        console.log('Periodos:', periodosData);
+        
+        setCalificaciones(calificacionesData.calificaciones || []);
+        setEstudiantes(estudiantesData.estudiantes || []);
+        // Extraer materias únicas usando Map
+        const materiasMap = new Map();
+        asignacionesData.asignaciones?.forEach((a: any) => {
+          if (a.materia && !materiasMap.has(a.materia.id)) {
+            materiasMap.set(a.materia.id, a.materia);
+          }
+        });
+        const materiasUnicas = Array.from(materiasMap.values());
+        console.log('Materias únicas:', materiasUnicas);
+        setMaterias(materiasUnicas);
+        setPeriodos(periodosData.data || periodosData);
+      } else {
+        // Admin/Auxiliar usan endpoints generales
+        const [calificacionesData, estudiantesData, materiasData, periodosData] = await Promise.all([
+          calificacionService.getAll(),
+          estudianteService.getAll(),
+          materiaService.getAll(),
+          periodoService.getAll(),
+        ]);
+        setCalificaciones(calificacionesData);
+        setEstudiantes(estudiantesData);
+        setMaterias(materiasData);
+        setPeriodos(periodosData);
+      }
+    } catch (err) {
+      console.error('Error completo:', err);
+      setError('Error al cargar los datos: ' + (err instanceof Error ? err.message : 'Error desconocido'));
     } finally {
       setLoading(false);
     }
@@ -97,12 +133,19 @@ export default function CalificacionesPage() {
         nota: parseFloat(formData.nota),
       };
 
-      if (editingItem) {
-        await calificacionService.update(editingItem.id, data);
-        setSuccess('Calificación actualizada correctamente');
+      if (user?.role === 'docente') {
+        // Docentes usan el endpoint específico
+        await docentePortalService.registrarCalificacion(data);
+        setSuccess(editingItem ? 'Calificación actualizada correctamente' : 'Calificación registrada correctamente');
       } else {
-        await calificacionService.create(data);
-        setSuccess('Calificación creada correctamente');
+        // Admin/Auxiliar usan endpoints generales
+        if (editingItem) {
+          await calificacionService.update(editingItem.id, data);
+          setSuccess('Calificación actualizada correctamente');
+        } else {
+          await calificacionService.create(data);
+          setSuccess('Calificación creada correctamente');
+        }
       }
 
       setIsModalOpen(false);
