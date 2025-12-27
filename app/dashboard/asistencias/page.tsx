@@ -1,11 +1,13 @@
 'use client';
 
 import { Alert, Button, Card, Input, Modal, Table } from '@/src/components/ui';
-import { asistenciaService, estudianteService, materiaService } from '@/src/lib/services';
+import { asistenciaService, estudianteService, materiaService, docentePortalService } from '@/src/lib/services';
 import { Asistencia, Estudiante, Materia } from '@/src/types/models';
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/src/features/auth';
 
 export default function AsistenciasPage() {
+  const { user } = useAuth();
   const [asistencias, setAsistencias] = useState<Asistencia[]>([]);
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [materias, setMaterias] = useState<Materia[]>([]);
@@ -28,14 +30,37 @@ export default function AsistenciasPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [asistenciasData, estudiantesData, materiasData] = await Promise.all([
-        asistenciaService.getAll(),
-        estudianteService.getAll(),
-        materiaService.getAll(),
-      ]);
-      setAsistencias(asistenciasData);
-      setEstudiantes(estudiantesData);
-      setMaterias(materiasData);
+      
+      // Si es docente, usar los endpoints del portal de docente
+      if (user?.role === 'docente') {
+        const [asistenciasData, estudiantesData, asignacionesData] = await Promise.all([
+          docentePortalService.misAsistencias(),
+          docentePortalService.misEstudiantes(),
+          docentePortalService.misAsignaciones(),
+        ]);
+        setAsistencias(asistenciasData.asistencias || []);
+        setEstudiantes(estudiantesData.estudiantes || []);
+        // Extraer materias únicas de las asignaciones usando Map
+        const materiasMap = new Map();
+        asignacionesData.asignaciones?.forEach((a: any) => {
+          if (a.materia && !materiasMap.has(a.materia.id)) {
+            materiasMap.set(a.materia.id, a.materia);
+          }
+        });
+        const materiasUnicas = Array.from(materiasMap.values());
+        console.log('Materias únicas:', materiasUnicas);
+        setMaterias(materiasUnicas);
+      } else {
+        // Admin/Auxiliar usan endpoints generales
+        const [asistenciasData, estudiantesData, materiasData] = await Promise.all([
+          asistenciaService.getAll(),
+          estudianteService.getAll(),
+          materiaService.getAll(),
+        ]);
+        setAsistencias(asistenciasData);
+        setEstudiantes(estudiantesData);
+        setMaterias(materiasData);
+      }
     } catch {
       setError('Error al cargar los datos');
     } finally {
@@ -89,12 +114,19 @@ export default function AsistenciasPage() {
         presente: formData.presente,
       };
 
-      if (editingItem) {
-        await asistenciaService.update(editingItem.id, data);
-        setSuccess('Asistencia actualizada correctamente');
+      if (user?.role === 'docente') {
+        // Docentes usan el endpoint específico
+        await docentePortalService.registrarAsistencia(data);
+        setSuccess(editingItem ? 'Asistencia actualizada correctamente' : 'Asistencia registrada correctamente');
       } else {
-        await asistenciaService.create(data);
-        setSuccess('Asistencia creada correctamente');
+        // Admin/Auxiliar usan endpoints generales
+        if (editingItem) {
+          await asistenciaService.update(editingItem.id, data);
+          setSuccess('Asistencia actualizada correctamente');
+        } else {
+          await asistenciaService.create(data);
+          setSuccess('Asistencia creada correctamente');
+        }
       }
 
       setIsModalOpen(false);

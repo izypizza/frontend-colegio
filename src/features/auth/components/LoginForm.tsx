@@ -51,11 +51,24 @@ export const LoginForm: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#F2F0CE] to-[#FEFCD6] p-3 sm:p-4 md:p-6">
       <Card className="w-full max-w-md" shadow="xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Bienvenido</h1>
-          <p className="text-gray-600">Inicia sesión en tu cuenta</p>
+        <div className="mb-6 sm:mb-8 text-center">
+          {/* Logo del Colegio */}
+          <div className="flex justify-center mb-4 sm:mb-6">
+            <img 
+              src="/logo-colegio.png" 
+              alt="Logo Túpac Amaru" 
+              className="h-20 sm:h-24 md:h-28 w-auto"
+            />
+          </div>
+          
+          {/* Nombre de la Institución */}
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#04ADBF] mb-2 px-2">
+            I.E. N° 51006<br />
+            "TUPAC AMARU"
+          </h1>
+          <p className="text-sm sm:text-base text-gray-600 font-medium px-2">Plataforma Escolar</p>
         </div>
 
         {successMessage && (

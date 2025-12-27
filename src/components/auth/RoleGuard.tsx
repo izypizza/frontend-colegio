@@ -1,8 +1,8 @@
 'use client';
 
-import { useAuth } from '@/features/auth/hooks/useAuth';
-import { useRolePermissions } from '@/features/auth/hooks/useRolePermissions';
-import { UserRole } from '@/types';
+import { useAuth } from '@/src/features/auth/hooks/useAuth';
+import { useRolePermissions } from '@/src/features/auth/hooks/useRolePermissions';
+import { UserRole } from '@/src/types';
 import { ReactNode } from 'react';
 
 interface RoleGuardProps {

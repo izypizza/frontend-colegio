@@ -1,22 +1,24 @@
 import type { Metadata, Viewport } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Inter, Roboto } from 'next/font/google';
 import './globals.css';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const inter = Inter({
+  variable: '--font-inter',
   subsets: ['latin'],
   display: 'swap',
+  weight: ['300', '400', '500', '600', '700'],
 });
 
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
+const roboto = Roboto({
+  variable: '--font-roboto',
   subsets: ['latin'],
   display: 'swap',
+  weight: ['300', '400', '500', '700'],
 });
 
 export const metadata: Metadata = {
-  title: 'Sistema Escolar',
-  description: 'Sistema de gestión escolar',
+  title: 'I.E. N° 51006 Túpac Amaru - Sistema Escolar',
+  description: 'Sistema de gestión escolar - Institución Educativa N° 51006 Túpac Amaru',
 };
 
 export const viewport: Viewport = {
@@ -32,7 +34,7 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <body 
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${inter.variable} ${roboto.variable} antialiased`}
         suppressHydrationWarning
       >
         {children}

@@ -27,12 +27,12 @@ export const Card: React.FC<CardProps> = ({
 
   const paddingStyles = {
     none: '',
-    sm: 'p-4',
-    md: 'p-6',
-    lg: 'p-8',
+    sm: 'p-3 sm:p-4',
+    md: 'p-4 sm:p-5 md:p-6',
+    lg: 'p-6 sm:p-7 md:p-8',
   };
 
-  const hoverStyles = hover ? 'hover:shadow-xl transition-shadow duration-300' : '';
+  const hoverStyles = hover ? 'hover:shadow-xl hover:scale-[1.02] transition-all duration-300' : '';
 
   return (
     <div

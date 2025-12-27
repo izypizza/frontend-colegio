@@ -1,11 +1,13 @@
 'use client';
 
 import { Alert, Button, Card, Input, Modal, Table } from '@/src/components/ui';
-import { horarioService, materiaService, seccionService } from '@/src/lib/services';
+import { horarioService, materiaService, seccionService, docentePortalService } from '@/src/lib/services';
 import { Horario, Materia, Seccion } from '@/src/types/models';
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/src/features/auth';
 
 export default function HorariosPage() {
+  const { user } = useAuth();
   const [horarios, setHorarios] = useState<Horario[]>([]);
   const [secciones, setSecciones] = useState<Seccion[]>([]);
   const [materias, setMaterias] = useState<Materia[]>([]);
@@ -31,14 +33,41 @@ export default function HorariosPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [horariosData, seccionesData, materiasData] = await Promise.all([
-        horarioService.getAll(),
-        seccionService.getAll(),
-        materiaService.getAll(),
-      ]);
-      setHorarios(horariosData);
-      setSecciones(seccionesData);
-      setMaterias(materiasData);
+      
+      if (user?.role === 'docente') {
+        // Docentes obtienen horarios de sus secciones
+        const asignacionesData = await docentePortalService.misAsignaciones();
+        const asignaciones = asignacionesData.asignaciones || [];
+        
+        // Extraer secciones y materias únicas
+        const seccionesUnicas = Array.from(
+          new Map(asignaciones.map((a: any) => [a.seccion.id, a.seccion])).values()
+        );
+        const materiasUnicas = Array.from(
+          new Map(asignaciones.map((a: any) => [a.materia.id, a.materia])).values()
+        );
+        
+        setSecciones(seccionesUnicas as Seccion[]);
+        setMaterias(materiasUnicas as Materia[]);
+        
+        // Obtener horarios de esas secciones
+        const seccionIds = seccionesUnicas.map((s: any) => s.id);
+        const horariosData = await horarioService.getAll();
+        const horariosFiltrados = horariosData.filter((h: Horario) => 
+          seccionIds.includes(h.seccion_id)
+        );
+        setHorarios(horariosFiltrados);
+      } else {
+        // Admin/Auxiliar usan endpoints generales
+        const [horariosData, seccionesData, materiasData] = await Promise.all([
+          horarioService.getAll(),
+          seccionService.getAll(),
+          materiaService.getAll(),
+        ]);
+        setHorarios(horariosData);
+        setSecciones(seccionesData);
+        setMaterias(materiasData);
+      }
     } catch {
       setError('Error al cargar los datos');
     } finally {

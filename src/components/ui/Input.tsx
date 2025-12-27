@@ -37,8 +37,8 @@ export const Input: React.FC<InputProps> = ({
             leftIcon ? 'pl-10' : ''
           } ${rightIcon ? 'pr-10' : ''} ${
             error
-              ? 'border-red-500 focus:border-red-600 focus:ring-2 focus:ring-red-500'
-              : 'border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500'
+              ? 'border-[#F22727] focus:border-[#F22727] focus:ring-2 focus:ring-[#F22727]/50'
+              : 'border-gray-300 focus:border-[#04ADBF] focus:ring-2 focus:ring-[#04ADBF]/50'
           } ${className}`}
           {...props}
         />
