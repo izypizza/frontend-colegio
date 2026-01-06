@@ -1,16 +1,20 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { Button, Card, Input, Modal, Alert } from '@/src/components/ui';
-import { seccionService, gradoService, estudianteService } from '@/src/lib/services';
-import { Seccion, Grado, Estudiante } from '@/src/types/models';
-import { useAuth } from '@/src/features/auth/hooks/useAuth';
+import React, { useEffect, useState } from "react";
+import { Button, Card, Input, Modal, Alert } from "@/src/components/ui";
+import {
+  seccionService,
+  gradoService,
+  estudianteService,
+} from "@/src/lib/services";
+import { Seccion, Grado, Estudiante } from "@/src/types/models";
+import { useAuth } from "@/src/features/auth/hooks/useAuth";
 
-type ViewMode = 'grid' | 'list';
+type ViewMode = "grid" | "list";
 
 export default function SeccionesPage() {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin' || user?.role === 'auxiliar';
+  const isAdmin = user?.role === "admin" || user?.role === "auxiliar";
 
   const [secciones, setSecciones] = useState<Seccion[]>([]);
   const [grados, setGrados] = useState<Grado[]>([]);
@@ -19,18 +23,20 @@ export default function SeccionesPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Seccion | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedGrado, setSelectedGrado] = useState<string>('');
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedGrado, setSelectedGrado] = useState<string>("");
   const [selectedSeccion, setSelectedSeccion] = useState<Seccion | null>(null);
-  const [estudiantesSeccion, setEstudiantesSeccion] = useState<Estudiante[]>([]);
+  const [estudiantesSeccion, setEstudiantesSeccion] = useState<Estudiante[]>(
+    []
+  );
   const [showEstudiantes, setShowEstudiantes] = useState(false);
 
   const [formData, setFormData] = useState({
-    nombre: '',
-    grado_id: '',
-    capacidad: '',
-    turno: '',
+    nombre: "",
+    grado_id: "",
+    capacidad: "",
+    turno: "",
   });
 
   useEffect(() => {
@@ -47,7 +53,7 @@ export default function SeccionesPage() {
       setSecciones(seccionesData);
       setGrados(gradosData);
     } catch {
-      setError('Error al cargar los datos');
+      setError("Error al cargar los datos");
     } finally {
       setLoading(false);
     }
@@ -55,7 +61,7 @@ export default function SeccionesPage() {
 
   const handleCreate = () => {
     setEditingItem(null);
-    setFormData({ nombre: '', grado_id: '', capacidad: '', turno: 'Mañana' });
+    setFormData({ nombre: "", grado_id: "", capacidad: "", turno: "Mañana" });
     setIsModalOpen(true);
   };
 
@@ -63,22 +69,22 @@ export default function SeccionesPage() {
     setEditingItem(item);
     setFormData({
       nombre: item.nombre,
-      grado_id: item.grado_id?.toString() || '',
-      capacidad: item.capacidad?.toString() || '',
-      turno: item.turno || 'Mañana',
+      grado_id: item.grado_id?.toString() || "",
+      capacidad: item.capacidad?.toString() || "",
+      turno: item.turno || "Mañana",
     });
     setIsModalOpen(true);
   };
 
   const handleDelete = async (item: Seccion) => {
-    if (!confirm('¿Estás seguro de eliminar esta sección?')) return;
+    if (!confirm("¿Estás seguro de eliminar esta sección?")) return;
 
     try {
       await seccionService.delete(item.id);
-      setSuccess('Sección eliminada correctamente');
+      setSuccess("Sección eliminada correctamente");
       fetchData();
     } catch {
-      setError('Error al eliminar la sección');
+      setError("Error al eliminar la sección");
     }
   };
 
@@ -90,22 +96,24 @@ export default function SeccionesPage() {
       const data = {
         nombre: formData.nombre,
         grado_id: parseInt(formData.grado_id),
-        capacidad: formData.capacidad ? parseInt(formData.capacidad) : undefined,
+        capacidad: formData.capacidad
+          ? parseInt(formData.capacidad)
+          : undefined,
         turno: formData.turno,
       };
 
       if (editingItem) {
         await seccionService.update(editingItem.id, data);
-        setSuccess('Sección actualizada correctamente');
+        setSuccess("Sección actualizada correctamente");
       } else {
         await seccionService.create(data);
-        setSuccess('Sección creada correctamente');
+        setSuccess("Sección creada correctamente");
       }
 
       setIsModalOpen(false);
       fetchData();
     } catch {
-      setError('Error al guardar la sección');
+      setError("Error al guardar la sección");
     }
   };
 
@@ -119,14 +127,17 @@ export default function SeccionesPage() {
       );
       setEstudiantesSeccion(estudiantesFiltrados);
     } catch {
-      setError('Error al cargar estudiantes');
+      setError("Error al cargar estudiantes");
     }
   };
 
   // Filtrado de secciones
   const seccionesFiltradas = secciones.filter((seccion) => {
-    const matchesSearch = seccion.nombre.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesGrado = !selectedGrado || seccion.grado_id?.toString() === selectedGrado;
+    const matchesSearch = seccion.nombre
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesGrado =
+      !selectedGrado || seccion.grado_id?.toString() === selectedGrado;
     return matchesSearch && matchesGrado;
   });
 
@@ -140,15 +151,22 @@ export default function SeccionesPage() {
     capacidadTotal: secciones.reduce((sum, s) => sum + (s.capacidad || 0), 0),
   };
 
-  if (loading) return <div className="flex justify-center items-center h-screen">Cargando...</div>;
+  if (loading)
+    return (
+      <div className="flex justify-center items-center h-screen">
+        Cargando...
+      </div>
+    );
 
   return (
     <div className="space-y-6">
       {/* Header con estadísticas */}
       <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-6 text-white">
         <h1 className="text-3xl font-bold mb-2">Gestión de Secciones</h1>
-        <p className="text-blue-100">Administra las secciones escolares por grado</p>
-        
+        <p className="text-blue-100">
+          Administra las secciones escolares por grado
+        </p>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
           <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
             <div className="text-sm text-blue-100">Total Secciones</div>
@@ -166,8 +184,16 @@ export default function SeccionesPage() {
       </div>
 
       {/* Alertas */}
-      {error && <Alert type="error" message={error} onClose={() => setError(null)} />}
-      {success && <Alert type="success" message={success} onClose={() => setSuccess(null)} />}
+      {error && (
+        <Alert type="error" message={error} onClose={() => setError(null)} />
+      )}
+      {success && (
+        <Alert
+          type="success"
+          message={success}
+          onClose={() => setSuccess(null)}
+        />
+      )}
 
       {/* Controles */}
       <Card>
@@ -195,19 +221,39 @@ export default function SeccionesPage() {
 
           <div className="flex gap-2">
             <Button
-              variant={viewMode === 'grid' ? 'primary' : 'secondary'}
-              onClick={() => setViewMode('grid')}
+              variant={viewMode === "grid" ? "primary" : "secondary"}
+              onClick={() => setViewMode("grid")}
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+                />
               </svg>
             </Button>
             <Button
-              variant={viewMode === 'list' ? 'primary' : 'secondary'}
-              onClick={() => setViewMode('list')}
+              variant={viewMode === "list" ? "primary" : "secondary"}
+              onClick={() => setViewMode("list")}
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
               </svg>
             </Button>
             {isAdmin && (
@@ -220,22 +266,31 @@ export default function SeccionesPage() {
       </Card>
 
       {/* Vista Grid */}
-      {viewMode === 'grid' && (
+      {viewMode === "grid" && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {seccionesFiltradas.map((seccion) => (
-            <Card key={seccion.id} className="hover:shadow-lg transition-shadow">
+            <Card
+              key={seccion.id}
+              className="hover:shadow-lg transition-shadow"
+            >
               <div className="space-y-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h3 className="text-xl font-bold text-gray-900">{seccion.nombre}</h3>
-                    <p className="text-sm text-gray-600">{seccion.grado?.nombre || 'Sin grado'}</p>
+                    <h3 className="text-xl font-bold text-gray-900">
+                      {seccion.nombre}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {seccion.grado?.nombre || "Sin grado"}
+                    </p>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                    seccion.turno === 'Mañana' 
-                      ? 'bg-yellow-100 text-yellow-800' 
-                      : 'bg-blue-100 text-blue-800'
-                  }`}>
-                    {seccion.turno || 'Mañana'}
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      seccion.turno === "Mañana"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : "bg-blue-100 text-blue-800"
+                    }`}
+                  >
+                    {seccion.turno || "Mañana"}
                   </span>
                 </div>
 
@@ -243,12 +298,14 @@ export default function SeccionesPage() {
                   <div className="bg-gray-50 rounded-lg p-3">
                     <div className="text-xs text-gray-600">Capacidad</div>
                     <div className="text-lg font-bold text-gray-900">
-                      {seccion.capacidad || 'N/A'}
+                      {seccion.capacidad || "N/A"}
                     </div>
                   </div>
                   <div className="bg-gray-50 rounded-lg p-3">
                     <div className="text-xs text-gray-600">ID</div>
-                    <div className="text-lg font-bold text-gray-900">{seccion.id}</div>
+                    <div className="text-lg font-bold text-gray-900">
+                      {seccion.id}
+                    </div>
                   </div>
                 </div>
 
@@ -258,21 +315,57 @@ export default function SeccionesPage() {
                     onClick={() => verEstudiantes(seccion)}
                     className="flex-1"
                   >
-                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    <svg
+                      className="w-4 h-4 mr-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                      />
                     </svg>
                     Estudiantes
                   </Button>
                   {isAdmin && (
                     <>
-                      <Button variant="secondary" onClick={() => handleEdit(seccion)}>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      <Button
+                        variant="secondary"
+                        onClick={() => handleEdit(seccion)}
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                          />
                         </svg>
                       </Button>
-                      <Button variant="danger" onClick={() => handleDelete(seccion)}>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      <Button
+                        variant="danger"
+                        onClick={() => handleDelete(seccion)}
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
                         </svg>
                       </Button>
                     </>
@@ -285,7 +378,7 @@ export default function SeccionesPage() {
       )}
 
       {/* Vista Lista */}
-      {viewMode === 'list' && (
+      {viewMode === "list" && (
         <Card>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
@@ -312,34 +405,54 @@ export default function SeccionesPage() {
                 {seccionesFiltradas.map((seccion) => (
                   <tr key={seccion.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-semibold text-gray-900">{seccion.nombre}</div>
+                      <div className="font-semibold text-gray-900">
+                        {seccion.nombre}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{seccion.grado?.nombre || 'N/A'}</div>
+                      <div className="text-sm text-gray-900">
+                        {seccion.grado?.nombre || "N/A"}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                        seccion.turno === 'Mañana' 
-                          ? 'bg-yellow-100 text-yellow-800' 
-                          : 'bg-blue-100 text-blue-800'
-                      }`}>
-                        {seccion.turno || 'Mañana'}
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                          seccion.turno === "Mañana"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-blue-100 text-blue-800"
+                        }`}
+                      >
+                        {seccion.turno || "Mañana"}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{seccion.capacidad || 'N/A'}</div>
+                      <div className="text-sm text-gray-900">
+                        {seccion.capacidad || "N/A"}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex gap-2">
-                        <Button variant="secondary" size="sm" onClick={() => verEstudiantes(seccion)}>
-                          Ver Estudiantes
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => verEstudiantes(seccion)}
+                        >
+                          Ver
                         </Button>
                         {isAdmin && (
                           <>
-                            <Button variant="secondary" size="sm" onClick={() => handleEdit(seccion)}>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => handleEdit(seccion)}
+                            >
                               Editar
                             </Button>
-                            <Button variant="danger" size="sm" onClick={() => handleDelete(seccion)}>
+                            <Button
+                              variant="danger"
+                              size="sm"
+                              onClick={() => handleDelete(seccion)}
+                            >
                               Eliminar
                             </Button>
                           </>
@@ -357,8 +470,11 @@ export default function SeccionesPage() {
       {/* Modal Formulario */}
       <Modal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={editingItem ? 'Editar Sección' : 'Nueva Sección'}
+        onClose={() => {
+          setIsModalOpen(false);
+          setError(null);
+        }}
+        title={editingItem ? "Editar Sección" : "Nueva Sección"}
         size="lg"
         footer={
           <>
@@ -372,19 +488,32 @@ export default function SeccionesPage() {
         }
       >
         <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <Alert
+              type="error"
+              message={error}
+              onClose={() => setError(null)}
+            />
+          )}
           <Input
             label="Nombre"
             value={formData.nombre}
-            onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, nombre: e.target.value })
+            }
             required
             placeholder="Ej: Sección A"
           />
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Grado</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Grado
+            </label>
             <select
               value={formData.grado_id}
-              onChange={(e) => setFormData({ ...formData, grado_id: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, grado_id: e.target.value })
+              }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             >
@@ -401,15 +530,21 @@ export default function SeccionesPage() {
             label="Capacidad"
             type="number"
             value={formData.capacidad}
-            onChange={(e) => setFormData({ ...formData, capacidad: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, capacidad: e.target.value })
+            }
             placeholder="Número máximo de estudiantes"
           />
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Turno</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Turno
+            </label>
             <select
               value={formData.turno}
-              onChange={(e) => setFormData({ ...formData, turno: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, turno: e.target.value })
+              }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="Mañana">Mañana</option>
@@ -430,11 +565,17 @@ export default function SeccionesPage() {
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-semibold text-blue-900">{selectedSeccion?.nombre}</h3>
-                <p className="text-sm text-blue-700">{selectedSeccion?.grado?.nombre}</p>
+                <h3 className="font-semibold text-blue-900">
+                  {selectedSeccion?.nombre}
+                </h3>
+                <p className="text-sm text-blue-700">
+                  {selectedSeccion?.grado?.nombre}
+                </p>
               </div>
               <div className="text-right">
-                <div className="text-2xl font-bold text-blue-900">{estudiantesSeccion.length}</div>
+                <div className="text-2xl font-bold text-blue-900">
+                  {estudiantesSeccion.length}
+                </div>
                 <div className="text-xs text-blue-700">Estudiantes</div>
               </div>
             </div>
@@ -447,16 +588,33 @@ export default function SeccionesPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {estudiantesSeccion.map((estudiante) => (
-                <div key={estudiante.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div
+                  key={estudiante.id}
+                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                >
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      <svg
+                        className="w-6 h-6 text-blue-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        />
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <div className="font-semibold text-gray-900">{estudiante.nombre}</div>
-                      <div className="text-sm text-gray-600">ID: {estudiante.id}</div>
+                      <div className="font-semibold text-gray-900">
+                        {estudiante.nombre}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        ID: {estudiante.id}
+                      </div>
                     </div>
                   </div>
                 </div>

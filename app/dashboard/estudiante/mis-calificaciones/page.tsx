@@ -1,9 +1,29 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { Card } from '@/src/components/ui';
-import { estudiantePortalService, periodoService } from '@/src/lib/services';
-import { useAuth } from '@/src/features/auth';
+import { useEffect, useState } from "react";
+import { Card } from "@/src/components/ui";
+import { estudiantePortalService, periodoService } from "@/src/lib/services";
+import { useAuth } from "@/src/features/auth";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+  Legend,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
 
 interface Calificacion {
   id: number;
@@ -33,6 +53,7 @@ export default function MisCalificacionesPage() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<CalificacionesData | null>(null);
+  const [allData, setAllData] = useState<Calificacion[]>([]);
   const [periodos, setPeriodos] = useState<Periodo[]>([]);
   const [selectedPeriodo, setSelectedPeriodo] = useState<number | null>(null);
 
@@ -49,12 +70,14 @@ export default function MisCalificacionesPage() {
   const fetchPeriodos = async () => {
     try {
       const response = await periodoService.getAll();
-      setPeriodos(response.data || response);
-      if (response.data.data?.length > 0) {
-        setSelectedPeriodo(response.data.data[0].id);
+      const periodosData = response.data || response;
+      setPeriodos(periodosData);
+
+      if (Array.isArray(periodosData) && periodosData.length > 0) {
+        setSelectedPeriodo(periodosData[0].id);
       }
     } catch (error) {
-      console.error('Error al cargar periodos:', error);
+      console.error("Error al cargar periodos:", error);
     }
   };
 
@@ -63,38 +86,119 @@ export default function MisCalificacionesPage() {
       setLoading(true);
       const response = await estudiantePortalService.misCalificaciones();
       const allCalificaciones = response.calificaciones || [];
-      
+      setAllData(allCalificaciones);
+
       // Filtrar por periodo seleccionado
-      const calificacionesFiltradas = selectedPeriodo 
-        ? allCalificaciones.filter((c: Calificacion) => c.periodo.id === selectedPeriodo)
+      const calificacionesFiltradas = selectedPeriodo
+        ? allCalificaciones.filter(
+            (c: Calificacion) => c.periodo.id === selectedPeriodo
+          )
         : allCalificaciones;
-      
+
       // Calcular promedio
-      const promedio = calificacionesFiltradas.length > 0
-        ? calificacionesFiltradas.reduce((sum: number, c: Calificacion) => sum + c.nota, 0) / calificacionesFiltradas.length
-        : 0;
-      
+      const promedio =
+        calificacionesFiltradas.length > 0
+          ? calificacionesFiltradas.reduce(
+              (sum: number, c: Calificacion) => sum + c.nota,
+              0
+            ) / calificacionesFiltradas.length
+          : 0;
+
       setData({ calificaciones: calificacionesFiltradas, promedio });
     } catch (error) {
-      console.error('Error al cargar calificaciones:', error);
+      console.error("Error al cargar calificaciones:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const getNotaColor = (nota: number) => {
-    if (nota >= 16) return 'text-green-600 font-bold';
-    if (nota >= 13) return 'text-blue-600 font-semibold';
-    if (nota >= 11) return 'text-yellow-600';
-    return 'text-red-600 font-bold';
+    if (nota >= 16) return "text-green-600 font-bold";
+    if (nota >= 13) return "text-blue-600 font-semibold";
+    if (nota >= 11) return "text-yellow-600";
+    return "text-red-600 font-bold";
   };
 
   const getEstadoNota = (nota: number) => {
-    if (nota >= 16) return 'Excelente';
-    if (nota >= 13) return 'Bueno';
-    if (nota >= 11) return 'Aprobado';
-    return 'Reprobado';
+    if (nota >= 16) return "Excelente";
+    if (nota >= 13) return "Bueno";
+    if (nota >= 11) return "Aprobado";
+    return "Reprobado";
   };
+
+  // Preparar datos para gráficas
+  const prepararDatosGraficas = () => {
+    if (!data || !data.calificaciones) return null;
+
+    // Datos para gráfico de barras por materia
+    const barData = data.calificaciones.map((c) => ({
+      materia:
+        c.materia.nombre.length > 20
+          ? c.materia.nombre.substring(0, 20) + "..."
+          : c.materia.nombre,
+      nota: c.nota,
+      nombreCompleto: c.materia.nombre,
+    }));
+
+    // Datos para gráfico de radar
+    const radarData = data.calificaciones.map((c) => ({
+      materia:
+        c.materia.nombre.length > 15
+          ? c.materia.nombre.substring(0, 15) + "..."
+          : c.materia.nombre,
+      nota: c.nota,
+      promedio: data.promedio,
+    }));
+
+    // Datos para gráfico de dona (distribución de notas)
+    const distribucion = {
+      excelente: data.calificaciones.filter((c) => c.nota >= 16).length,
+      bueno: data.calificaciones.filter((c) => c.nota >= 13 && c.nota < 16)
+        .length,
+      aprobado: data.calificaciones.filter((c) => c.nota >= 11 && c.nota < 13)
+        .length,
+      reprobado: data.calificaciones.filter((c) => c.nota < 11).length,
+    };
+
+    const pieData = [
+      {
+        name: "Excelente (16-20)",
+        value: distribucion.excelente,
+        color: "#10B981",
+      },
+      { name: "Bueno (13-15)", value: distribucion.bueno, color: "#3B82F6" },
+      {
+        name: "Aprobado (11-12)",
+        value: distribucion.aprobado,
+        color: "#F59E0B",
+      },
+      {
+        name: "Reprobado (0-10)",
+        value: distribucion.reprobado,
+        color: "#EF4444",
+      },
+    ].filter((item) => item.value > 0);
+
+    // Datos para evolución por periodo (si hay múltiples periodos)
+    const evolucionData = periodos.map((periodo) => {
+      const calificacionesPeriodo = allData.filter(
+        (c) => c.periodo.id === periodo.id
+      );
+      const promedioPeriodo =
+        calificacionesPeriodo.length > 0
+          ? calificacionesPeriodo.reduce((sum, c) => sum + c.nota, 0) /
+            calificacionesPeriodo.length
+          : 0;
+      return {
+        periodo: periodo.nombre,
+        promedio: parseFloat(promedioPeriodo.toFixed(2)),
+      };
+    });
+
+    return { barData, radarData, pieData, evolucionData };
+  };
+
+  const graficasData = prepararDatosGraficas();
 
   if (loading) {
     return (
@@ -108,7 +212,9 @@ export default function MisCalificacionesPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Mis Calificaciones</h1>
-        <p className="text-gray-600 mt-2">Revisa tu rendimiento académico por periodo</p>
+        <p className="text-gray-600 mt-2">
+          Revisa tu rendimiento académico por periodo
+        </p>
       </div>
 
       {/* Selector de periodo */}
@@ -119,8 +225,8 @@ export default function MisCalificacionesPage() {
             onClick={() => setSelectedPeriodo(periodo.id)}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               selectedPeriodo === periodo.id
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? "bg-blue-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
           >
             {periodo.nombre}
@@ -131,20 +237,182 @@ export default function MisCalificacionesPage() {
       {/* Resumen de promedio */}
       <Card>
         <div className="text-center py-6">
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">Promedio General</h3>
-          <div className={`text-5xl font-bold ${getNotaColor(data?.promedio || 0)}`}>
-            {data?.promedio.toFixed(2) || '0.00'}
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">
+            Promedio General
+          </h3>
+          <div
+            className={`text-5xl font-bold ${getNotaColor(
+              data?.promedio || 0
+            )}`}
+          >
+            {data?.promedio.toFixed(2) || "0.00"}
           </div>
           <p className={`text-lg mt-2 ${getNotaColor(data?.promedio || 0)}`}>
             {getEstadoNota(data?.promedio || 0)}
           </p>
+          <div className="mt-4 flex justify-center gap-8 text-sm">
+            <div>
+              <span className="text-gray-600">Materias:</span>
+              <span className="ml-2 font-semibold">
+                {data?.calificaciones.length || 0}
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-600">Aprobadas:</span>
+              <span className="ml-2 font-semibold text-green-600">
+                {data?.calificaciones.filter((c) => c.nota >= 11).length || 0}
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-600">Reprobadas:</span>
+              <span className="ml-2 font-semibold text-red-600">
+                {data?.calificaciones.filter((c) => c.nota < 11).length || 0}
+              </span>
+            </div>
+          </div>
         </div>
       </Card>
 
+      {data?.calificaciones &&
+        data.calificaciones.length > 0 &&
+        graficasData && (
+          <>
+            {/* Gráficas de análisis */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Gráfico de barras - Notas por materia */}
+              <Card>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  📊 Notas por Materia
+                </h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={graficasData.barData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="materia"
+                      angle={-45}
+                      textAnchor="end"
+                      height={100}
+                      fontSize={12}
+                    />
+                    <YAxis domain={[0, 20]} />
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0].payload;
+                          return (
+                            <div className="bg-white p-3 border border-gray-200 rounded shadow-lg">
+                              <p className="font-semibold">
+                                {data.nombreCompleto}
+                              </p>
+                              <p
+                                className={`text-lg font-bold ${getNotaColor(
+                                  data.nota
+                                )}`}
+                              >
+                                Nota: {data.nota.toFixed(2)}
+                              </p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Bar dataKey="nota" fill="#3B82F6" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Card>
+
+              {/* Gráfico de radar - Vista comparativa */}
+              <Card>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  🎯 Vista Comparativa
+                </h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <RadarChart data={graficasData.radarData}>
+                    <PolarGrid />
+                    <PolarAngleAxis dataKey="materia" fontSize={11} />
+                    <PolarRadiusAxis domain={[0, 20]} />
+                    <Radar
+                      name="Tu nota"
+                      dataKey="nota"
+                      stroke="#3B82F6"
+                      fill="#3B82F6"
+                      fillOpacity={0.6}
+                    />
+                    <Radar
+                      name="Promedio"
+                      dataKey="promedio"
+                      stroke="#10B981"
+                      fill="#10B981"
+                      fillOpacity={0.3}
+                    />
+                    <Legend />
+                    <Tooltip />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </Card>
+
+              {/* Gráfico de dona - Distribución */}
+              <Card>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  🥧 Distribución de Calificaciones
+                </h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={graficasData.pieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      fill="#8884d8"
+                      paddingAngle={5}
+                      dataKey="value"
+                      label={({ name, value }) => `${name}: ${value}`}
+                    >
+                      {graficasData.pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </Card>
+
+              {/* Gráfico de línea - Evolución por periodo */}
+              <Card>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  📈 Evolución por Periodo
+                </h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={graficasData.evolucionData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="periodo" />
+                    <YAxis domain={[0, 20]} />
+                    <Tooltip />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="promedio"
+                      stroke="#8B5CF6"
+                      strokeWidth={3}
+                      dot={{ r: 6 }}
+                      activeDot={{ r: 8 }}
+                      name="Promedio"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </Card>
+            </div>
+          </>
+        )}
+
       {/* Tabla de calificaciones */}
       <Card>
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Calificaciones por Materia</h2>
-        
+        <h2 className="text-xl font-bold text-gray-900 mb-4">
+          Calificaciones por Materia
+        </h2>
+
         {!data?.calificaciones || data.calificaciones.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             No tienes calificaciones registradas en este periodo
@@ -177,22 +445,28 @@ export default function MisCalificacionesPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <span className={`text-2xl ${getNotaColor(calificacion.nota)}`}>
+                      <span
+                        className={`text-2xl ${getNotaColor(
+                          calificacion.nota
+                        )}`}
+                      >
                         {calificacion.nota.toFixed(2)}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        calificacion.nota >= 11 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
+                      <span
+                        className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          calificacion.nota >= 11
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
                         {getEstadoNota(calificacion.nota)}
                       </span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm text-gray-500">
-                        {calificacion.observaciones || '-'}
+                        {calificacion.observaciones || "-"}
                       </div>
                     </td>
                   </tr>

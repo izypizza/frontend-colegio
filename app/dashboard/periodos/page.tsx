@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { Alert, Button, Card, Input, Modal, Table } from '@/src/components/ui';
-import { periodoAcademicoService } from '@/src/lib/services';
-import { PeriodoAcademico } from '@/src/types/models';
-import { useEffect, useState } from 'react';
+import { Alert, Button, Card, Input, Modal, Table } from "@/src/components/ui";
+import { periodoAcademicoService } from "@/src/lib/services";
+import { PeriodoAcademico } from "@/src/types/models";
+import { useEffect, useState } from "react";
 
 export default function PeriodosPage() {
   const [periodos, setPeriodos] = useState<PeriodoAcademico[]>([]);
@@ -11,13 +11,15 @@ export default function PeriodosPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<PeriodoAcademico | null>(null);
   const [formData, setFormData] = useState({
-    nombre: '',
-    anio: '',
-    fecha_inicio: '',
-    fecha_fin: '',
+    nombre: "",
+    anio: "",
+    fecha_inicio: "",
+    fecha_fin: "",
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterAnio, setFilterAnio] = useState("");
 
   useEffect(() => {
     fetchData();
@@ -29,7 +31,7 @@ export default function PeriodosPage() {
       const data = await periodoAcademicoService.getAll();
       setPeriodos(data);
     } catch {
-      setError('Error al cargar los periodos');
+      setError("Error al cargar los periodos");
     } finally {
       setLoading(false);
     }
@@ -37,7 +39,7 @@ export default function PeriodosPage() {
 
   const handleCreate = () => {
     setEditingItem(null);
-    setFormData({ nombre: '', anio: '', fecha_inicio: '', fecha_fin: '' });
+    setFormData({ nombre: "", anio: "", fecha_inicio: "", fecha_fin: "" });
     setIsModalOpen(true);
   };
 
@@ -46,21 +48,21 @@ export default function PeriodosPage() {
     setFormData({
       nombre: item.nombre,
       anio: item.anio.toString(),
-      fecha_inicio: item.fecha_inicio,
-      fecha_fin: item.fecha_fin,
+      fecha_inicio: item.fecha_inicio ? item.fecha_inicio.split("T")[0] : "", // Convertir a yyyy-MM-dd
+      fecha_fin: item.fecha_fin ? item.fecha_fin.split("T")[0] : "", // Convertir a yyyy-MM-dd
     });
     setIsModalOpen(true);
   };
 
   const handleDelete = async (item: PeriodoAcademico) => {
-    if (!confirm('¿Estás seguro de eliminar este periodo académico?')) return;
+    if (!confirm("¿Estás seguro de eliminar este periodo académico?")) return;
 
     try {
       await periodoAcademicoService.delete(item.id);
-      setSuccess('Periodo eliminado correctamente');
+      setSuccess("Periodo eliminado correctamente");
       fetchData();
     } catch {
-      setError('Error al eliminar el periodo');
+      setError("Error al eliminar el periodo");
     }
   };
 
@@ -78,32 +80,48 @@ export default function PeriodosPage() {
 
       if (editingItem) {
         await periodoAcademicoService.update(editingItem.id, data);
-        setSuccess('Periodo actualizado correctamente');
+        setSuccess("Periodo actualizado correctamente");
       } else {
         await periodoAcademicoService.create(data);
-        setSuccess('Periodo creado correctamente');
+        setSuccess("Periodo creado correctamente");
       }
 
       setIsModalOpen(false);
       fetchData();
     } catch {
-      setError('Error al guardar el periodo');
+      setError("Error al guardar el periodo");
     }
   };
 
+  // Filtrado de periodos
+  const periodosFiltrados = periodos.filter((periodo) => {
+    const matchesSearch = periodo.nombre
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesAnio = !filterAnio || periodo.anio?.toString() === filterAnio;
+    return matchesSearch && matchesAnio;
+  });
+
+  // Obtener años únicos
+  const aniosUnicos = Array.from(new Set(periodos.map((p) => p.anio))).sort(
+    (a, b) => b - a
+  );
+
   const columns = [
-    { key: 'id', label: 'ID' },
-    { key: 'nombre', label: 'Nombre' },
-    { key: 'anio', label: 'Año' },
+    { key: "id", label: "ID" },
+    { key: "nombre", label: "Nombre" },
+    { key: "anio", label: "Año" },
     {
-      key: 'fecha_inicio',
-      label: 'Fecha Inicio',
-      render: (value: unknown) => new Date(value as string).toLocaleDateString(),
+      key: "fecha_inicio",
+      label: "Fecha Inicio",
+      render: (value: unknown) =>
+        new Date(value as string).toLocaleDateString(),
     },
     {
-      key: 'fecha_fin',
-      label: 'Fecha Fin',
-      render: (value: unknown) => new Date(value as string).toLocaleDateString(),
+      key: "fecha_fin",
+      label: "Fecha Fin",
+      render: (value: unknown) =>
+        new Date(value as string).toLocaleDateString(),
     },
   ];
 
@@ -111,7 +129,9 @@ export default function PeriodosPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Periodos Académicos</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Periodos Académicos
+          </h1>
           <p className="text-gray-600 mt-2">Gestión de periodos académicos</p>
         </div>
         <Button variant="primary" onClick={handleCreate}>
@@ -119,13 +139,45 @@ export default function PeriodosPage() {
         </Button>
       </div>
 
-      {error && <Alert type="error" message={error} onClose={() => setError(null)} />}
-      {success && <Alert type="success" message={success} onClose={() => setSuccess(null)} />}
+      {success && (
+        <Alert
+          type="success"
+          message={success}
+          onClose={() => setSuccess(null)}
+        />
+      )}
+
+      {/* Filtros de búsqueda */}
+      <Card>
+        <div className="flex flex-col md:flex-row gap-4 mb-4">
+          <Input
+            placeholder="Buscar periodo..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="flex-1"
+          />
+          <select
+            value={filterAnio}
+            onChange={(e) => setFilterAnio(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Todos los años</option>
+            {aniosUnicos.map((anio) => (
+              <option key={anio} value={anio}>
+                {anio}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="text-sm text-gray-600">
+          Mostrando {periodosFiltrados.length} de {periodos.length} periodos
+        </div>
+      </Card>
 
       <Card>
         <Table
           columns={columns}
-          data={periodos}
+          data={periodosFiltrados}
           loading={loading}
           onEdit={handleEdit}
           onDelete={handleDelete}
@@ -134,15 +186,27 @@ export default function PeriodosPage() {
 
       <Modal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={editingItem ? 'Editar Periodo' : 'Nuevo Periodo'}
+        onClose={() => {
+          setIsModalOpen(false);
+          setError(null);
+        }}
+        title={editingItem ? "Editar Periodo" : "Nuevo Periodo"}
         size="lg"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <Alert
+              type="error"
+              message={error}
+              onClose={() => setError(null)}
+            />
+          )}
           <Input
             label="Nombre"
             value={formData.nombre}
-            onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, nombre: e.target.value })
+            }
             placeholder="Ejemplo: Primer Trimestre, Segundo Bimestre"
             required
           />
@@ -158,23 +222,31 @@ export default function PeriodosPage() {
             label="Fecha Inicio"
             type="date"
             value={formData.fecha_inicio}
-            onChange={(e) => setFormData({ ...formData, fecha_inicio: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, fecha_inicio: e.target.value })
+            }
             required
           />
           <Input
             label="Fecha Fin"
             type="date"
             value={formData.fecha_fin}
-            onChange={(e) => setFormData({ ...formData, fecha_fin: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, fecha_fin: e.target.value })
+            }
             required
           />
 
           <div className="flex justify-end gap-3 pt-4">
-            <Button variant="secondary" type="button" onClick={() => setIsModalOpen(false)}>
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+            >
               Cancelar
             </Button>
             <Button variant="primary" type="submit">
-              {editingItem ? 'Actualizar' : 'Guardar'}
+              {editingItem ? "Actualizar" : "Guardar"}
             </Button>
           </div>
         </form>

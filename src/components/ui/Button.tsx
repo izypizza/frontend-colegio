@@ -1,43 +1,53 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'danger' | 'success' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
+  variant?:
+    | "primary"
+    | "secondary"
+    | "danger"
+    | "success"
+    | "ghost"
+    | "outline";
+  size?: "sm" | "md" | "lg";
   isLoading?: boolean;
   fullWidth?: boolean;
   children: React.ReactNode;
 }
 
 export const Button: React.FC<ButtonProps> = ({
-  variant = 'primary',
-  size = 'md',
+  variant = "primary",
+  size = "md",
   isLoading = false,
   fullWidth = false,
-  className = '',
+  className = "",
   disabled = false,
   children,
   ...props
 }) => {
   const baseStyles =
-    'font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2';
+    "font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2";
 
   const variantStyles = {
-    primary: 'bg-[#04ADBF] text-white hover:bg-[#038a9a] focus:ring-[#04ADBF]',
-    secondary: 'bg-[#F2F0CE] text-gray-800 hover:bg-[#e8e6c0] focus:ring-[#F2F0CE]',
-    danger: 'bg-[#F22727] text-white hover:bg-[#c91f1f] focus:ring-[#F22727]',
-    success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500',
-    ghost: 'bg-transparent text-gray-700 hover:bg-[#F2F0CE] focus:ring-gray-300',
+    primary: "bg-[#04ADBF] text-white hover:bg-[#038a9a] focus:ring-[#04ADBF]",
+    secondary:
+      "bg-[#F2F0CE] text-gray-800 hover:bg-[#e8e6c0] focus:ring-[#F2F0CE]",
+    danger: "bg-[#F22727] text-white hover:bg-[#c91f1f] focus:ring-[#F22727]",
+    success: "bg-green-600 text-white hover:bg-green-700 focus:ring-green-500",
+    ghost:
+      "bg-transparent text-gray-700 hover:bg-[#F2F0CE] focus:ring-gray-300",
+    outline:
+      "bg-white border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 focus:ring-gray-400",
   };
 
   const sizeStyles = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-base',
-    lg: 'px-6 py-3 text-lg',
+    sm: "px-3 py-1.5 text-sm",
+    md: "px-4 py-2 text-base",
+    lg: "px-6 py-3 text-lg",
   };
 
-  const widthStyle = fullWidth ? 'w-full' : '';
+  const widthStyle = fullWidth ? "w-full" : "";
 
   return (
     <button

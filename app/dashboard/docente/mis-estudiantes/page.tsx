@@ -7,11 +7,13 @@ import { useSearchParams } from 'next/navigation';
 
 interface Estudiante {
   id: number;
-  nombre: string;
-  apellido: string;
-  codigo: string;
-  email: string;
+  nombres: string;
+  apellido_paterno: string;
+  apellido_materno: string;
+  codigo_estudiante: string;
+  email?: string;
   seccion: {
+    id: number;
     nombre: string;
     grado: {
       nombre: string;
@@ -58,9 +60,10 @@ export default function MisEstudiantesPage() {
     // Filtrar por término de búsqueda
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(e => 
-        e.nombre.toLowerCase().includes(term)
-      );
+      filtered = filtered.filter(e => {
+        const nombreCompleto = `${e.nombres} ${e.apellido_paterno} ${e.apellido_materno}`.toLowerCase();
+        return nombreCompleto.includes(term);
+      });
     }
 
     setFilteredEstudiantes(filtered);
@@ -158,13 +161,13 @@ export default function MisEstudiantesPage() {
                         <div className="flex-shrink-0 h-10 w-10">
                           <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">
                             <span className="text-white font-semibold text-sm">
-                              {estudiante.nombre.charAt(0)}
+                              {estudiante.nombres?.charAt(0) || 'E'}
                             </span>
                           </div>
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">
-                            {estudiante.nombre}
+                            {estudiante.nombres} {estudiante.apellido_paterno} {estudiante.apellido_materno}
                           </div>
                         </div>
                       </div>

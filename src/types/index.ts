@@ -10,11 +10,12 @@ export interface User {
 }
 
 export enum UserRole {
-  ADMIN = 'admin',
-  AUXILIAR = 'auxiliar',
-  DOCENTE = 'docente',
-  PADRE = 'padre',
-  ESTUDIANTE = 'estudiante',
+  ADMIN = "admin",
+  AUXILIAR = "auxiliar",
+  DOCENTE = "docente",
+  PADRE = "padre",
+  ESTUDIANTE = "estudiante",
+  BIBLIOTECARIO = "bibliotecario",
 }
 
 // Auth types

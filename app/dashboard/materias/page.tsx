@@ -13,6 +13,7 @@ export default function MateriasPage() {
   const [formData, setFormData] = useState({ nombre: '' });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -74,6 +75,11 @@ export default function MateriasPage() {
     }
   };
 
+  // Filtrado de materias
+  const materiasFiltradas = materias.filter((materia) => {
+    return materia.nombre.toLowerCase().includes(searchTerm.toLowerCase());
+  });
+
   const columns = [
     { key: 'id', label: 'ID' },
     { key: 'nombre', label: 'Nombre de la Materia' },
@@ -91,13 +97,26 @@ export default function MateriasPage() {
         </Button>
       </div>
 
-      {error && <Alert type="error" message={error} onClose={() => setError(null)} />}
       {success && <Alert type="success" message={success} onClose={() => setSuccess(null)} />}
+
+      {/* Filtro de búsqueda */}
+      <Card>
+        <div className="mb-4">
+          <Input
+            placeholder="Buscar materia..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="text-sm text-gray-600">
+          Mostrando {materiasFiltradas.length} de {materias.length} materias
+        </div>
+      </Card>
 
       <Card>
         <Table
           columns={columns}
-          data={materias}
+          data={materiasFiltradas}
           loading={loading}
           onEdit={handleEdit}
           onDelete={handleDelete}
@@ -106,11 +125,17 @@ export default function MateriasPage() {
 
       <Modal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setError(null);
+        }}
         title={editingItem ? 'Editar Materia' : 'Nueva Materia'}
         size="md"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <Alert type="error" message={error} onClose={() => setError(null)} />
+          )}
           <Input
             label="Nombre de la Materia"
             value={formData.nombre}

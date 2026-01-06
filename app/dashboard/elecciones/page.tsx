@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { eleccionService, votoService } from '@/src/lib/services';
-import { Button } from '@/src/components/ui/Button';
-import { Card } from '@/src/components/ui/Card';
-import { Alert } from '@/src/components/ui/Alert';
-import { useAuth } from '@/src/features/auth/hooks/useAuth';
+import { useState, useEffect } from "react";
+import { eleccionService, votoService } from "@/src/lib/services";
+import { Button } from "@/src/components/ui/Button";
+import { Card } from "@/src/components/ui/Card";
+import { Alert } from "@/src/components/ui/Alert";
+import { useAuth } from "@/src/features/auth/hooks/useAuth";
 
 interface Candidato {
   id: number;
@@ -24,7 +24,8 @@ interface Eleccion {
 export default function EleccionesPage() {
   const { user } = useAuth();
   const [elecciones, setElecciones] = useState<Eleccion[]>([]);
-  const [eleccionSeleccionada, setEleccionSeleccionada] = useState<Eleccion | null>(null);
+  const [eleccionSeleccionada, setEleccionSeleccionada] =
+    useState<Eleccion | null>(null);
   const [yaVote, setYaVote] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +42,7 @@ export default function EleccionesPage() {
       setElecciones(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err: any) {
-      setError(err.message || 'Error al cargar las elecciones');
+      setError(err.message || "Error al cargar las elecciones");
     } finally {
       setLoading(false);
     }
@@ -53,22 +54,22 @@ export default function EleccionesPage() {
         eleccionService.getById(eleccion.id),
         eleccionService.yaVote(eleccion.id),
       ]);
-      
+
       setEleccionSeleccionada(detalleEleccion);
       setYaVote(voteStatus?.ya_voto || false);
     } catch (err: any) {
-      setError(err.message || 'Error al cargar la elección');
+      setError(err.message || "Error al cargar la elección");
     }
   };
 
   const handleVotar = async (candidato_id: number) => {
     if (!eleccionSeleccionada) return;
-    
-    if (!confirm('¿Confirmar voto? Esta acción no se puede deshacer.')) return;
+
+    if (!confirm("¿Confirmar voto? Esta acción no se puede deshacer.")) return;
 
     try {
       await votoService.votar(eleccionSeleccionada.id, candidato_id);
-      setSuccess('¡Voto registrado exitosamente!');
+      setSuccess("¡Voto registrado exitosamente!");
       setYaVote(true);
       setTimeout(() => {
         setSuccess(null);
@@ -76,14 +77,14 @@ export default function EleccionesPage() {
         loadElecciones();
       }, 2000);
     } catch (err: any) {
-      setError(err.message || 'Error al registrar el voto');
+      setError(err.message || "Error al registrar el voto");
     }
   };
 
   const handleVerResultados = async (eleccion_id: number) => {
     try {
       const resultados = await eleccionService.getResultados(eleccion_id);
-      
+
       if (resultados) {
         setEleccionSeleccionada({
           ...resultados,
@@ -91,7 +92,7 @@ export default function EleccionesPage() {
         });
       }
     } catch (err: any) {
-      setError(err.message || 'Error al cargar los resultados');
+      setError(err.message || "Error al cargar los resultados");
     }
   };
 
@@ -119,13 +120,21 @@ export default function EleccionesPage() {
           </h1>
         </div>
 
-        {error && <Alert type="error" message={error} onClose={() => setError(null)} />}
-        {success && <Alert type="success" message={success} onClose={() => setSuccess(null)} />}
+        {error && (
+          <Alert type="error" message={error} onClose={() => setError(null)} />
+        )}
+        {success && (
+          <Alert
+            type="success"
+            message={success}
+            onClose={() => setSuccess(null)}
+          />
+        )}
 
         <Card>
           <div className="flex space-x-4 text-sm text-gray-500">
             <div>
-              <strong>Fecha:</strong>{' '}
+              <strong>Fecha:</strong>{" "}
               {new Date(eleccionSeleccionada.fecha).toLocaleDateString()}
             </div>
           </div>
@@ -141,7 +150,17 @@ export default function EleccionesPage() {
               <Card key={candidato.id}>
                 <div className="text-center mb-4">
                   <div className="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-3 flex items-center justify-center">
-                    <span className="text-3xl text-gray-400">👤</span>
+                    <svg
+                      className="w-12 h-12 text-gray-400"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
                   </div>
                   <h3 className="text-xl font-bold text-gray-800">
                     {candidato.nombre}
@@ -157,7 +176,7 @@ export default function EleccionesPage() {
                   </div>
                 )}
 
-                {!yaVote && user?.role === 'estudiante' && (
+                {!yaVote && user?.role === "estudiante" && (
                   <Button
                     className="w-full"
                     onClick={() => handleVotar(candidato.id)}
@@ -177,10 +196,14 @@ export default function EleccionesPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-800">Elecciones Escolares</h1>
+        <h1 className="text-3xl font-bold text-gray-800">
+          Elecciones Escolares
+        </h1>
       </div>
 
-      {error && <Alert type="error" message={error} onClose={() => setError(null)} />}
+      {error && (
+        <Alert type="error" message={error} onClose={() => setError(null)} />
+      )}
 
       {elecciones.length === 0 ? (
         <Card>
@@ -193,18 +216,20 @@ export default function EleccionesPage() {
           {elecciones.map((eleccion) => (
             <Card key={eleccion.id}>
               <div className="flex justify-between items-start mb-3">
-                <h3 className="text-xl font-bold text-gray-800">{eleccion.titulo}</h3>
+                <h3 className="text-xl font-bold text-gray-800">
+                  {eleccion.titulo}
+                </h3>
               </div>
 
               <div className="space-y-2 text-sm text-gray-500 mb-4">
                 <div>
-                  <strong>Fecha:</strong>{' '}
+                  <strong>Fecha:</strong>{" "}
                   {new Date(eleccion.fecha).toLocaleDateString()}
                 </div>
               </div>
 
               <div className="flex space-x-2">
-                {user?.role === 'estudiante' ? (
+                {user?.role === "estudiante" ? (
                   <Button
                     className="flex-1"
                     onClick={() => handleVerEleccion(eleccion)}
