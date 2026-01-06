@@ -1,4 +1,10 @@
-import { API_BASE_URL, API_TIMEOUT, HTTP_STATUS, REFRESH_TOKEN_KEY, TOKEN_KEY } from '@/src/config/constants';
+import {
+  API_BASE_URL,
+  API_TIMEOUT,
+  HTTP_STATUS,
+  REFRESH_TOKEN_KEY,
+  TOKEN_KEY,
+} from "@/src/config/constants";
 
 class ApiClient {
   private baseURL: string;
@@ -11,14 +17,14 @@ class ApiClient {
 
   private getHeaders(includeAuth: boolean = true): HeadersInit {
     const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      "Content-Type": "application/json",
+      Accept: "application/json",
     };
 
     if (includeAuth) {
       const token = this.getToken();
       if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+        headers["Authorization"] = `Bearer ${token}`;
       }
     }
 
@@ -26,7 +32,7 @@ class ApiClient {
   }
 
   private getToken(): string | null {
-    if (typeof window === 'undefined') return null;
+    if (typeof window === "undefined") return null;
     return localStorage.getItem(TOKEN_KEY);
   }
 
@@ -34,14 +40,30 @@ class ApiClient {
     const data = await response.json();
 
     if (!response.ok) {
+      // Verificar si el sistema está en modo mantenimiento (503)
+      if (response.status === 503 && data.maintenance_mode) {
+        if (typeof window !== "undefined") {
+          // Redirigir a la página de mantenimiento
+          window.location.href = "/maintenance";
+        }
+        throw new Error(data.message || "Sistema en mantenimiento");
+      }
+
       if (response.status === HTTP_STATUS.UNAUTHORIZED) {
         this.clearAuth();
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login';
+        if (typeof window !== "undefined") {
+          window.location.href = "/login";
         }
-        throw new Error('Sesión expirada. Por favor inicia sesión nuevamente.');
+        throw new Error("Sesión expirada. Por favor inicia sesión nuevamente.");
       }
-      throw new Error(data.message || 'Error en la solicitud');
+
+      // Crear un error con toda la información de respuesta
+      const error: any = new Error(data.message || "Error en la solicitud");
+      error.response = {
+        status: response.status,
+        data: data,
+      };
+      throw error;
     }
 
     return data as T;
@@ -66,8 +88,8 @@ class ApiClient {
 
       return await this.handleResponse<T>(response);
     } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error('La solicitud ha excedido el tiempo de espera');
+      if (error instanceof Error && error.name === "AbortError") {
+        throw new Error("La solicitud ha excedido el tiempo de espera");
       }
       throw error;
     } finally {
@@ -75,42 +97,58 @@ class ApiClient {
     }
   }
 
-  async get<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, { method: 'GET' });
+  async get<T>(
+    endpoint: string,
+    options?: { params?: Record<string, any> }
+  ): Promise<T> {
+    let url = endpoint;
+    if (options?.params) {
+      const params = new URLSearchParams();
+      Object.entries(options.params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          params.append(key, String(value));
+        }
+      });
+      const queryString = params.toString();
+      if (queryString) {
+        url = `${endpoint}?${queryString}`;
+      }
+    }
+    return this.request<T>(url, { method: "GET" });
   }
 
   async post<T>(endpoint: string, body?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
-      method: 'POST',
+      method: "POST",
       body: body ? JSON.stringify(body) : undefined,
     });
   }
 
   async put<T>(endpoint: string, body?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
-      method: 'PUT',
+      method: "PUT",
       body: body ? JSON.stringify(body) : undefined,
     });
   }
 
   async delete<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, { method: 'DELETE' });
+    return this.request<T>(endpoint, { method: "DELETE" });
   }
 
   setToken(token: string): void {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       localStorage.setItem(TOKEN_KEY, token);
     }
   }
 
   setRefreshToken(token: string): void {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       localStorage.setItem(REFRESH_TOKEN_KEY, token);
     }
   }
 
   clearAuth(): void {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(REFRESH_TOKEN_KEY);
     }

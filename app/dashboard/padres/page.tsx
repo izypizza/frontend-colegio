@@ -1,25 +1,30 @@
-'use client';
+"use client";
 
-import { Alert, Button, Card, Input, Modal, Table } from '@/src/components/ui';
-import { padreService } from '@/src/lib/services';
-import { Padre } from '@/src/types/models';
-import { useEffect, useState } from 'react';
+import { Alert, Button, Card, Input, Modal, Table } from "@/src/components/ui";
+import { padreService } from "@/src/lib/services";
+import { Padre } from "@/src/types/models";
+import { useEffect, useState } from "react";
 
 export default function PadresPage() {
   const [padres, setPadres] = useState<Padre[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Padre | null>(null);
+  const [viewingItem, setViewingItem] = useState<Padre | null>(null);
   const [formData, setFormData] = useState({
-    nombre: '',
-    telefono: '',
-    email: '',
-    dni: '',
-    direccion: '',
-    ocupacion: '',
+    nombres: "",
+    apellido_paterno: "",
+    apellido_materno: "",
+    telefono: "",
+    email: "",
+    dni: "",
+    direccion: "",
+    ocupacion: "",
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     fetchData();
@@ -31,7 +36,7 @@ export default function PadresPage() {
       const data = await padreService.getAll();
       setPadres(data);
     } catch {
-      setError('Error al cargar los padres');
+      setError("Error al cargar los padres");
     } finally {
       setLoading(false);
     }
@@ -39,39 +44,48 @@ export default function PadresPage() {
 
   const handleCreate = () => {
     setEditingItem(null);
-    setFormData({ 
-      nombre: '', 
-      telefono: '', 
-      email: '',
-      dni: '',
-      direccion: '',
-      ocupacion: '',
+    setFormData({
+      nombres: "",
+      apellido_paterno: "",
+      apellido_materno: "",
+      telefono: "",
+      email: "",
+      dni: "",
+      direccion: "",
+      ocupacion: "",
     });
     setIsModalOpen(true);
+  };
+
+  const handleView = (item: Padre) => {
+    setViewingItem(item);
+    setIsViewModalOpen(true);
   };
 
   const handleEdit = (item: Padre) => {
     setEditingItem(item);
     setFormData({
-      nombre: item.nombre,
-      telefono: item.telefono || '',
-      email: item.email || '',
-      dni: item.dni || '',
-      direccion: item.direccion || '',
-      ocupacion: item.ocupacion || '',
+      nombres: item.nombres,
+      apellido_paterno: item.apellido_paterno,
+      apellido_materno: item.apellido_materno,
+      telefono: item.telefono || "",
+      email: item.email || "",
+      dni: item.dni || "",
+      direccion: item.direccion || "",
+      ocupacion: item.ocupacion || "",
     });
     setIsModalOpen(true);
   };
 
   const handleDelete = async (item: Padre) => {
-    if (!confirm('¿Estás seguro de eliminar este padre de familia?')) return;
+    if (!confirm("¿Estás seguro de eliminar este padre de familia?")) return;
 
     try {
       await padreService.delete(item.id);
-      setSuccess('Padre eliminado correctamente');
+      setSuccess("Padre eliminado correctamente");
       fetchData();
     } catch {
-      setError('Error al eliminar el padre');
+      setError("Error al eliminar el padre");
     }
   };
 
@@ -80,33 +94,88 @@ export default function PadresPage() {
     setError(null);
 
     try {
+      // Limpiar datos antes de enviar
+      const cleanData = {
+        nombres: formData.nombres.trim(),
+        apellido_paterno: formData.apellido_paterno.trim(),
+        apellido_materno: formData.apellido_materno.trim(),
+        telefono: formData.telefono.trim(),
+        email: formData.email.trim(),
+        dni: formData.dni.trim(),
+        direccion: formData.direccion.trim(),
+        ocupacion: formData.ocupacion.trim(),
+      };
+
       if (editingItem) {
-        await padreService.update(editingItem.id, formData);
-        setSuccess('Padre actualizado correctamente');
+        await padreService.update(editingItem.id, cleanData);
+        setSuccess("Padre actualizado correctamente");
       } else {
-        await padreService.create(formData);
-        setSuccess('Padre creado correctamente');
+        await padreService.create(cleanData);
+        setSuccess("Padre creado correctamente");
       }
 
       setIsModalOpen(false);
       fetchData();
-    } catch {
-      setError('Error al guardar el padre');
+    } catch (err: unknown) {
+      // Manejo mejorado de errores del backend
+      if (err && typeof err === "object" && "response" in err) {
+        const response = (
+          err as {
+            response?: {
+              data?: { errors?: Record<string, string[]>; message?: string };
+            };
+          }
+        ).response;
+        if (response?.data?.errors) {
+          const firstError = Object.values(response.data.errors)[0];
+          setError(Array.isArray(firstError) ? firstError[0] : firstError);
+        } else if (response?.data?.message) {
+          setError(response.data.message);
+        } else {
+          setError("Error al guardar el padre");
+        }
+      } else {
+        setError("Error al guardar el padre");
+      }
     }
   };
 
+  // Filtrado de padres
+  const padresFiltrados = padres.filter((padre) => {
+    const nombreCompleto =
+      `${padre.nombres} ${padre.apellido_paterno} ${padre.apellido_materno}`.toLowerCase();
+    const email = padre.email?.toLowerCase() || "";
+    const telefono = padre.telefono?.toLowerCase() || "";
+    const dni = padre.dni?.toLowerCase() || "";
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      nombreCompleto.includes(searchLower) ||
+      email.includes(searchLower) ||
+      telefono.includes(searchLower) ||
+      dni.includes(searchLower)
+    );
+  });
+
   const columns = [
-    { key: 'id', label: 'ID' },
-    { key: 'nombre', label: 'Nombre' },
-    { key: 'telefono', label: 'Teléfono' },
-    { key: 'email', label: 'Email' },
+    { key: "id", label: "ID" },
+    {
+      key: "nombre_completo",
+      label: "Nombre Completo",
+      render: (value: unknown, item: Padre) =>
+        item.nombre_completo ||
+        `${item.apellido_paterno} ${item.apellido_materno}, ${item.nombres}`,
+    },
+    { key: "telefono", label: "Teléfono" },
+    { key: "email", label: "Email" },
   ];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Padres de Familia</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Padres de Familia
+          </h1>
           <p className="text-gray-600 mt-2">Gestión de padres de familia</p>
         </div>
         <Button variant="primary" onClick={handleCreate}>
@@ -114,14 +183,34 @@ export default function PadresPage() {
         </Button>
       </div>
 
-      {error && <Alert type="error" message={error} onClose={() => setError(null)} />}
-      {success && <Alert type="success" message={success} onClose={() => setSuccess(null)} />}
+      {success && (
+        <Alert
+          type="success"
+          message={success}
+          onClose={() => setSuccess(null)}
+        />
+      )}
+
+      {/* Filtro de búsqueda */}
+      <Card>
+        <div className="mb-4">
+          <Input
+            placeholder="Buscar por nombre, email, teléfono o DNI..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="text-sm text-gray-600">
+          Mostrando {padresFiltrados.length} de {padres.length} padres
+        </div>
+      </Card>
 
       <Card>
         <Table
           columns={columns}
-          data={padres}
+          data={padresFiltrados}
           loading={loading}
+          onView={handleView}
           onEdit={handleEdit}
           onDelete={handleDelete}
         />
@@ -129,57 +218,219 @@ export default function PadresPage() {
 
       <Modal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={editingItem ? 'Editar Padre' : 'Nuevo Padre'}
+        onClose={() => {
+          setIsModalOpen(false);
+          setError(null);
+        }}
+        title={editingItem ? "Editar Padre" : "Nuevo Padre"}
         size="lg"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <Alert
+              type="error"
+              message={error}
+              onClose={() => setError(null)}
+            />
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Input
+              label="Nombres"
+              value={formData.nombres}
+              onChange={(e) =>
+                setFormData({ ...formData, nombres: e.target.value })
+              }
+              required
+              placeholder="Juan"
+            />
+            <Input
+              label="Apellido Paterno"
+              value={formData.apellido_paterno}
+              onChange={(e) =>
+                setFormData({ ...formData, apellido_paterno: e.target.value })
+              }
+              required
+              placeholder="García"
+            />
+            <Input
+              label="Apellido Materno"
+              value={formData.apellido_materno}
+              onChange={(e) =>
+                setFormData({ ...formData, apellido_materno: e.target.value })
+              }
+              required
+              placeholder="López"
+            />
+          </div>
           <Input
-            label="Nombre"
-            value={formData.nombre}
-            onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-            required
-          />
-          <Input
-            label="DNI"
+            label="DNI (8 dígitos)"
             value={formData.dni}
-            onChange={(e) => setFormData({ ...formData, dni: e.target.value })}
+            onChange={(e) => {
+              const value = e.target.value.replace(/\D/g, "");
+              if (value.length <= 8) {
+                setFormData({ ...formData, dni: value });
+              }
+            }}
             placeholder="12345678"
+            required
+            maxLength={8}
+            pattern="[0-9]{8}"
           />
           <Input
             label="Email"
             type="email"
             value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, email: e.target.value })
+            }
             placeholder="padre@email.com"
           />
           <Input
-            label="Teléfono"
+            label="Teléfono (9 dígitos)"
             type="tel"
             value={formData.telefono}
-            onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+            onChange={(e) => {
+              const value = e.target.value.replace(/\D/g, "");
+              if (value.length <= 9) {
+                setFormData({ ...formData, telefono: value });
+              }
+            }}
             placeholder="987654321"
+            pattern="9[0-9]{8}"
           />
           <Input
             label="Dirección"
             value={formData.direccion}
-            onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, direccion: e.target.value })
+            }
             placeholder="Av. Principal 123"
           />
           <Input
             label="Ocupación"
             value={formData.ocupacion}
-            onChange={(e) => setFormData({ ...formData, ocupacion: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, ocupacion: e.target.value })
+            }
             placeholder="Ingeniero, Doctor, etc."
           />
           <div className="flex justify-end gap-3 pt-4">
-            <Button variant="secondary" type="button" onClick={() => setIsModalOpen(false)}>
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+            >
               Cancelar
             </Button>
             <Button variant="primary" type="submit">
-              {editingItem ? 'Actualizar' : 'Guardar'}
+              {editingItem ? "Actualizar" : "Guardar"}
             </Button>
-          </div>        </form>
+          </div>{" "}
+        </form>
+      </Modal>
+
+      {/* Modal Ver Detalles */}
+      <Modal
+        isOpen={isViewModalOpen}
+        onClose={() => setIsViewModalOpen(false)}
+        title="Detalles del Padre de Familia"
+        size="lg"
+      >
+        {viewingItem && (
+          <div className="space-y-6">
+            {/* Información Personal */}
+            <div className="border-b pb-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                Información Personal
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-500">ID</p>
+                  <p className="font-medium">{viewingItem.id}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">DNI</p>
+                  <p className="font-medium">
+                    {viewingItem.dni || "No registrado"}
+                  </p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-sm text-gray-500">Nombre Completo</p>
+                  <p className="font-medium">
+                    {viewingItem.nombres} {viewingItem.apellido_paterno}{" "}
+                    {viewingItem.apellido_materno}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Ocupación</p>
+                  <p className="font-medium">
+                    {viewingItem.ocupacion || "No especificada"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Información de Contacto */}
+            <div className="border-b pb-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                Información de Contacto
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-500">Email</p>
+                  <p className="font-medium">
+                    {viewingItem.email || "No registrado"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Teléfono</p>
+                  <p className="font-medium">
+                    {viewingItem.telefono || "No registrado"}
+                  </p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-sm text-gray-500">Dirección</p>
+                  <p className="font-medium">
+                    {viewingItem.direccion || "No registrada"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Información de Hijos */}
+            {viewingItem.hijos && viewingItem.hijos.length > 0 && (
+              <div className="border-b pb-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  Hijos
+                </h3>
+                <div className="space-y-2">
+                  {viewingItem.hijos.map((hijo, index) => (
+                    <div key={index} className="p-3 bg-gray-50 rounded-lg">
+                      <p className="font-medium">
+                        {hijo.nombres} {hijo.apellido_paterno}{" "}
+                        {hijo.apellido_materno}
+                      </p>
+                      {hijo.seccion && (
+                        <p className="text-sm text-gray-600">
+                          {hijo.seccion.nombre} - {hijo.seccion.grado?.nombre}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end">
+              <Button
+                variant="secondary"
+                onClick={() => setIsViewModalOpen(false)}
+              >
+                Cerrar
+              </Button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

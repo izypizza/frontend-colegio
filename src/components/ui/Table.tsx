@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Button } from './Button';
+import React from "react";
+import { Button } from "./Button";
 
 interface Column<T> {
   key: string;
@@ -18,7 +18,7 @@ interface TableProps<T> {
   onView?: (item: T) => void;
 }
 
-export function Table<T extends { id: string | number }>({
+export function Table<T extends { id: string | number; uniqueId?: string }>({
   columns,
   data,
   loading = false,
@@ -64,12 +64,23 @@ export function Table<T extends { id: string | number }>({
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
           {data.map((item, index) => (
-            <tr key={item.id || index} className="hover:bg-gray-50">
+            <tr
+              key={item.uniqueId || item.id || index}
+              className="hover:bg-gray-50"
+            >
               {columns.map((column) => (
-                <td key={column.key} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td
+                  key={column.key}
+                  className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                >
                   {column.render
-                    ? column.render((item as Record<string, unknown>)[column.key], item)
-                    : String((item as Record<string, unknown>)[column.key] ?? '')}
+                    ? column.render(
+                        (item as Record<string, unknown>)[column.key],
+                        item
+                      )
+                    : String(
+                        (item as Record<string, unknown>)[column.key] ?? ""
+                      )}
                 </td>
               ))}
               {(onEdit || onDelete || onView) && (
@@ -77,7 +88,7 @@ export function Table<T extends { id: string | number }>({
                   <div className="flex justify-end gap-2">
                     {onView && (
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         onClick={() => onView(item)}
                       >
@@ -86,7 +97,7 @@ export function Table<T extends { id: string | number }>({
                     )}
                     {onEdit && (
                       <Button
-                        variant="secondary"
+                        variant="outline"
                         size="sm"
                         onClick={() => onEdit(item)}
                       >

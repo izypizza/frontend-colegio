@@ -1,10 +1,17 @@
-'use client';
+"use client";
 
-import { Alert, Button, Card, Input, Modal, Table } from '@/src/components/ui';
-import { horarioService, materiaService, seccionService, docentePortalService } from '@/src/lib/services';
-import { Horario, Materia, Seccion } from '@/src/types/models';
-import { useEffect, useState } from 'react';
-import { useAuth } from '@/src/features/auth';
+import { Alert, Button, Card, Input, Modal, Table } from "@/src/components/ui";
+import {
+  horarioService,
+  materiaService,
+  seccionService,
+  docentePortalService,
+  estudiantePortalService,
+  padrePortalService,
+} from "@/src/lib/services";
+import { Horario, Materia, Seccion } from "@/src/types/models";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/src/features/auth";
 
 export default function HorariosPage() {
   const { user } = useAuth();
@@ -12,19 +19,37 @@ export default function HorariosPage() {
   const [secciones, setSecciones] = useState<Seccion[]>([]);
   const [materias, setMaterias] = useState<Materia[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<"calendario" | "lista">(
+    "calendario"
+  );
+  const [selectedSeccion, setSelectedSeccion] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Horario | null>(null);
   const [formData, setFormData] = useState({
-    seccion_id: '',
-    materia_id: '',
-    dia: '',
-    hora_inicio: '',
-    hora_fin: '',
+    seccion_id: "",
+    materia_id: "",
+    dia: "",
+    hora_inicio: "",
+    hora_fin: "",
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+  const dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
+  const horas = [
+    "07:00",
+    "08:00",
+    "09:00",
+    "10:00",
+    "11:00",
+    "12:00",
+    "13:00",
+    "14:00",
+    "15:00",
+    "16:00",
+    "17:00",
+    "18:00",
+  ];
 
   useEffect(() => {
     fetchData();
@@ -33,30 +58,77 @@ export default function HorariosPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      
-      if (user?.role === 'docente') {
+
+      if (user?.role === "docente") {
         // Docentes obtienen horarios de sus secciones
         const asignacionesData = await docentePortalService.misAsignaciones();
         const asignaciones = asignacionesData.asignaciones || [];
-        
+
         // Extraer secciones y materias únicas
         const seccionesUnicas = Array.from(
-          new Map(asignaciones.map((a: any) => [a.seccion.id, a.seccion])).values()
+          new Map(
+            asignaciones.map((a: any) => [a.seccion.id, a.seccion])
+          ).values()
         );
         const materiasUnicas = Array.from(
-          new Map(asignaciones.map((a: any) => [a.materia.id, a.materia])).values()
+          new Map(
+            asignaciones.map((a: any) => [a.materia.id, a.materia])
+          ).values()
         );
-        
+
         setSecciones(seccionesUnicas as Seccion[]);
         setMaterias(materiasUnicas as Materia[]);
-        
+
         // Obtener horarios de esas secciones
         const seccionIds = seccionesUnicas.map((s: any) => s.id);
         const horariosData = await horarioService.getAll();
-        const horariosFiltrados = horariosData.filter((h: Horario) => 
+        const horariosFiltrados = horariosData.filter((h: Horario) =>
           seccionIds.includes(h.seccion_id)
         );
         setHorarios(horariosFiltrados);
+      } else if (user?.role === "estudiante") {
+        // Estudiantes ven el horario de su sección
+        const perfilData = await estudiantePortalService.miPerfil();
+        const estudiante = perfilData.estudiante || perfilData;
+
+        if (estudiante?.seccion_id) {
+          const [horariosData, materiasData] = await Promise.all([
+            horarioService.getAll(),
+            materiaService.getAll(),
+          ]);
+
+          // Manejar respuesta paginada o sin paginar
+          const horariosArray = horariosData?.data || horariosData || [];
+
+          const horariosFiltrados = horariosArray.filter(
+            (h: Horario) => h.seccion_id === estudiante.seccion_id
+          );
+          setHorarios(horariosFiltrados);
+          setSecciones([estudiante.seccion]);
+          setMaterias(materiasData || []);
+        }
+      } else if (user?.role === "padre") {
+        // Padres ven horarios de sus hijos
+        const hijosData = await padrePortalService.misHijos();
+        const hijos = hijosData.hijos || [];
+
+        if (hijos.length > 0) {
+          const [horariosData, materiasData] = await Promise.all([
+            horarioService.getAll(),
+            materiaService.getAll(),
+          ]);
+
+          // Manejar respuesta paginada o sin paginar
+          const horariosArray = horariosData?.data || horariosData || [];
+
+          const seccionIds = hijos.map((h: any) => h.seccion_id);
+          const horariosFiltrados = horariosArray.filter((h: Horario) =>
+            seccionIds.includes(h.seccion_id)
+          );
+          setHorarios(horariosFiltrados);
+          setSecciones(hijos.map((h: any) => h.seccion).filter(Boolean));
+          setMaterias(materiasData || []);
+        }
       } else {
         // Admin/Auxiliar usan endpoints generales
         const [horariosData, seccionesData, materiasData] = await Promise.all([
@@ -64,12 +136,17 @@ export default function HorariosPage() {
           seccionService.getAll(),
           materiaService.getAll(),
         ]);
-        setHorarios(horariosData);
-        setSecciones(seccionesData);
-        setMaterias(materiasData);
+
+        // Manejar respuesta paginada o sin paginar
+        const horariosArray = horariosData?.data || horariosData || [];
+
+        setHorarios(horariosArray);
+        setSecciones(seccionesData || []);
+        setMaterias(materiasData || []);
       }
-    } catch {
-      setError('Error al cargar los datos');
+    } catch (err) {
+      console.error("Error al cargar horarios:", err);
+      setError("Error al cargar los datos");
     } finally {
       setLoading(false);
     }
@@ -78,11 +155,11 @@ export default function HorariosPage() {
   const handleCreate = () => {
     setEditingItem(null);
     setFormData({
-      seccion_id: '',
-      materia_id: '',
-      dia: '',
-      hora_inicio: '',
-      hora_fin: '',
+      seccion_id: "",
+      materia_id: "",
+      dia: "",
+      hora_inicio: "",
+      hora_fin: "",
     });
     setIsModalOpen(true);
   };
@@ -100,14 +177,14 @@ export default function HorariosPage() {
   };
 
   const handleDelete = async (item: Horario) => {
-    if (!confirm('¿Estás seguro de eliminar este horario?')) return;
+    if (!confirm("¿Estás seguro de eliminar este horario?")) return;
 
     try {
       await horarioService.delete(item.id);
-      setSuccess('Horario eliminado correctamente');
+      setSuccess("Horario eliminado correctamente");
       fetchData();
     } catch {
-      setError('Error al eliminar el horario');
+      setError("Error al eliminar el horario");
     }
   };
 
@@ -126,68 +203,232 @@ export default function HorariosPage() {
 
       if (editingItem) {
         await horarioService.update(editingItem.id, data);
-        setSuccess('Horario actualizado correctamente');
+        setSuccess("Horario actualizado correctamente");
       } else {
         await horarioService.create(data);
-        setSuccess('Horario creado correctamente');
+        setSuccess("Horario creado correctamente");
       }
 
       setIsModalOpen(false);
       fetchData();
     } catch {
-      setError('Error al guardar el horario');
+      setError("Error al guardar el horario");
     }
   };
 
+  const horariosFiltrados = selectedSeccion
+    ? horarios.filter((h) => h.seccion_id.toString() === selectedSeccion)
+    : horarios;
+
+  const getHorarioParaCelda = (dia: string, hora: string) => {
+    return horariosFiltrados.find((h) => {
+      const horaInicio = h.hora_inicio.substring(0, 5);
+      return h.dia === dia && horaInicio === hora;
+    });
+  };
+
+  const getColorMateria = (materiaId: number) => {
+    const colors = [
+      "bg-blue-100 border-blue-300 text-blue-800",
+      "bg-green-100 border-green-300 text-green-800",
+      "bg-yellow-100 border-yellow-300 text-yellow-800",
+      "bg-purple-100 border-purple-300 text-purple-800",
+      "bg-pink-100 border-pink-300 text-pink-800",
+      "bg-indigo-100 border-indigo-300 text-indigo-800",
+      "bg-red-100 border-red-300 text-red-800",
+      "bg-orange-100 border-orange-300 text-orange-800",
+    ];
+    return colors[materiaId % colors.length];
+  };
+
   const columns = [
-    { key: 'id', label: 'ID' },
+    { key: "id", label: "ID" },
     {
-      key: 'seccion',
-      label: 'Sección',
+      key: "seccion",
+      label: "Sección",
       render: (value: unknown) => {
         const seccion = value as Seccion;
-        return `${seccion?.nombre} - ${seccion?.grado?.nombre}` || 'N/A';
+        return `${seccion?.nombre} - ${seccion?.grado?.nombre}` || "N/A";
       },
     },
     {
-      key: 'materia',
-      label: 'Materia',
-      render: (value: unknown) => (value as Materia)?.nombre || 'N/A',
+      key: "materia",
+      label: "Materia",
+      render: (value: unknown) => (value as Materia)?.nombre || "N/A",
     },
-    { key: 'dia', label: 'Día' },
-    { key: 'hora_inicio', label: 'Hora Inicio' },
-    { key: 'hora_fin', label: 'Hora Fin' },
+    { key: "dia", label: "Día" },
+    { key: "hora_inicio", label: "Hora Inicio" },
+    { key: "hora_fin", label: "Hora Fin" },
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Horarios</h1>
           <p className="text-gray-600 mt-2">Gestión de horarios de clases</p>
         </div>
-        <Button variant="primary" onClick={handleCreate}>
-          + Nuevo Horario
-        </Button>
+        {(user?.role === "admin" || user?.role === "auxiliar") && (
+          <Button variant="primary" onClick={handleCreate}>
+            + Nuevo Horario
+          </Button>
+        )}
       </div>
 
-      {error && <Alert type="error" message={error} onClose={() => setError(null)} />}
-      {success && <Alert type="success" message={success} onClose={() => setSuccess(null)} />}
-
-      <Card>
-        <Table
-          columns={columns}
-          data={horarios}
-          loading={loading}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
+      {error && (
+        <Alert type="error" message={error} onClose={() => setError(null)} />
+      )}
+      {success && (
+        <Alert
+          type="success"
+          message={success}
+          onClose={() => setSuccess(null)}
         />
+      )}
+
+      {/* Controles */}
+      <Card>
+        <div className="flex flex-wrap gap-4 items-center justify-between">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setViewMode("calendario")}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                viewMode === "calendario"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              }`}
+            >
+              📅 Vista Calendario
+            </button>
+            <button
+              onClick={() => setViewMode("lista")}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                viewMode === "lista"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              }`}
+            >
+              📋 Vista Lista
+            </button>
+          </div>
+
+          <select
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={selectedSeccion}
+            onChange={(e) => setSelectedSeccion(e.target.value)}
+          >
+            <option value="">Todas las secciones</option>
+            {secciones.map((seccion) => (
+              <option key={seccion.id} value={seccion.id}>
+                {seccion.nombre} - {seccion.grado?.nombre}
+              </option>
+            ))}
+          </select>
+        </div>
       </Card>
+
+      {/* Vista Calendario */}
+      {viewMode === "calendario" ? (
+        <Card>
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Cargando horarios...</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full border-collapse">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th className="sticky left-0 z-10 bg-gray-50 border border-gray-300 px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                      Hora
+                    </th>
+                    {dias.map((dia) => (
+                      <th
+                        key={dia}
+                        className="border border-gray-300 px-4 py-3 text-center text-sm font-semibold text-gray-700 min-w-[150px]"
+                      >
+                        {dia}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {horas.map((hora) => (
+                    <tr key={hora}>
+                      <td className="sticky left-0 z-10 bg-white border border-gray-300 px-4 py-3 text-sm font-medium text-gray-700 whitespace-nowrap">
+                        {hora}
+                      </td>
+                      {dias.map((dia) => {
+                        const horario = getHorarioParaCelda(dia, hora);
+                        return (
+                          <td
+                            key={`${dia}-${hora}`}
+                            className="border border-gray-300 px-2 py-2 align-top h-20"
+                          >
+                            {horario && (
+                              <div
+                                className={`${getColorMateria(
+                                  horario.materia_id
+                                )} border-2 rounded-lg p-2 h-full cursor-pointer hover:shadow-md transition-shadow`}
+                                onClick={() =>
+                                  (user?.role === "admin" ||
+                                    user?.role === "auxiliar") &&
+                                  handleEdit(horario)
+                                }
+                              >
+                                <div className="font-semibold text-xs truncate">
+                                  {horario.materia?.nombre}
+                                </div>
+                                <div className="text-xs mt-1 truncate">
+                                  {horario.seccion?.nombre}
+                                </div>
+                                <div className="text-xs mt-1">
+                                  {horario.hora_inicio.substring(0, 5)} -{" "}
+                                  {horario.hora_fin.substring(0, 5)}
+                                </div>
+                              </div>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {horariosFiltrados.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  No hay horarios registrados
+                  {selectedSeccion ? " para esta sección" : ""}
+                </div>
+              )}
+            </div>
+          )}
+        </Card>
+      ) : (
+        <Card>
+          <Table
+            columns={columns}
+            data={horariosFiltrados}
+            loading={loading}
+            onEdit={
+              user?.role === "admin" || user?.role === "auxiliar"
+                ? handleEdit
+                : undefined
+            }
+            onDelete={
+              user?.role === "admin" || user?.role === "auxiliar"
+                ? handleDelete
+                : undefined
+            }
+          />
+        </Card>
+      )}
 
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={editingItem ? 'Editar Horario' : 'Nuevo Horario'}
+        title={editingItem ? "Editar Horario" : "Nuevo Horario"}
         size="lg"
         footer={
           <>
@@ -202,10 +443,14 @@ export default function HorariosPage() {
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Sección</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Sección
+            </label>
             <select
               value={formData.seccion_id}
-              onChange={(e) => setFormData({ ...formData, seccion_id: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, seccion_id: e.target.value })
+              }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             >
@@ -219,10 +464,14 @@ export default function HorariosPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Materia</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Materia
+            </label>
             <select
               value={formData.materia_id}
-              onChange={(e) => setFormData({ ...formData, materia_id: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, materia_id: e.target.value })
+              }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             >
@@ -236,10 +485,14 @@ export default function HorariosPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Día</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Día
+            </label>
             <select
               value={formData.dia}
-              onChange={(e) => setFormData({ ...formData, dia: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, dia: e.target.value })
+              }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             >
@@ -257,14 +510,18 @@ export default function HorariosPage() {
               label="Hora Inicio"
               type="time"
               value={formData.hora_inicio}
-              onChange={(e) => setFormData({ ...formData, hora_inicio: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, hora_inicio: e.target.value })
+              }
               required
             />
             <Input
               label="Hora Fin"
               type="time"
               value={formData.hora_fin}
-              onChange={(e) => setFormData({ ...formData, hora_fin: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, hora_fin: e.target.value })
+              }
               required
             />
           </div>

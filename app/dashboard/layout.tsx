@@ -1,9 +1,10 @@
-'use client';
+"use client";
 
-import { DashboardLayout } from '@/src/components/layout';
-import { ROUTES } from '@/src/config/constants';
-import { AuthProvider, useAuth, useRequireAuth } from '@/src/features/auth';
-import { useRouter } from 'next/navigation';
+import { DashboardLayout } from "@/src/components/layout";
+import { ROUTES } from "@/src/config/constants";
+import { AuthProvider, useAuth, useRequireAuth } from "@/src/features/auth";
+import { ThemeProvider } from "@/src/contexts/ThemeContext";
+import { useRouter } from "next/navigation";
 
 function DashboardLayoutWrapper({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
@@ -42,7 +43,9 @@ export default function DashboardRootLayout({
 }) {
   return (
     <AuthProvider>
-      <DashboardLayoutWrapper>{children}</DashboardLayoutWrapper>
+      <ThemeProvider>
+        <DashboardLayoutWrapper>{children}</DashboardLayoutWrapper>
+      </ThemeProvider>
     </AuthProvider>
   );
 }

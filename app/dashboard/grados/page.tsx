@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { Button, Card, Input, Modal, Alert } from '@/src/components/ui';
-import { gradoService, seccionService } from '@/src/lib/services';
-import { Grado, Seccion } from '@/src/types/models';
-import { useAuth } from '@/src/features/auth/hooks/useAuth';
+import React, { useEffect, useState } from "react";
+import { Button, Card, Input, Modal, Alert } from "@/src/components/ui";
+import { gradoService, seccionService } from "@/src/lib/services";
+import { Grado, Seccion } from "@/src/types/models";
+import { useAuth } from "@/src/features/auth/hooks/useAuth";
 
 export default function GradosPage() {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === "admin";
 
   const [grados, setGrados] = useState<Grado[]>([]);
   const [secciones, setSecciones] = useState<Seccion[]>([]);
@@ -21,8 +21,8 @@ export default function GradosPage() {
   const [showSecciones, setShowSecciones] = useState(false);
 
   const [formData, setFormData] = useState({
-    nombre: '',
-    nivel: '',
+    nombre: "",
+    nivel: "",
   });
 
   useEffect(() => {
@@ -39,7 +39,7 @@ export default function GradosPage() {
       setGrados(gradosData);
       setSecciones(seccionesData);
     } catch {
-      setError('Error al cargar los datos');
+      setError("Error al cargar los datos");
     } finally {
       setLoading(false);
     }
@@ -47,7 +47,7 @@ export default function GradosPage() {
 
   const handleCreate = () => {
     setEditingItem(null);
-    setFormData({ nombre: '', nivel: 'Primaria' });
+    setFormData({ nombre: "", nivel: "Primaria" });
     setIsModalOpen(true);
   };
 
@@ -55,7 +55,7 @@ export default function GradosPage() {
     setEditingItem(item);
     setFormData({
       nombre: item.nombre,
-      nivel: item.nivel || 'Primaria',
+      nivel: item.nivel || "Primaria",
     });
     setIsModalOpen(true);
   };
@@ -69,14 +69,14 @@ export default function GradosPage() {
       return;
     }
 
-    if (!confirm('¿Estás seguro de eliminar este grado?')) return;
+    if (!confirm("¿Estás seguro de eliminar este grado?")) return;
 
     try {
       await gradoService.delete(item.id);
-      setSuccess('Grado eliminado correctamente');
+      setSuccess("Grado eliminado correctamente");
       fetchData();
     } catch {
-      setError('Error al eliminar el grado');
+      setError("Error al eliminar el grado");
     }
   };
 
@@ -92,16 +92,16 @@ export default function GradosPage() {
 
       if (editingItem) {
         await gradoService.update(editingItem.id, data);
-        setSuccess('Grado actualizado correctamente');
+        setSuccess("Grado actualizado correctamente");
       } else {
         await gradoService.create(data);
-        setSuccess('Grado creado correctamente');
+        setSuccess("Grado creado correctamente");
       }
 
       setIsModalOpen(false);
       fetchData();
     } catch {
-      setError('Error al guardar el grado');
+      setError("Error al guardar el grado");
     }
   };
 
@@ -118,18 +118,25 @@ export default function GradosPage() {
   const stats = {
     totalGrados: grados.length,
     totalSecciones: secciones.length,
-    primaria: grados.filter((g) => g.nivel === 'Primaria').length,
-    secundaria: grados.filter((g) => g.nivel === 'Secundaria').length,
+    primaria: grados.filter((g) => g.nivel === "Primaria").length,
+    secundaria: grados.filter((g) => g.nivel === "Secundaria").length,
   };
 
-  if (loading) return <div className="flex justify-center items-center h-screen">Cargando...</div>;
+  if (loading)
+    return (
+      <div className="flex justify-center items-center h-screen">
+        Cargando...
+      </div>
+    );
 
   return (
     <div className="space-y-6">
       {/* Header Atractivo */}
       <div className="bg-gradient-to-r from-green-500 to-teal-600 rounded-xl p-6 text-white">
         <h1 className="text-3xl font-bold mb-2">Gestión de Grados</h1>
-        <p className="text-green-100">Organiza los niveles educativos de tu institución</p>
+        <p className="text-green-100">
+          Organiza los niveles educativos de tu institución
+        </p>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
           <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
@@ -152,8 +159,16 @@ export default function GradosPage() {
       </div>
 
       {/* Alertas */}
-      {error && <Alert type="error" message={error} onClose={() => setError(null)} />}
-      {success && <Alert type="success" message={success} onClose={() => setSuccess(null)} />}
+      {error && (
+        <Alert type="error" message={error} onClose={() => setError(null)} />
+      )}
+      {success && (
+        <Alert
+          type="success"
+          message={success}
+          onClose={() => setSuccess(null)}
+        />
+      )}
 
       {/* Controles */}
       {isAdmin && (
@@ -167,20 +182,27 @@ export default function GradosPage() {
       {/* Cards de Grados */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {grados.map((grado) => {
-          const seccionesCount = secciones.filter((s) => s.grado_id === grado.id).length;
-          const nivel = grado.nivel || 'Sin especificar';
+          const seccionesCount = secciones.filter(
+            (s) => s.grado_id === grado.id
+          ).length;
+          const nivel = grado.nivel || "Sin especificar";
 
           return (
-            <Card key={grado.id} className="hover:shadow-xl transition-all duration-300">
+            <Card
+              key={grado.id}
+              className="hover:shadow-xl transition-all duration-300"
+            >
               <div className="space-y-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h3 className="text-2xl font-bold text-gray-900">{grado.nombre}</h3>
+                    <h3 className="text-2xl font-bold text-gray-900">
+                      {grado.nombre}
+                    </h3>
                     <span
                       className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-semibold ${
-                        nivel === 'Primaria'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-blue-100 text-blue-800'
+                        nivel === "Primaria"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-blue-100 text-blue-800"
                       }`}
                     >
                       {nivel}
@@ -207,7 +229,9 @@ export default function GradosPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-sm text-gray-600">Secciones</div>
-                      <div className="text-3xl font-bold text-gray-900">{seccionesCount}</div>
+                      <div className="text-3xl font-bold text-gray-900">
+                        {seccionesCount}
+                      </div>
                     </div>
                     <svg
                       className="w-12 h-12 text-gray-300"
@@ -227,7 +251,7 @@ export default function GradosPage() {
 
                 <div className="flex gap-2 pt-4 border-t">
                   <Button
-                    variant="secondary"
+                    variant="outline"
                     onClick={() => verSecciones(grado)}
                     className="flex-1"
                   >
@@ -254,7 +278,10 @@ export default function GradosPage() {
                   </Button>
                   {isAdmin && (
                     <>
-                      <Button variant="secondary" onClick={() => handleEdit(grado)}>
+                      <Button
+                        variant="outline"
+                        onClick={() => handleEdit(grado)}
+                      >
                         <svg
                           className="w-4 h-4"
                           fill="none"
@@ -269,7 +296,10 @@ export default function GradosPage() {
                           />
                         </svg>
                       </Button>
-                      <Button variant="danger" onClick={() => handleDelete(grado)}>
+                      <Button
+                        variant="danger"
+                        onClick={() => handleDelete(grado)}
+                      >
                         <svg
                           className="w-4 h-4"
                           fill="none"
@@ -296,8 +326,11 @@ export default function GradosPage() {
       {/* Modal Formulario */}
       <Modal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={editingItem ? 'Editar Grado' : 'Nuevo Grado'}
+        onClose={() => {
+          setIsModalOpen(false);
+          setError(null);
+        }}
+        title={editingItem ? "Editar Grado" : "Nuevo Grado"}
         size="lg"
         footer={
           <>
@@ -311,19 +344,32 @@ export default function GradosPage() {
         }
       >
         <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <Alert
+              type="error"
+              message={error}
+              onClose={() => setError(null)}
+            />
+          )}
           <Input
             label="Nombre del Grado"
             value={formData.nombre}
-            onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, nombre: e.target.value })
+            }
             required
             placeholder="Ej: 1° Primaria, 5° Secundaria"
           />
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Nivel</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Nivel
+            </label>
             <select
               value={formData.nivel}
-              onChange={(e) => setFormData({ ...formData, nivel: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, nivel: e.target.value })
+              }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="Primaria">Primaria</option>
@@ -344,7 +390,9 @@ export default function GradosPage() {
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-semibold text-green-900">{selectedGrado?.nombre}</h3>
+                <h3 className="font-semibold text-green-900">
+                  {selectedGrado?.nombre}
+                </h3>
                 <p className="text-sm text-green-700">{selectedGrado?.nivel}</p>
               </div>
               <div className="text-right">
@@ -375,9 +423,9 @@ export default function GradosPage() {
                       {seccion.turno && (
                         <span
                           className={`inline-block mt-2 px-2 py-1 rounded-full text-xs font-semibold ${
-                            seccion.turno === 'Mañana'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-blue-100 text-blue-800'
+                            seccion.turno === "Mañana"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-blue-100 text-blue-800"
                           }`}
                         >
                           {seccion.turno}

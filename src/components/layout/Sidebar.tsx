@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import React from 'react';
-import { useAuth } from '@/src/features/auth/hooks/useAuth';
-import { UserRole } from '@/src/types';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import React from "react";
+import { useAuth } from "@/src/features/auth/hooks/useAuth";
+import { UserRole } from "@/src/types";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -20,11 +20,22 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   {
-    label: 'Dashboard',
-    href: '/dashboard',
-    roles: [UserRole.ADMIN, UserRole.AUXILIAR, UserRole.DOCENTE, UserRole.PADRE, UserRole.ESTUDIANTE],
+    label: "Dashboard",
+    href: "/dashboard",
+    roles: [
+      UserRole.ADMIN,
+      UserRole.AUXILIAR,
+      UserRole.DOCENTE,
+      UserRole.PADRE,
+      UserRole.ESTUDIANTE,
+    ],
     icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -35,11 +46,16 @@ const menuItems: MenuItem[] = [
     ),
   },
   {
-    label: 'Estudiantes',
-    href: '/dashboard/estudiantes',
+    label: "Estudiantes",
+    href: "/dashboard/estudiantes",
     roles: [UserRole.ADMIN, UserRole.AUXILIAR],
     icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -50,11 +66,16 @@ const menuItems: MenuItem[] = [
     ),
   },
   {
-    label: 'Docentes',
-    href: '/dashboard/docentes',
+    label: "Docentes",
+    href: "/dashboard/docentes",
     roles: [UserRole.ADMIN],
     icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -65,11 +86,16 @@ const menuItems: MenuItem[] = [
     ),
   },
   {
-    label: 'Padres',
-    href: '/dashboard/padres',
+    label: "Padres",
+    href: "/dashboard/padres",
     roles: [UserRole.ADMIN],
     icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -80,11 +106,16 @@ const menuItems: MenuItem[] = [
     ),
   },
   {
-    label: 'Grados',
-    href: '/dashboard/grados',
+    label: "Grados",
+    href: "/dashboard/grados",
     roles: [UserRole.ADMIN],
     icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -95,11 +126,16 @@ const menuItems: MenuItem[] = [
     ),
   },
   {
-    label: 'Secciones',
-    href: '/dashboard/secciones',
+    label: "Secciones",
+    href: "/dashboard/secciones",
     roles: [UserRole.ADMIN],
     icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -110,11 +146,16 @@ const menuItems: MenuItem[] = [
     ),
   },
   {
-    label: 'Materias',
-    href: '/dashboard/materias',
+    label: "Materias",
+    href: "/dashboard/materias",
     roles: [UserRole.ADMIN],
     icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -125,11 +166,16 @@ const menuItems: MenuItem[] = [
     ),
   },
   {
-    label: 'Periodos',
-    href: '/dashboard/periodos',
+    label: "Periodos",
+    href: "/dashboard/periodos",
     roles: [UserRole.ADMIN],
     icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -140,11 +186,22 @@ const menuItems: MenuItem[] = [
     ),
   },
   {
-    label: 'Horarios',
-    href: '/dashboard/horarios',
-    roles: [UserRole.ADMIN, UserRole.AUXILIAR, UserRole.DOCENTE, UserRole.PADRE, UserRole.ESTUDIANTE],
+    label: "Horarios",
+    href: "/dashboard/horarios",
+    roles: [
+      UserRole.ADMIN,
+      UserRole.AUXILIAR,
+      UserRole.DOCENTE,
+      UserRole.PADRE,
+      UserRole.ESTUDIANTE,
+    ],
     icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -155,11 +212,21 @@ const menuItems: MenuItem[] = [
     ),
   },
   {
-    label: 'Calificaciones',
-    href: '/dashboard/calificaciones',
-    roles: [UserRole.ADMIN, UserRole.AUXILIAR, UserRole.DOCENTE, UserRole.PADRE, UserRole.ESTUDIANTE],
+    label: "Calificaciones",
+    href: "/dashboard/calificaciones",
+    roles: [
+      UserRole.ADMIN,
+      UserRole.AUXILIAR,
+      UserRole.DOCENTE,
+      UserRole.PADRE,
+    ],
     icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -170,11 +237,16 @@ const menuItems: MenuItem[] = [
     ),
   },
   {
-    label: 'Asistencias',
-    href: '/dashboard/asistencias',
+    label: "Asistencias",
+    href: "/dashboard/asistencias",
     roles: [UserRole.ADMIN, UserRole.AUXILIAR, UserRole.DOCENTE],
     icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -185,26 +257,16 @@ const menuItems: MenuItem[] = [
     ),
   },
   {
-    label: 'Biblioteca',
-    href: '/dashboard/biblioteca',
+    label: "Préstamos",
+    href: "/dashboard/prestamos",
     roles: [UserRole.ADMIN, UserRole.AUXILIAR],
     icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-        />
-      </svg>
-    ),
-  },
-  {
-    label: 'Préstamos',
-    href: '/dashboard/prestamos',
-    roles: [UserRole.ADMIN, UserRole.AUXILIAR],
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -215,11 +277,16 @@ const menuItems: MenuItem[] = [
     ),
   },
   {
-    label: 'Elecciones',
-    href: '/dashboard/elecciones',
-    roles: [UserRole.ADMIN, UserRole.AUXILIAR, UserRole.DOCENTE, UserRole.ESTUDIANTE],
+    label: "Elecciones",
+    href: "/dashboard/elecciones",
+    roles: [UserRole.ESTUDIANTE],
     icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -229,13 +296,97 @@ const menuItems: MenuItem[] = [
       </svg>
     ),
   },
-  // Items específicos para Docente
   {
-    label: 'Mis Clases',
-    href: '/dashboard/docente/mis-clases',
-    roles: [UserRole.DOCENTE],
+    label: "Gestión Elecciones",
+    href: "/dashboard/elecciones-admin",
+    roles: [UserRole.ADMIN],
     icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+        />
+      </svg>
+    ),
+  },
+  {
+    label: "Permisos Auxiliares",
+    href: "/dashboard/permisos-auxiliares",
+    roles: [UserRole.ADMIN],
+    icon: (
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
+        />
+      </svg>
+    ),
+  },
+  {
+    label: "Gestión de Usuarios",
+    href: "/dashboard/usuarios",
+    roles: [UserRole.ADMIN],
+    icon: (
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+        />
+      </svg>
+    ),
+  },
+  {
+    label: "Mis Permisos",
+    href: "/dashboard/mis-permisos",
+    roles: [UserRole.AUXILIAR],
+    icon: (
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+        />
+      </svg>
+    ),
+  },
+  {
+    label: "Biblioteca",
+    href: "/dashboard/biblioteca",
+    roles: [UserRole.ADMIN, UserRole.BIBLIOTECARIO],
+    icon: (
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -246,11 +397,57 @@ const menuItems: MenuItem[] = [
     ),
   },
   {
-    label: 'Mis Estudiantes',
-    href: '/dashboard/docente/mis-estudiantes',
+    label: "Biblioteca",
+    href: "/dashboard/estudiante/biblioteca",
+    roles: [UserRole.ESTUDIANTE],
+    icon: (
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+        />
+      </svg>
+    ),
+  },
+  // Items específicos para Docente
+  {
+    label: "Mis Clases",
+    href: "/dashboard/docente/mis-clases",
     roles: [UserRole.DOCENTE],
     icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+        />
+      </svg>
+    ),
+  },
+  {
+    label: "Mis Estudiantes",
+    href: "/dashboard/docente/mis-estudiantes",
+    roles: [UserRole.DOCENTE],
+    icon: (
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -262,11 +459,16 @@ const menuItems: MenuItem[] = [
   },
   // Items específicos para Estudiante
   {
-    label: 'Mis Calificaciones',
-    href: '/dashboard/estudiante/mis-calificaciones',
+    label: "Mis Calificaciones",
+    href: "/dashboard/estudiante/mis-calificaciones",
     roles: [UserRole.ESTUDIANTE],
     icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -277,11 +479,16 @@ const menuItems: MenuItem[] = [
     ),
   },
   {
-    label: 'Mis Asistencias',
-    href: '/dashboard/estudiante/mis-asistencias',
+    label: "Mis Asistencias",
+    href: "/dashboard/estudiante/mis-asistencias",
     roles: [UserRole.ESTUDIANTE],
     icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -293,11 +500,16 @@ const menuItems: MenuItem[] = [
   },
   // Items específicos para Padre
   {
-    label: 'Mis Hijos',
-    href: '/dashboard/padre/mis-hijos',
+    label: "Mis Hijos",
+    href: "/dashboard/padre/mis-hijos",
     roles: [UserRole.PADRE],
     icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -308,11 +520,16 @@ const menuItems: MenuItem[] = [
     ),
   },
   {
-    label: 'Calificaciones de Hijos',
-    href: '/dashboard/padre/calificaciones',
+    label: "Calificaciones de Hijos",
+    href: "/dashboard/padre/calificaciones",
     roles: [UserRole.PADRE],
     icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -347,7 +564,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       {/* Sidebar */}
       <aside
         className={`fixed top-0 left-0 h-full bg-white shadow-xl z-30 w-64 sm:w-72 lg:w-64 transition-transform duration-300 lg:translate-x-0 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
+          isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex flex-col h-full">
@@ -356,13 +573,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             <div className="flex items-center gap-3 flex-1 min-w-0">
               {/* Logo del Colegio */}
               <div className="flex-shrink-0">
-                <img 
-                  src="/logo-colegio.png" 
-                  alt="Logo I.E. Túpac Amaru" 
+                <img
+                  src="/logo-colegio.png"
+                  alt="Logo I.E. Túpac Amaru"
                   className="h-12 w-12 sm:h-14 sm:w-14 object-contain"
                 />
               </div>
-              
+
               {/* Título y Rol */}
               <div className="flex-1 min-w-0">
                 <h2 className="text-sm sm:text-base font-bold text-[#04ADBF] leading-tight truncate">
@@ -373,22 +590,27 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 </p>
                 {user && (
                   <p className="text-[10px] sm:text-xs text-gray-500 mt-0.5 capitalize truncate">
-                    {user.role === 'admin' && '👨‍💼 Administrador'}
-                    {user.role === 'auxiliar' && '🧑‍💼 Auxiliar'}
-                    {user.role === 'docente' && '👨‍🏫 Docente'}
-                    {user.role === 'padre' && '👨‍👩‍👧 Padre de Familia'}
-                    {user.role === 'estudiante' && '👨‍🎓 Estudiante'}
+                    {user.role === "admin" && "👨‍💼 Administrador"}
+                    {user.role === "auxiliar" && "🧑‍💼 Auxiliar"}
+                    {user.role === "docente" && "👨‍🏫 Docente"}
+                    {user.role === "padre" && "👨‍👩‍👧 Padre de Familia"}
+                    {user.role === "estudiante" && "👨‍🎓 Estudiante"}
                   </p>
                 )}
               </div>
             </div>
-            
+
             {/* Botón cerrar mobile */}
             <button
               onClick={onClose}
               className="lg:hidden flex-shrink-0 text-gray-600 hover:text-gray-800 p-1"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -410,13 +632,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                       href={item.href}
                       className={`flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg transition-all duration-200 ${
                         isActive
-                          ? 'bg-[#04ADBF] text-white shadow-md scale-[1.02]'
-                          : 'text-gray-700 hover:bg-[#F2F0CE] hover:scale-[1.01]'
+                          ? "bg-[#04ADBF] text-white shadow-md scale-[1.02]"
+                          : "text-gray-700 hover:bg-[#F2F0CE] hover:scale-[1.01]"
                       }`}
                       onClick={() => onClose()}
                     >
                       <span className="flex-shrink-0">{item.icon}</span>
-                      <span className="font-medium text-sm sm:text-base truncate">{item.label}</span>
+                      <span className="font-medium text-sm sm:text-base truncate">
+                        {item.label}
+                      </span>
                     </Link>
                   </li>
                 );
@@ -427,7 +651,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           {/* Footer */}
           <div className="p-3 sm:p-4 border-t bg-gray-50">
             <p className="text-[10px] sm:text-xs text-gray-500 text-center leading-tight">
-              © 2025 I.E. N° 51006<br className="sm:hidden" /> Túpac Amaru
+              © 2025 I.E. N° 51006
+              <br className="sm:hidden" /> Túpac Amaru
             </p>
           </div>
         </div>
