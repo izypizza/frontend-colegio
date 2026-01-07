@@ -222,8 +222,15 @@ export default function HorariosPage() {
 
   const getHorarioParaCelda = (dia: string, hora: string) => {
     return horariosFiltrados.find((h) => {
-      const horaInicio = h.hora_inicio.substring(0, 5);
-      return h.dia === dia && horaInicio === hora;
+      if (h.dia !== dia) return false;
+
+      // Extraer la hora de inicio (formato HH:MM)
+      const horaInicio = h.hora_inicio.substring(0, 5); // "08:45"
+      const [horaInicioHH] = horaInicio.split(":"); // "08"
+      const [horaHH] = hora.split(":"); // "08"
+
+      // Buscar horarios que comiencen en esta franja horaria
+      return horaInicioHH === horaHH;
     });
   };
 
@@ -298,7 +305,7 @@ export default function HorariosPage() {
                   : "bg-gray-200 text-gray-700 hover:bg-gray-300"
               }`}
             >
-              📅 Vista Calendario
+              Vista Calendario
             </button>
             <button
               onClick={() => setViewMode("lista")}
@@ -308,7 +315,7 @@ export default function HorariosPage() {
                   : "bg-gray-200 text-gray-700 hover:bg-gray-300"
               }`}
             >
-              📋 Vista Lista
+              Vista Lista
             </button>
           </div>
 
@@ -339,14 +346,14 @@ export default function HorariosPage() {
             <div className="overflow-x-auto">
               <table className="min-w-full border-collapse">
                 <thead>
-                  <tr className="bg-gray-50">
-                    <th className="sticky left-0 z-10 bg-gray-50 border border-gray-300 px-4 py-3 text-left text-sm font-semibold text-gray-700">
-                      Hora
+                  <tr className="bg-gradient-to-r from-blue-600 to-blue-500">
+                    <th className="sticky left-0 z-10 bg-blue-600 border border-blue-400 px-4 py-4 text-left text-sm font-bold text-white">
+                      HORA
                     </th>
                     {dias.map((dia) => (
                       <th
                         key={dia}
-                        className="border border-gray-300 px-4 py-3 text-center text-sm font-semibold text-gray-700 min-w-[150px]"
+                        className="border border-blue-400 px-4 py-4 text-center text-sm font-bold text-white uppercase min-w-[180px]"
                       >
                         {dia}
                       </th>
@@ -354,9 +361,12 @@ export default function HorariosPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {horas.map((hora) => (
-                    <tr key={hora}>
-                      <td className="sticky left-0 z-10 bg-white border border-gray-300 px-4 py-3 text-sm font-medium text-gray-700 whitespace-nowrap">
+                  {horas.map((hora, idx) => (
+                    <tr
+                      key={hora}
+                      className={idx % 2 === 0 ? "bg-gray-50" : "bg-white"}
+                    >
+                      <td className="sticky left-0 z-10 border border-gray-300 px-4 py-4 text-sm font-bold text-gray-800 whitespace-nowrap bg-gradient-to-r from-gray-100 to-gray-50">
                         {hora}
                       </td>
                       {dias.map((dia) => {
@@ -364,26 +374,27 @@ export default function HorariosPage() {
                         return (
                           <td
                             key={`${dia}-${hora}`}
-                            className="border border-gray-300 px-2 py-2 align-top h-20"
+                            className="border border-gray-300 p-2 align-top h-24"
                           >
                             {horario && (
                               <div
                                 className={`${getColorMateria(
                                   horario.materia_id
-                                )} border-2 rounded-lg p-2 h-full cursor-pointer hover:shadow-md transition-shadow`}
+                                )} border-l-4 rounded-lg p-3 h-full cursor-pointer hover:shadow-lg transition-all transform hover:-translate-y-0.5`}
                                 onClick={() =>
                                   (user?.role === "admin" ||
                                     user?.role === "auxiliar") &&
                                   handleEdit(horario)
                                 }
                               >
-                                <div className="font-semibold text-xs truncate">
+                                <div className="font-bold text-sm mb-1">
                                   {horario.materia?.nombre}
                                 </div>
-                                <div className="text-xs mt-1 truncate">
-                                  {horario.seccion?.nombre}
+                                <div className="text-xs text-gray-700 mb-1">
+                                  {horario.seccion?.nombre} -{" "}
+                                  {horario.seccion?.grado?.nombre}
                                 </div>
-                                <div className="text-xs mt-1">
+                                <div className="text-xs font-medium text-gray-600">
                                   {horario.hora_inicio.substring(0, 5)} -{" "}
                                   {horario.hora_fin.substring(0, 5)}
                                 </div>
