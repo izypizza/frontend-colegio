@@ -245,7 +245,11 @@ export default function MisCalificacionesPage() {
               data?.promedio || 0
             )}`}
           >
-            {data?.promedio.toFixed(2) || "0.00"}
+            {data?.promedio
+              ? typeof data.promedio === "number"
+                ? data.promedio.toFixed(2)
+                : Number(data.promedio).toFixed(2)
+              : "0.00"}
           </div>
           <p className={`text-lg mt-2 ${getNotaColor(data?.promedio || 0)}`}>
             {getEstadoNota(data?.promedio || 0)}
@@ -309,7 +313,10 @@ export default function MisCalificacionesPage() {
                                   data.nota
                                 )}`}
                               >
-                                Nota: {data.nota.toFixed(2)}
+                                Nota:{" "}
+                                {typeof data.nota === "number"
+                                  ? data.nota.toFixed(2)
+                                  : Number(data.nota || 0).toFixed(2)}
                               </p>
                             </div>
                           );
@@ -450,7 +457,9 @@ export default function MisCalificacionesPage() {
                           calificacion.nota
                         )}`}
                       >
-                        {calificacion.nota.toFixed(2)}
+                        {typeof calificacion.nota === "number"
+                          ? calificacion.nota.toFixed(2)
+                          : Number(calificacion.nota || 0).toFixed(2)}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">

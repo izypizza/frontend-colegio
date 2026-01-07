@@ -1,18 +1,23 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { libroService, categoriaLibroService } from '@/src/lib/services';
-import { Button } from '@/src/components/ui/Button';
-import { Input } from '@/src/components/ui/Input';
-import { Card } from '@/src/components/ui/Card';
-import { Modal } from '@/src/components/ui/Modal';
-import { Table } from '@/src/components/ui/Table';
-import { Alert } from '@/src/components/ui/Alert';
+import { useState, useEffect } from "react";
+import { libroService, categoriaLibroService } from "@/src/lib/services";
+import { Button } from "@/src/components/ui/Button";
+import { Input } from "@/src/components/ui/Input";
+import { Card } from "@/src/components/ui/Card";
+import { Modal } from "@/src/components/ui/Modal";
+import { Table } from "@/src/components/ui/Table";
+import { Alert } from "@/src/components/ui/Alert";
 
 interface Libro {
   id: number;
   titulo: string;
   autor: string;
+  isbn?: string;
+  editorial?: string;
+  anio_publicacion?: number;
+  cantidad_total: number;
+  cantidad_disponible: number;
   categoria_id: number;
   categoria?: { id: number; nombre: string };
   disponible: boolean;
@@ -29,23 +34,27 @@ export default function LibrosPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  
+
   // Estados para el modal
   const [showModal, setShowModal] = useState(false);
   const [editingLibro, setEditingLibro] = useState<Libro | null>(null);
-  
+
   // Estados para el formulario
   const [formData, setFormData] = useState({
-    titulo: '',
-    autor: '',
-    categoria_id: '',
+    titulo: "",
+    autor: "",
+    isbn: "",
+    editorial: "",
+    anio_publicacion: "",
+    cantidad_total: "1",
+    categoria_id: "",
     disponible: true,
   });
 
   // Estados para búsqueda y filtros
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterCategoria, setFilterCategoria] = useState('');
-  const [filterDisponible, setFilterDisponible] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterCategoria, setFilterCategoria] = useState("");
+  const [filterDisponible, setFilterDisponible] = useState("");
 
   useEffect(() => {
     loadData();
@@ -62,7 +71,7 @@ export default function LibrosPage() {
       setCategorias(Array.isArray(categoriasData) ? categoriasData : []);
       setError(null);
     } catch (err: any) {
-      setError(err.message || 'Error al cargar los datos');
+      setError(err.message || "Error al cargar los datos");
     } finally {
       setLoading(false);
     }
@@ -72,24 +81,32 @@ export default function LibrosPage() {
     e.preventDefault();
     try {
       const data = {
-        ...formData,
+        titulo: formData.titulo,
+        autor: formData.autor,
+        isbn: formData.isbn || null,
+        editorial: formData.editorial || null,
+        anio_publicacion: formData.anio_publicacion
+          ? Number(formData.anio_publicacion)
+          : null,
+        cantidad_total: Number(formData.cantidad_total),
         categoria_id: Number(formData.categoria_id),
+        disponible: formData.disponible,
       };
 
       if (editingLibro) {
         await libroService.update(editingLibro.id, data);
-        setSuccess('Libro actualizado exitosamente');
+        setSuccess("Libro actualizado exitosamente");
       } else {
         await libroService.create(data);
-        setSuccess('Libro creado exitosamente');
+        setSuccess("Libro creado exitosamente");
       }
-      
+
       setShowModal(false);
       resetForm();
       loadData();
       setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
-      setError(err.message || 'Error al guardar el libro');
+      setError(err.message || "Error al guardar el libro");
     }
   };
 
@@ -98,6 +115,10 @@ export default function LibrosPage() {
     setFormData({
       titulo: libro.titulo,
       autor: libro.autor,
+      isbn: libro.isbn || "",
+      editorial: libro.editorial || "",
+      anio_publicacion: libro.anio_publicacion?.toString() || "",
+      cantidad_total: libro.cantidad_total.toString(),
       categoria_id: libro.categoria_id.toString(),
       disponible: libro.disponible,
     });
@@ -105,23 +126,27 @@ export default function LibrosPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('¿Está seguro de eliminar este libro?')) return;
-    
+    if (!confirm("¿Está seguro de eliminar este libro?")) return;
+
     try {
       await libroService.delete(id);
-      setSuccess('Libro eliminado exitosamente');
+      setSuccess("Libro eliminado exitosamente");
       loadData();
       setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
-      setError(err.message || 'Error al eliminar el libro');
+      setError(err.message || "Error al eliminar el libro");
     }
   };
 
   const resetForm = () => {
     setFormData({
-      titulo: '',
-      autor: '',
-      categoria_id: '',
+      titulo: "",
+      autor: "",
+      isbn: "",
+      editorial: "",
+      anio_publicacion: "",
+      cantidad_total: "1",
+      categoria_id: "",
       disponible: true,
     });
     setEditingLibro(null);
@@ -137,37 +162,40 @@ export default function LibrosPage() {
     const matchSearch =
       libro.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
       libro.autor.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchCategoria = filterCategoria === '' || libro.categoria_id.toString() === filterCategoria;
-    
+
+    const matchCategoria =
+      filterCategoria === "" ||
+      libro.categoria_id.toString() === filterCategoria;
+
     const matchDisponible =
-      filterDisponible === '' ||
-      (filterDisponible === 'true' && libro.disponible) ||
-      (filterDisponible === 'false' && !libro.disponible);
+      filterDisponible === "" ||
+      (filterDisponible === "true" && libro.disponible) ||
+      (filterDisponible === "false" && !libro.disponible);
 
     return matchSearch && matchCategoria && matchDisponible;
   });
 
   const columns = [
-    { key: 'titulo', label: 'Título' },
-    { key: 'autor', label: 'Autor' },
+    { key: "titulo", label: "Título" },
+    { key: "autor", label: "Autor" },
     {
-      key: 'categoria',
-      label: 'Categoría',
-      render: (libro: Libro) => libro.categoria?.nombre || '-',
+      key: "categoria",
+      label: "Categoría",
+      render: (libro: Libro) => libro.categoria?.nombre || "-",
     },
     {
-      key: 'disponible',
-      label: 'Estado',
+      key: "disponible",
+      label: "Estado",
       render: (libro: Libro) => (
         <span
           className={`px-2 py-1 rounded-full text-xs ${
-            libro.disponible
-              ? 'bg-green-100 text-green-800'
-              : 'bg-red-100 text-red-800'
+            libro.cantidad_disponible > 0
+              ? "bg-green-100 text-green-800"
+              : "bg-red-100 text-red-800"
           }`}
         >
-          {libro.disponible ? 'Disponible' : 'Prestado'}
+          {libro.cantidad_disponible} / {libro.cantidad_total} disponible
+          {libro.cantidad_disponible !== 1 ? "s" : ""}
         </span>
       ),
     },
@@ -195,8 +223,16 @@ export default function LibrosPage() {
         </Button>
       </div>
 
-      {error && <Alert type="error" message={error} onClose={() => setError(null)} />}
-      {success && <Alert type="success" message={success} onClose={() => setSuccess(null)} />}
+      {error && (
+        <Alert type="error" message={error} onClose={() => setError(null)} />
+      )}
+      {success && (
+        <Alert
+          type="success"
+          message={success}
+          onClose={() => setSuccess(null)}
+        />
+      )}
 
       {/* Filtros */}
       <Card>
@@ -207,7 +243,7 @@ export default function LibrosPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Buscar..."
           />
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Categoría
@@ -257,20 +293,58 @@ export default function LibrosPage() {
       <Modal
         isOpen={showModal}
         onClose={handleCloseModal}
-        title={editingLibro ? 'Editar Libro' : 'Nuevo Libro'}
+        title={editingLibro ? "Editar Libro" : "Nuevo Libro"}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
             label="Título *"
             value={formData.titulo}
-            onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, titulo: e.target.value })
+            }
             required
           />
 
           <Input
             label="Autor *"
             value={formData.autor}
-            onChange={(e) => setFormData({ ...formData, autor: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, autor: e.target.value })
+            }
+            required
+          />
+
+          <Input
+            label="ISBN"
+            value={formData.isbn}
+            onChange={(e) => setFormData({ ...formData, isbn: e.target.value })}
+          />
+
+          <Input
+            label="Editorial"
+            value={formData.editorial}
+            onChange={(e) =>
+              setFormData({ ...formData, editorial: e.target.value })
+            }
+          />
+
+          <Input
+            label="Año de Publicación"
+            type="number"
+            value={formData.anio_publicacion}
+            onChange={(e) =>
+              setFormData({ ...formData, anio_publicacion: e.target.value })
+            }
+          />
+
+          <Input
+            label="Cantidad Total *"
+            type="number"
+            min="1"
+            value={formData.cantidad_total}
+            onChange={(e) =>
+              setFormData({ ...formData, cantidad_total: e.target.value })
+            }
             required
           />
 
@@ -280,7 +354,9 @@ export default function LibrosPage() {
             </label>
             <select
               value={formData.categoria_id}
-              onChange={(e) => setFormData({ ...formData, categoria_id: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, categoria_id: e.target.value })
+              }
               className="w-full border border-gray-300 rounded-md px-3 py-2"
               required
             >
@@ -298,20 +374,29 @@ export default function LibrosPage() {
               type="checkbox"
               id="disponible"
               checked={formData.disponible}
-              onChange={(e) => setFormData({ ...formData, disponible: e.target.checked })}
+              onChange={(e) =>
+                setFormData({ ...formData, disponible: e.target.checked })
+              }
               className="mr-2"
             />
-            <label htmlFor="disponible" className="text-sm font-medium text-gray-700">
+            <label
+              htmlFor="disponible"
+              className="text-sm font-medium text-gray-700"
+            >
               Disponible
             </label>
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">
-            <Button type="button" variant="secondary" onClick={handleCloseModal}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleCloseModal}
+            >
               Cancelar
             </Button>
             <Button type="submit">
-              {editingLibro ? 'Actualizar' : 'Crear'}
+              {editingLibro ? "Actualizar" : "Crear"}
             </Button>
           </div>
         </form>

@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { prestamoLibroService, libroService } from '@/src/lib/services';
-import { Button } from '@/src/components/ui/Button';
-import { Card } from '@/src/components/ui/Card';
-import { Modal } from '@/src/components/ui/Modal';
-import { Table } from '@/src/components/ui/Table';
-import { Alert } from '@/src/components/ui/Alert';
+import { useState, useEffect } from "react";
+import { prestamoLibroService, libroService } from "@/src/lib/services";
+import { Button } from "@/src/components/ui/Button";
+import { Card } from "@/src/components/ui/Card";
+import { Modal } from "@/src/components/ui/Modal";
+import { Table } from "@/src/components/ui/Table";
+import { Alert } from "@/src/components/ui/Alert";
 
 interface Prestamo {
   id: number;
@@ -40,12 +40,12 @@ export default function PrestamosPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  
+
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
-    libro_id: '',
-    user_id: '',
-    fecha_devolucion: '',
+    libro_id: "",
+    user_id: "",
+    fecha_devolucion: "",
   });
 
   useEffect(() => {
@@ -59,17 +59,17 @@ export default function PrestamosPage() {
         prestamoLibroService.getAll(),
         libroService.getAll(),
       ]);
-      
+
       setPrestamos(Array.isArray(prestamosData) ? prestamosData : []);
-      
+
       const disponibles = Array.isArray(librosData)
         ? librosData.filter((libro: Libro) => libro.disponible)
         : [];
       setLibrosDisponibles(disponibles);
-      
+
       setError(null);
     } catch (err: any) {
-      setError(err.message || 'Error al cargar los datos');
+      setError(err.message || "Error al cargar los datos");
     } finally {
       setLoading(false);
     }
@@ -85,34 +85,34 @@ export default function PrestamosPage() {
       };
 
       await prestamoLibroService.create(data);
-      setSuccess('Préstamo registrado exitosamente');
+      setSuccess("Préstamo registrado exitosamente");
       setShowModal(false);
       resetForm();
       loadData();
       setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
-      setError(err.message || 'Error al registrar el préstamo');
+      setError(err.message || "Error al registrar el préstamo");
     }
   };
 
   const handleDevolver = async (id: number) => {
-    if (!confirm('¿Confirmar devolución del libro?')) return;
-    
+    if (!confirm("¿Confirmar devolución del libro?")) return;
+
     try {
       await prestamoLibroService.devolver(id);
-      setSuccess('Libro devuelto exitosamente');
+      setSuccess("Libro devuelto exitosamente");
       loadData();
       setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
-      setError(err.message || 'Error al devolver el libro');
+      setError(err.message || "Error al devolver el libro");
     }
   };
 
   const resetForm = () => {
     setFormData({
-      libro_id: '',
-      user_id: '',
-      fecha_devolucion: '',
+      libro_id: "",
+      user_id: "",
+      fecha_devolucion: "",
     });
   };
 
@@ -123,49 +123,56 @@ export default function PrestamosPage() {
 
   const columns = [
     {
-      key: 'libro',
-      label: 'Libro',
-      render: (prestamo: Prestamo) => prestamo.libro?.titulo || '-',
+      key: "libro",
+      label: "Libro",
+      render: (value: unknown, prestamo: Prestamo) =>
+        prestamo?.libro?.titulo || "-",
     },
     {
-      key: 'autor',
-      label: 'Autor',
-      render: (prestamo: Prestamo) => prestamo.libro?.autor || '-',
+      key: "autor",
+      label: "Autor",
+      render: (value: unknown, prestamo: Prestamo) =>
+        prestamo?.libro?.autor || "-",
     },
     {
-      key: 'user',
-      label: 'Usuario',
-      render: (prestamo: Prestamo) => prestamo.user?.name || '-',
+      key: "user",
+      label: "Usuario",
+      render: (value: unknown, prestamo: Prestamo) =>
+        prestamo?.usuario?.name || "-",
     },
     {
-      key: 'fecha_prestamo',
-      label: 'Fecha Préstamo',
-      render: (prestamo: Prestamo) => new Date(prestamo.fecha_prestamo).toLocaleDateString(),
+      key: "fecha_prestamo",
+      label: "Fecha Préstamo",
+      render: (value: unknown, prestamo: Prestamo) =>
+        new Date(prestamo.fecha_prestamo).toLocaleDateString(),
     },
     {
-      key: 'fecha_devolucion',
-      label: 'Fecha Devolución',
-      render: (prestamo: Prestamo) => new Date(prestamo.fecha_devolucion).toLocaleDateString(),
+      key: "fecha_devolucion",
+      label: "Fecha Devolución",
+      render: (value: unknown, prestamo: Prestamo) =>
+        prestamo.fecha_devolucion
+          ? new Date(prestamo.fecha_devolucion).toLocaleDateString()
+          : "-",
     },
     {
-      key: 'estado',
-      label: 'Estado',
+      key: "estado",
+      label: "Estado",
       render: (prestamo: Prestamo) => {
         const hoy = new Date();
         const fechaDevolucion = new Date(prestamo.fecha_devolucion);
         const atrasado = !prestamo.devuelto && hoy > fechaDevolucion;
-        
+
         return (
           <span
             className={`px-2 py-1 rounded-full text-xs ${
               prestamo.devuelto
-                ? 'bg-green-100 text-green-800'
+                ? "bg-green-100 text-green-800"
                 : atrasado
-                ? 'bg-red-100 text-red-800'
-                : 'bg-yellow-100 text-yellow-800'
+                ? "bg-red-100 text-red-800"
+                : "bg-yellow-100 text-yellow-800"
             }`}
           >
-            {prestamo.devuelto ? 'Devuelto' : atrasado ? 'Atrasado' : 'Activo'}
+            {prestamo.devuelto ? "Devuelto" : atrasado ? "Atrasado" : "Activo"}
           </span>
         );
       },
@@ -198,12 +205,22 @@ export default function PrestamosPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-800">Gestión de Préstamos</h1>
+        <h1 className="text-3xl font-bold text-gray-800">
+          Gestión de Préstamos
+        </h1>
         <Button onClick={() => setShowModal(true)}>+ Nuevo Préstamo</Button>
       </div>
 
-      {error && <Alert type="error" message={error} onClose={() => setError(null)} />}
-      {success && <Alert type="success" message={success} onClose={() => setSuccess(null)} />}
+      {error && (
+        <Alert type="error" message={error} onClose={() => setError(null)} />
+      )}
+      {success && (
+        <Alert
+          type="success"
+          message={success}
+          onClose={() => setSuccess(null)}
+        />
+      )}
 
       {/* Estadísticas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -215,7 +232,7 @@ export default function PrestamosPage() {
             <div className="text-gray-600">Préstamos Activos</div>
           </div>
         </Card>
-        
+
         <Card>
           <div className="text-center">
             <div className="text-3xl font-bold text-green-600">
@@ -224,7 +241,7 @@ export default function PrestamosPage() {
             <div className="text-gray-600">Devoluciones</div>
           </div>
         </Card>
-        
+
         <Card>
           <div className="text-center">
             <div className="text-3xl font-bold text-[#F22727]">
@@ -266,7 +283,9 @@ export default function PrestamosPage() {
             </label>
             <select
               value={formData.libro_id}
-              onChange={(e) => setFormData({ ...formData, libro_id: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, libro_id: e.target.value })
+              }
               className="w-full border border-gray-300 rounded-md px-3 py-2"
               required
             >
@@ -286,7 +305,9 @@ export default function PrestamosPage() {
             <input
               type="number"
               value={formData.user_id}
-              onChange={(e) => setFormData({ ...formData, user_id: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, user_id: e.target.value })
+              }
               className="w-full border border-gray-300 rounded-md px-3 py-2"
               required
             />
@@ -302,15 +323,21 @@ export default function PrestamosPage() {
             <input
               type="date"
               value={formData.fecha_devolucion}
-              onChange={(e) => setFormData({ ...formData, fecha_devolucion: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, fecha_devolucion: e.target.value })
+              }
               className="w-full border border-gray-300 rounded-md px-3 py-2"
               required
-              min={new Date().toISOString().split('T')[0]}
+              min={new Date().toISOString().split("T")[0]}
             />
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">
-            <Button type="button" variant="secondary" onClick={handleCloseModal}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleCloseModal}
+            >
               Cancelar
             </Button>
             <Button type="submit">Registrar Préstamo</Button>

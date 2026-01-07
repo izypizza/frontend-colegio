@@ -18,6 +18,9 @@ interface Eleccion {
   id: number;
   titulo: string;
   fecha: string;
+  estado?: string;
+  fecha_inicio?: string;
+  fecha_cierre?: string;
   candidatos?: Candidato[];
 }
 
@@ -213,41 +216,106 @@ export default function EleccionesPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {elecciones.map((eleccion) => (
-            <Card key={eleccion.id}>
-              <div className="flex justify-between items-start mb-3">
-                <h3 className="text-xl font-bold text-gray-800">
-                  {eleccion.titulo}
-                </h3>
-              </div>
+          {elecciones.map((eleccion) => {
+            const esActiva = eleccion.estado === "activa";
+            const esPendiente = eleccion.estado === "pendiente";
+            const esCerrada = eleccion.estado === "cerrada";
 
-              <div className="space-y-2 text-sm text-gray-500 mb-4">
-                <div>
-                  <strong>Fecha:</strong>{" "}
-                  {new Date(eleccion.fecha).toLocaleDateString()}
+            return (
+              <Card
+                key={eleccion.id}
+                className={!esActiva ? "opacity-75 bg-gray-50" : ""}
+              >
+                <div className="flex justify-between items-start mb-3">
+                  <h3 className="text-xl font-bold text-gray-800">
+                    {eleccion.titulo}
+                  </h3>
+                  {eleccion.estado && (
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        esActiva
+                          ? "bg-green-100 text-green-800"
+                          : esPendiente
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {esActiva
+                        ? "Activa"
+                        : esPendiente
+                        ? "Próximamente"
+                        : "Cerrada"}
+                    </span>
+                  )}
                 </div>
-              </div>
 
-              <div className="flex space-x-2">
-                {user?.role === "estudiante" ? (
-                  <Button
-                    className="flex-1"
-                    onClick={() => handleVerEleccion(eleccion)}
-                  >
-                    Votar
-                  </Button>
-                ) : (
-                  <Button
-                    className="flex-1"
-                    variant="secondary"
-                    onClick={() => handleVerResultados(eleccion.id)}
-                  >
-                    Ver Resultados
-                  </Button>
-                )}
-              </div>
-            </Card>
-          ))}
+                <div className="space-y-2 text-sm text-gray-500 mb-4">
+                  {eleccion.fecha_inicio && eleccion.fecha_cierre ? (
+                    <>
+                      <div>
+                        <strong>Inicio:</strong>{" "}
+                        {new Date(eleccion.fecha_inicio).toLocaleDateString(
+                          "es-PE",
+                          {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          }
+                        )}
+                      </div>
+                      <div>
+                        <strong>Cierre:</strong>{" "}
+                        {new Date(eleccion.fecha_cierre).toLocaleDateString(
+                          "es-PE",
+                          {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          }
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <div>
+                      <strong>Fecha:</strong>{" "}
+                      {new Date(eleccion.fecha).toLocaleDateString()}
+                    </div>
+                  )}
+                  {!esActiva && (
+                    <p className="text-xs text-gray-600 italic mt-2">
+                      {esPendiente
+                        ? "Esta elección aún no está disponible"
+                        : "Esta elección ha finalizado"}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex space-x-2">
+                  {user?.role === "estudiante" ? (
+                    <Button
+                      className="flex-1"
+                      onClick={() => handleVerEleccion(eleccion)}
+                      disabled={!esActiva}
+                    >
+                      {esActiva
+                        ? "Votar"
+                        : esPendiente
+                        ? "Próximamente"
+                        : "Cerrada"}
+                    </Button>
+                  ) : (
+                    <Button
+                      className="flex-1"
+                      variant="secondary"
+                      onClick={() => handleVerResultados(eleccion.id)}
+                    >
+                      Ver Resultados
+                    </Button>
+                  )}
+                </div>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>

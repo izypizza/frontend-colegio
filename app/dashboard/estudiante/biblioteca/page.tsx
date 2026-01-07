@@ -96,18 +96,19 @@ export default function BibliotecaEstudiantePage() {
       fetchData(); // Recargar datos
     } catch (err: any) {
       console.error("[Biblioteca] Error al solicitar préstamo:", err);
-      setError(
+      const errorMessage =
+        err?.response?.data?.message ||
         err?.message ||
-          "Error al solicitar el préstamo. Contacta con la biblioteca."
-      );
+        "Error al solicitar el préstamo. Contacta con la biblioteca.";
+      setError(errorMessage);
     }
   };
 
   const librosFiltrados = libros.filter((libro) => {
     const matchesSearch =
-      libro.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      libro.autor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      libro.isbn.includes(searchTerm);
+      libro.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      libro.autor?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      libro.isbn?.includes(searchTerm);
     const matchesCategoria =
       !selectedCategoria ||
       libro.categoria?.id.toString() === selectedCategoria;
@@ -234,22 +235,9 @@ export default function BibliotecaEstudiantePage() {
               key={libro.id}
               className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
             >
-              <div className="flex items-start justify-between mb-2">
-                <h3 className="font-semibold text-gray-900 text-lg">
-                  {libro.titulo}
-                </h3>
-                <span
-                  className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                    libro.cantidad_disponible > 0
-                      ? "bg-green-100 text-green-800"
-                      : "bg-red-100 text-red-800"
-                  }`}
-                >
-                  {libro.cantidad_disponible > 0
-                    ? "Disponible"
-                    : "No disponible"}
-                </span>
-              </div>
+              <h3 className="font-semibold text-gray-900 text-lg mb-2">
+                {libro.titulo}
+              </h3>
               <p className="text-sm text-gray-600 mb-1">
                 <span className="font-medium">Autor:</span> {libro.autor}
               </p>
@@ -270,19 +258,23 @@ export default function BibliotecaEstudiantePage() {
                   {libro.categoria.nombre}
                 </p>
               )}
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">
-                  Disponibles: {libro.cantidad_disponible} de{" "}
-                  {libro.cantidad_total}
-                </span>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => handleSolicitarPrestamo(libro.id)}
-                  disabled={libro.cantidad_disponible === 0}
-                >
-                  Solicitar
-                </Button>
+              <div className="flex justify-end mt-4">
+                {libro.cantidad_disponible > 0 ? (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => handleSolicitarPrestamo(libro.id)}
+                  >
+                    Solicitar
+                  </Button>
+                ) : (
+                  <button
+                    disabled
+                    className="px-4 py-2 text-sm font-medium text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed"
+                  >
+                    No disponible
+                  </button>
+                )}
               </div>
             </div>
           ))}
