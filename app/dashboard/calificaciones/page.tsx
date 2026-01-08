@@ -364,9 +364,11 @@ export default function CalificacionesPage() {
               {mostrarEstadisticas ? "Ocultar" : "Mostrar"} Estadísticas
             </Button>
           )}
-          <Button variant="primary" onClick={handleCreate}>
-            + Nueva Calificación
-          </Button>
+          {(user?.role === "admin" || user?.role === "auxiliar" || user?.role === "docente") && (
+            <Button variant="primary" onClick={handleCreate}>
+              + Nueva Calificación
+            </Button>
+          )}
         </div>
       </div>
 

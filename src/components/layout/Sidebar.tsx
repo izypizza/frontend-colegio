@@ -218,7 +218,6 @@ const menuItems: MenuItem[] = [
       UserRole.ADMIN,
       UserRole.AUXILIAR,
       UserRole.DOCENTE,
-      UserRole.PADRE,
     ],
     icon: (
       <svg
