@@ -73,9 +73,12 @@ export default function CalificacionesHijosPage() {
   const fetchPeriodos = async () => {
     try {
       const response = await periodoService.getAll();
-      setPeriodos(response.data || response);
-      if (response.data.data?.length > 0) {
-        setSelectedPeriodo(response.data.data[0].id);
+      // Manejar diferentes estructuras de respuesta
+      const periodosData = response.data?.data || response.data || response;
+      setPeriodos(periodosData);
+      
+      if (periodosData.length > 0) {
+        setSelectedPeriodo(periodosData[0].id);
       }
     } catch (error) {
       console.error('Error al cargar periodos:', error);
