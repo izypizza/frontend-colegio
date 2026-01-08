@@ -214,11 +214,7 @@ const menuItems: MenuItem[] = [
   {
     label: "Calificaciones",
     href: "/dashboard/calificaciones",
-    roles: [
-      UserRole.ADMIN,
-      UserRole.AUXILIAR,
-      UserRole.DOCENTE,
-    ],
+    roles: [UserRole.ADMIN, UserRole.AUXILIAR, UserRole.DOCENTE],
     icon: (
       <svg
         className="w-5 h-5"
