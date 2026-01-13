@@ -1,6 +1,14 @@
 "use client";
 
-import { Alert, Button, Card, Input, Modal, Table } from "@/src/components/ui";
+import {
+  Alert,
+  Button,
+  Card,
+  Input,
+  Modal,
+  Table,
+  Pagination,
+} from "@/src/components/ui";
 import { padreService } from "@/src/lib/services";
 import { Padre } from "@/src/types/models";
 import { useEffect, useState } from "react";
@@ -8,6 +16,12 @@ import { useEffect, useState } from "react";
 export default function PadresPage() {
   const [padres, setPadres] = useState<Padre[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(50);
+  const [paginationData, setPaginationData] = useState({
+    total: 0,
+    lastPage: 1,
+  });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Padre | null>(null);
@@ -28,13 +42,31 @@ export default function PadresPage() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [currentPage, perPage]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const data = await padreService.getAll();
-      setPadres(data);
+      const data = await padreService.getAll({
+        page: currentPage,
+        per_page: perPage,
+      });
+
+      if (
+        data &&
+        typeof data === "object" &&
+        "data" in data &&
+        "current_page" in data
+      ) {
+        setPadres(data.data);
+        setPaginationData({
+          total: data.total || 0,
+          lastPage: data.last_page || 1,
+        });
+      } else {
+        const padresArray = Array.isArray(data) ? data : data?.data || [];
+        setPadres(padresArray);
+      }
     } catch {
       setError("Error al cargar los padres");
     } finally {
@@ -215,6 +247,21 @@ export default function PadresPage() {
           onDelete={handleDelete}
         />
       </Card>
+
+      <Pagination
+        currentPage={currentPage}
+        lastPage={paginationData.lastPage}
+        total={paginationData.total}
+        perPage={perPage}
+        onPageChange={(page) => {
+          setCurrentPage(page);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+        onPerPageChange={(newPerPage) => {
+          setPerPage(newPerPage);
+          setCurrentPage(1);
+        }}
+      />
 
       <Modal
         isOpen={isModalOpen}

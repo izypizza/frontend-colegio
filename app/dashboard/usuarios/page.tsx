@@ -1,6 +1,14 @@
 "use client";
 
-import { Alert, Button, Card, Input, Modal, Table } from "@/src/components/ui";
+import {
+  Alert,
+  Button,
+  Card,
+  Input,
+  Modal,
+  Table,
+  Pagination,
+} from "@/src/components/ui";
 import { userManagementService } from "@/src/lib/services";
 import { User, PersonaSinUsuario, CreateUserPayload } from "@/src/types/models";
 import { useEffect, useState } from "react";
@@ -10,6 +18,12 @@ export default function UsuariosPage() {
   const { user } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(50);
+  const [paginationData, setPaginationData] = useState({
+    total: 0,
+    lastPage: 1,
+  });
   const [activeTab, setActiveTab] = useState<"usuarios" | "sin-usuario">(
     "usuarios"
   );
@@ -63,12 +77,36 @@ export default function UsuariosPage() {
     }
   }, [activeTab]);
 
+  useEffect(() => {
+    if (activeTab === "usuarios") {
+      fetchUsers();
+    }
+  }, [currentPage, perPage]);
+
   const fetchUsers = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await userManagementService.getAll();
-      setUsers(data);
+      const data = await userManagementService.getAll({
+        page: currentPage,
+        per_page: perPage,
+      });
+
+      if (
+        data &&
+        typeof data === "object" &&
+        "data" in data &&
+        "current_page" in data
+      ) {
+        setUsers(data.data);
+        setPaginationData({
+          total: data.total || 0,
+          lastPage: data.last_page || 1,
+        });
+      } else {
+        const usersArray = Array.isArray(data) ? data : data?.data || [];
+        setUsers(usersArray);
+      }
     } catch (err: any) {
       console.error("Error al cargar usuarios:", err);
       setError(err.message || "Error al cargar usuarios");
@@ -636,6 +674,21 @@ export default function UsuariosPage() {
               <Table columns={columns} data={filteredUsers} />
             )}
           </Card>
+
+          <Pagination
+            currentPage={currentPage}
+            lastPage={paginationData.lastPage}
+            total={paginationData.total}
+            perPage={perPage}
+            onPageChange={(page) => {
+              setCurrentPage(page);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            onPerPageChange={(newPerPage) => {
+              setPerPage(newPerPage);
+              setCurrentPage(1);
+            }}
+          />
         </>
       ) : (
         <>

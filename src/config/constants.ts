@@ -1,7 +1,7 @@
 // API base configuration
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
-export const API_TIMEOUT = 60000; // 60 segundos para consultas con muchos datos
+export const API_TIMEOUT = 90000; // 90 segundos para consultas con muchos datos
 
 // Token storage keys
 export const TOKEN_KEY = "auth_token";

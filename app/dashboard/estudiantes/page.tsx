@@ -1,6 +1,14 @@
 "use client";
 
-import { Alert, Button, Card, Input, Modal, Table } from "@/src/components/ui";
+import {
+  Alert,
+  Button,
+  Card,
+  Input,
+  Modal,
+  Table,
+  Pagination,
+} from "@/src/components/ui";
 import { estudianteService, seccionService } from "@/src/lib/services";
 import { Estudiante, Seccion } from "@/src/types/models";
 import { useEffect, useState } from "react";
@@ -28,9 +36,17 @@ export default function EstudiantesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterSeccion, setFilterSeccion] = useState("");
 
+  // Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(50);
+  const [paginationData, setPaginationData] = useState({
+    total: 0,
+    lastPage: 1,
+  });
+
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [currentPage, perPage]);
 
   const fetchData = async () => {
     try {
@@ -39,8 +55,8 @@ export default function EstudiantesPage() {
       const startTime = performance.now();
 
       const [estudiantesData, seccionesData] = await Promise.all([
-        estudianteService.getAll(),
-        seccionService.getAll(),
+        estudianteService.getAll({ page: currentPage, per_page: perPage }),
+        seccionService.getAll({ all: true }),
       ]);
 
       const endTime = performance.now();
@@ -48,15 +64,42 @@ export default function EstudiantesPage() {
         `[Estudiantes] Cargados en ${(endTime - startTime).toFixed(0)}ms`
       );
 
-      // Manejar respuesta paginada o sin paginar
-      const estudiantesArray = estudiantesData?.data || estudiantesData || [];
-      const seccionesArray = seccionesData?.data || seccionesData || [];
+      // Manejar respuesta paginada
+      if (
+        estudiantesData &&
+        typeof estudiantesData === "object" &&
+        "data" in estudiantesData &&
+        "current_page" in estudiantesData
+      ) {
+        setEstudiantes(estudiantesData.data);
+        setPaginationData({
+          total: estudiantesData.total || 0,
+          lastPage: estudiantesData.last_page || 1,
+        });
+        console.log(
+          "[Estudiantes] Total:",
+          estudiantesData.total,
+          "| Página:",
+          currentPage,
+          "de",
+          estudiantesData.last_page
+        );
+      } else {
+        const estudiantesArray = Array.isArray(estudiantesData)
+          ? estudiantesData
+          : estudiantesData?.data || [];
+        setEstudiantes(estudiantesArray);
+        console.log(
+          "[Estudiantes] Total sin paginar:",
+          estudiantesArray.length
+        );
+      }
 
-      console.log("[Estudiantes] Total:", estudiantesArray.length);
-      console.log("[Estudiantes] Secciones:", seccionesArray.length);
-
-      setEstudiantes(estudiantesArray);
+      const seccionesArray = Array.isArray(seccionesData)
+        ? seccionesData
+        : seccionesData?.data || [];
       setSecciones(seccionesArray);
+      console.log("[Estudiantes] Secciones:", seccionesArray.length);
     } catch (err: any) {
       console.error("[Estudiantes] Error:", err);
       setError(err?.message || "Error al cargar los datos");
@@ -245,6 +288,24 @@ export default function EstudiantesPage() {
           onEdit={handleEdit}
           onDelete={handleDelete}
         />
+
+        {/* Paginación */}
+        {paginationData.total > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            lastPage={paginationData.lastPage}
+            total={paginationData.total}
+            perPage={perPage}
+            onPageChange={(page) => {
+              setCurrentPage(page);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            onPerPageChange={(newPerPage) => {
+              setPerPage(newPerPage);
+              setCurrentPage(1);
+            }}
+          />
+        )}
       </Card>
 
       <Modal

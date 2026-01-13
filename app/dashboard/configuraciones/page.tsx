@@ -89,9 +89,16 @@ export default function ConfiguracionesPage() {
       );
 
       await configuracionService.actualizar(configuracionesArray);
-      setSuccess("Configuraciones actualizadas correctamente");
+      setSuccess(
+        "✅ Configuraciones guardadas correctamente. Los cambios se han aplicado al sistema."
+      );
       setCambios({});
       fetchData();
+
+      // Recargar la página después de 2 segundos para reflejar los cambios en el menú
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
     } catch {
       setError("Error al guardar configuraciones");
     }

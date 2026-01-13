@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import React from "react";
 import { useAuth } from "@/src/features/auth/hooks/useAuth";
 import { UserRole } from "@/src/types";
+import { useModulosActivos } from "@/src/hooks/useModulosActivos";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -16,6 +17,13 @@ interface MenuItem {
   href: string;
   icon: React.ReactNode;
   roles: UserRole[]; // Roles que pueden ver este item
+  modulo?:
+    | "biblioteca"
+    | "elecciones"
+    | "permisos"
+    | "calificaciones"
+    | "asistencias"
+    | "horarios";
 }
 
 const menuItems: MenuItem[] = [
@@ -195,6 +203,7 @@ const menuItems: MenuItem[] = [
       UserRole.PADRE,
       UserRole.ESTUDIANTE,
     ],
+    modulo: "horarios",
     icon: (
       <svg
         className="w-5 h-5"
@@ -215,6 +224,7 @@ const menuItems: MenuItem[] = [
     label: "Calificaciones",
     href: "/dashboard/calificaciones",
     roles: [UserRole.ADMIN, UserRole.AUXILIAR, UserRole.DOCENTE],
+    modulo: "calificaciones",
     icon: (
       <svg
         className="w-5 h-5"
@@ -235,6 +245,7 @@ const menuItems: MenuItem[] = [
     label: "Asistencias",
     href: "/dashboard/asistencias",
     roles: [UserRole.ADMIN, UserRole.AUXILIAR, UserRole.DOCENTE],
+    modulo: "asistencias",
     icon: (
       <svg
         className="w-5 h-5"
@@ -255,6 +266,7 @@ const menuItems: MenuItem[] = [
     label: "Préstamos",
     href: "/dashboard/prestamos",
     roles: [UserRole.ADMIN, UserRole.AUXILIAR],
+    modulo: "biblioteca",
     icon: (
       <svg
         className="w-5 h-5"
@@ -275,6 +287,7 @@ const menuItems: MenuItem[] = [
     label: "Elecciones",
     href: "/dashboard/elecciones",
     roles: [UserRole.ESTUDIANTE],
+    modulo: "elecciones",
     icon: (
       <svg
         className="w-5 h-5"
@@ -295,6 +308,7 @@ const menuItems: MenuItem[] = [
     label: "Gestión Elecciones",
     href: "/dashboard/elecciones-admin",
     roles: [UserRole.ADMIN],
+    modulo: "elecciones",
     icon: (
       <svg
         className="w-5 h-5"
@@ -315,6 +329,7 @@ const menuItems: MenuItem[] = [
     label: "Permisos Auxiliares",
     href: "/dashboard/permisos-auxiliares",
     roles: [UserRole.ADMIN],
+    modulo: "permisos",
     icon: (
       <svg
         className="w-5 h-5"
@@ -355,6 +370,7 @@ const menuItems: MenuItem[] = [
     label: "Mis Permisos",
     href: "/dashboard/mis-permisos",
     roles: [UserRole.AUXILIAR],
+    modulo: "permisos",
     icon: (
       <svg
         className="w-5 h-5"
@@ -375,6 +391,7 @@ const menuItems: MenuItem[] = [
     label: "Biblioteca",
     href: "/dashboard/biblioteca",
     roles: [UserRole.ADMIN, UserRole.BIBLIOTECARIO],
+    modulo: "biblioteca",
     icon: (
       <svg
         className="w-5 h-5"
@@ -395,6 +412,7 @@ const menuItems: MenuItem[] = [
     label: "Biblioteca",
     href: "/dashboard/estudiante/biblioteca",
     roles: [UserRole.ESTUDIANTE],
+    modulo: "biblioteca",
     icon: (
       <svg
         className="w-5 h-5"
@@ -539,11 +557,19 @@ const menuItems: MenuItem[] = [
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const pathname = usePathname();
   const { user } = useAuth();
+  const { modulos, loading: modulosLoading } = useModulosActivos();
 
-  // Filtrar items del menú según el rol del usuario
+  // Filtrar items del menú según el rol del usuario y módulos activos
   const visibleMenuItems = menuItems.filter((item) => {
     if (!user) return false;
-    return item.roles.includes(user.role);
+    if (!item.roles.includes(user.role)) return false;
+
+    // Si el item tiene un módulo asociado, verificar si está activo
+    if (item.modulo && !modulosLoading) {
+      return modulos[item.modulo] === true;
+    }
+
+    return true;
   });
 
   return (

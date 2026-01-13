@@ -1,6 +1,14 @@
 "use client";
 
-import { Alert, Button, Card, Input, Modal, Table } from "@/src/components/ui";
+import {
+  Alert,
+  Button,
+  Card,
+  Input,
+  Modal,
+  Table,
+  Pagination,
+} from "@/src/components/ui";
 import {
   calificacionService,
   estudianteService,
@@ -8,7 +16,6 @@ import {
   periodoService,
   docentePortalService,
   estudiantePortalService,
-  padrePortalService,
 } from "@/src/lib/services";
 import {
   Calificacion,
@@ -19,9 +26,18 @@ import {
 import { useEffect, useState } from "react";
 import { useAuth } from "@/src/features/auth";
 import EstadisticasAvanzadas from "./components/EstadisticasAvanzadas";
+import { useRouter } from "next/navigation";
 
 export default function CalificacionesPage() {
   const { user } = useAuth();
+  const router = useRouter();
+
+  // Redirigir a padres a su página específica
+  useEffect(() => {
+    if (user?.role === "padre") {
+      router.push("/dashboard/padre/calificaciones");
+    }
+  }, [user, router]);
   const [calificaciones, setCalificaciones] = useState<Calificacion[]>([]);
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [materias, setMaterias] = useState<Materia[]>([]);
@@ -44,9 +60,17 @@ export default function CalificacionesPage() {
   const [filterPeriodo, setFilterPeriodo] = useState("");
   const [mostrarEstadisticas, setMostrarEstadisticas] = useState(true);
 
+  // Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(100);
+  const [paginationData, setPaginationData] = useState({
+    total: 0,
+    lastPage: 1,
+  });
+
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [currentPage, perPage]);
 
   useEffect(() => {
     if (user?.role === "admin" || user?.role === "auxiliar") {
@@ -146,43 +170,18 @@ export default function CalificacionesPage() {
         setEstudiantes([]);
         setMaterias([]);
         setPeriodos(periodosData || []);
-      } else if (user?.role === "padre") {
-        // Padres ven calificaciones de sus hijos
-        const [calificacionesData, hijosData, periodosData] = await Promise.all(
-          [
-            padrePortalService.calificacionesHijos(),
-            padrePortalService.misHijos(),
-            periodoService.getAll(),
-          ]
-        );
-
-        const endTime = performance.now();
-        console.log(
-          `[Calificaciones] Datos padre cargados en ${(
-            endTime - startTime
-          ).toFixed(0)}ms`
-        );
-        console.log(
-          "[Calificaciones] Total padre:",
-          calificacionesData.calificaciones?.length || 0
-        );
-
-        setCalificaciones(calificacionesData.calificaciones || []);
-        setEstudiantes(hijosData.hijos || []);
-        setMaterias([]);
-        setPeriodos(periodosData || []);
       } else if (user?.role === "admin" || user?.role === "auxiliar") {
-        // Admin/Auxiliar usan endpoints generales
+        // Admin/Auxiliar usan endpoints generales con paginación
         const [
           calificacionesData,
           estudiantesData,
           materiasData,
           periodosData,
         ] = await Promise.all([
-          calificacionService.getAll(),
-          estudianteService.getAll(),
-          materiaService.getAll(),
-          periodoService.getAll(),
+          calificacionService.getAll({ page: currentPage, per_page: perPage }),
+          estudianteService.getAll({ all: true }),
+          materiaService.getAll({ all: true }),
+          periodoService.getAll({ all: true }),
         ]);
 
         const endTime = performance.now();
@@ -192,18 +191,44 @@ export default function CalificacionesPage() {
           )}ms`
         );
 
-        // Manejar respuesta paginada o sin paginar
-        const calificacionesArray =
-          calificacionesData?.data || calificacionesData || [];
-        console.log(
-          "[Calificaciones] Total admin:",
-          calificacionesArray.length
-        );
+        // Manejar respuesta paginada
+        if (
+          calificacionesData &&
+          typeof calificacionesData === "object" &&
+          "data" in calificacionesData &&
+          "current_page" in calificacionesData
+        ) {
+          setCalificaciones(calificacionesData.data);
+          setPaginationData({
+            total: calificacionesData.total || 0,
+            lastPage: calificacionesData.last_page || 1,
+          });
+          console.log(
+            "[Calificaciones] Paginación:",
+            calificacionesData.total,
+            "registros"
+          );
+        } else {
+          const calificacionesArray =
+            calificacionesData?.data || calificacionesData || [];
+          setCalificaciones(calificacionesArray);
+          console.log(
+            "[Calificaciones] Total admin:",
+            calificacionesArray.length
+          );
+        }
 
-        setCalificaciones(calificacionesArray);
-        setEstudiantes(estudiantesData || []);
-        setMaterias(materiasData || []);
-        setPeriodos(periodosData || []);
+        setEstudiantes(
+          Array.isArray(estudiantesData)
+            ? estudiantesData
+            : estudiantesData?.data || []
+        );
+        setMaterias(
+          Array.isArray(materiasData) ? materiasData : materiasData?.data || []
+        );
+        setPeriodos(
+          Array.isArray(periodosData) ? periodosData : periodosData?.data || []
+        );
       } else {
         setError("No tiene permisos para ver calificaciones");
       }
@@ -448,6 +473,23 @@ export default function CalificacionesPage() {
           onDelete={handleDelete}
         />
       </Card>
+
+      {(user?.role === "admin" || user?.role === "auxiliar") && (
+        <Pagination
+          currentPage={currentPage}
+          lastPage={paginationData.lastPage}
+          total={paginationData.total}
+          perPage={perPage}
+          onPageChange={(page) => {
+            setCurrentPage(page);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          onPerPageChange={(newPerPage) => {
+            setPerPage(newPerPage);
+            setCurrentPage(1);
+          }}
+        />
+      )}
 
       <Modal
         isOpen={isModalOpen}

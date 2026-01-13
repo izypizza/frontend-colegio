@@ -33,12 +33,18 @@ export default function GradosPage() {
     try {
       setLoading(true);
       const [gradosData, seccionesData] = await Promise.all([
-        gradoService.getAll(),
-        seccionService.getAll(),
+        gradoService.getAll({ all: true }),
+        seccionService.getAll({ all: true }),
       ]);
-      setGrados(gradosData);
-      setSecciones(seccionesData);
-    } catch {
+
+      // Los servicios ya manejan la conversión a array
+      setGrados(Array.isArray(gradosData) ? gradosData : []);
+      setSecciones(Array.isArray(seccionesData) ? seccionesData : []);
+
+      console.log("Grados cargados:", gradosData);
+      console.log("Secciones cargadas:", seccionesData);
+    } catch (err) {
+      console.error("Error al cargar datos:", err);
       setError("Error al cargar los datos");
     } finally {
       setLoading(false);
@@ -47,7 +53,7 @@ export default function GradosPage() {
 
   const handleCreate = () => {
     setEditingItem(null);
-    setFormData({ nombre: "", nivel: "Primaria" });
+    setFormData({ nombre: "", nivel: "primaria" });
     setIsModalOpen(true);
   };
 
@@ -55,7 +61,7 @@ export default function GradosPage() {
     setEditingItem(item);
     setFormData({
       nombre: item.nombre,
-      nivel: item.nivel || "Primaria",
+      nivel: item.nivel || "primaria",
     });
     setIsModalOpen(true);
   };
@@ -118,8 +124,10 @@ export default function GradosPage() {
   const stats = {
     totalGrados: grados.length,
     totalSecciones: secciones.length,
-    primaria: grados.filter((g) => g.nivel === "Primaria").length,
-    secundaria: grados.filter((g) => g.nivel === "Secundaria").length,
+    primaria: grados.filter((g) => g.nivel?.toLowerCase() === "primaria")
+      .length,
+    secundaria: grados.filter((g) => g.nivel?.toLowerCase() === "secundaria")
+      .length,
   };
 
   if (loading)
@@ -200,12 +208,13 @@ export default function GradosPage() {
                     </h3>
                     <span
                       className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-semibold ${
-                        nivel === "Primaria"
+                        nivel?.toLowerCase() === "primaria"
                           ? "bg-green-100 text-green-800"
                           : "bg-blue-100 text-blue-800"
                       }`}
                     >
-                      {nivel}
+                      {nivel?.charAt(0).toUpperCase() +
+                        nivel?.slice(1).toLowerCase()}
                     </span>
                   </div>
                   <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-teal-500 rounded-full flex items-center justify-center">
@@ -372,8 +381,8 @@ export default function GradosPage() {
               }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="Primaria">Primaria</option>
-              <option value="Secundaria">Secundaria</option>
+              <option value="primaria">Primaria</option>
+              <option value="secundaria">Secundaria</option>
             </select>
           </div>
         </form>

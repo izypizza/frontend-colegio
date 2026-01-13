@@ -56,6 +56,9 @@ export default function MisCalificacionesPage() {
   const [allData, setAllData] = useState<Calificacion[]>([]);
   const [periodos, setPeriodos] = useState<Periodo[]>([]);
   const [selectedPeriodo, setSelectedPeriodo] = useState<number | null>(null);
+  const [nivelEstudiante, setNivelEstudiante] = useState<
+    "primaria" | "secundaria" | null
+  >(null);
 
   useEffect(() => {
     fetchPeriodos();
@@ -84,9 +87,18 @@ export default function MisCalificacionesPage() {
   const fetchCalificaciones = async () => {
     try {
       setLoading(true);
-      const response = await estudiantePortalService.misCalificaciones();
-      const allCalificaciones = response.calificaciones || [];
+      const [calificacionesResponse, perfilResponse] = await Promise.all([
+        estudiantePortalService.misCalificaciones(),
+        estudiantePortalService.miPerfil(),
+      ]);
+
+      const allCalificaciones = calificacionesResponse.calificaciones || [];
       setAllData(allCalificaciones);
+
+      // Obtener nivel del estudiante (primaria/secundaria)
+      const estudianteData = perfilResponse.estudiante || perfilResponse;
+      const nivel = estudianteData?.seccion?.grado?.nivel || "secundaria";
+      setNivelEstudiante(nivel);
 
       // Filtrar por periodo seleccionado
       const calificacionesFiltradas = selectedPeriodo
@@ -124,6 +136,18 @@ export default function MisCalificacionesPage() {
     if (nota >= 13) return "Bueno";
     if (nota >= 11) return "Aprobado";
     return "Reprobado";
+  };
+
+  // Función para obtener emoji/carita según nota (solo para primaria)
+  const getEmojiNota = (nota: number) => {
+    if (nivelEstudiante !== "primaria") return null;
+
+    if (nota >= 18) return "😄"; // Muy feliz - notas excelentes
+    if (nota >= 16) return "😊"; // Feliz - notas muy buenas
+    if (nota >= 14) return "🙂"; // Contento - notas buenas
+    if (nota >= 11) return "😐"; // Neutral - apenas aprobado
+    if (nota >= 8) return "😕"; // Preocupado - nota baja
+    return "😢"; // Triste - reprobado
   };
 
   // Preparar datos para gráficas
@@ -240,16 +264,23 @@ export default function MisCalificacionesPage() {
           <h3 className="text-lg font-semibold text-gray-700 mb-2">
             Promedio General
           </h3>
-          <div
-            className={`text-5xl font-bold ${getNotaColor(
-              data?.promedio || 0
-            )}`}
-          >
-            {data?.promedio
-              ? typeof data.promedio === "number"
-                ? data.promedio.toFixed(2)
-                : Number(data.promedio).toFixed(2)
-              : "0.00"}
+          <div className="flex items-center justify-center gap-4">
+            {nivelEstudiante === "primaria" && data?.promedio && (
+              <span className="text-6xl" title="¿Cómo voy?">
+                {getEmojiNota(data.promedio)}
+              </span>
+            )}
+            <div
+              className={`text-5xl font-bold ${getNotaColor(
+                data?.promedio || 0
+              )}`}
+            >
+              {data?.promedio
+                ? typeof data.promedio === "number"
+                  ? data.promedio.toFixed(2)
+                  : Number(data.promedio).toFixed(2)
+                : "0.00"}
+            </div>
           </div>
           <p className={`text-lg mt-2 ${getNotaColor(data?.promedio || 0)}`}>
             {getEstadoNota(data?.promedio || 0)}
@@ -435,6 +466,11 @@ export default function MisCalificacionesPage() {
                   <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Nota
                   </th>
+                  {nivelEstudiante === "primaria" && (
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      ¿Cómo voy?
+                    </th>
+                  )}
                   <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Estado
                   </th>
@@ -462,6 +498,16 @@ export default function MisCalificacionesPage() {
                           : Number(calificacion.nota || 0).toFixed(2)}
                       </span>
                     </td>
+                    {nivelEstudiante === "primaria" && (
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <span
+                          className="text-4xl"
+                          title={`Nota: ${calificacion.nota.toFixed(2)}`}
+                        >
+                          {getEmojiNota(calificacion.nota)}
+                        </span>
+                      </td>
+                    )}
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <span
                         className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${

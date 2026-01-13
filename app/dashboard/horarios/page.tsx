@@ -1,6 +1,14 @@
 "use client";
 
-import { Alert, Button, Card, Input, Modal, Table } from "@/src/components/ui";
+import {
+  Alert,
+  Button,
+  Card,
+  Input,
+  Modal,
+  Table,
+  Pagination,
+} from "@/src/components/ui";
 import {
   horarioService,
   materiaService,
@@ -19,6 +27,12 @@ export default function HorariosPage() {
   const [secciones, setSecciones] = useState<Seccion[]>([]);
   const [materias, setMaterias] = useState<Materia[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(100);
+  const [paginationData, setPaginationData] = useState({
+    total: 0,
+    lastPage: 1,
+  });
   const [viewMode, setViewMode] = useState<"calendario" | "lista">(
     "calendario"
   );
@@ -54,6 +68,51 @@ export default function HorariosPage() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (user?.role === "admin" || user?.role === "auxiliar") {
+      fetchDataPaginated();
+    }
+  }, [currentPage, perPage, user]);
+
+  const fetchDataPaginated = async () => {
+    try {
+      setLoading(true);
+      const [horariosData, seccionesData, materiasData] = await Promise.all([
+        horarioService.getAll({ page: currentPage, per_page: perPage }),
+        seccionService.getAll({ all: true }),
+        materiaService.getAll({ all: true }),
+      ]);
+
+      if (
+        horariosData &&
+        typeof horariosData === "object" &&
+        "data" in horariosData &&
+        "current_page" in horariosData
+      ) {
+        setHorarios(horariosData.data);
+        setPaginationData({
+          total: horariosData.total || 0,
+          lastPage: horariosData.last_page || 1,
+        });
+      } else {
+        const horariosArray = horariosData?.data || horariosData || [];
+        setHorarios(horariosArray);
+      }
+
+      setSecciones(
+        Array.isArray(seccionesData) ? seccionesData : seccionesData?.data || []
+      );
+      setMaterias(
+        Array.isArray(materiasData) ? materiasData : materiasData?.data || []
+      );
+    } catch (err) {
+      console.error("Error al cargar horarios:", err);
+      setError("Error al cargar los datos");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -130,19 +189,37 @@ export default function HorariosPage() {
           setMaterias(materiasData || []);
         }
       } else {
-        // Admin/Auxiliar usan endpoints generales
+        // Admin/Auxiliar usan endpoints generales con paginación
         const [horariosData, seccionesData, materiasData] = await Promise.all([
-          horarioService.getAll(),
-          seccionService.getAll(),
-          materiaService.getAll(),
+          horarioService.getAll({ page: currentPage, per_page: perPage }),
+          seccionService.getAll({ all: true }),
+          materiaService.getAll({ all: true }),
         ]);
 
-        // Manejar respuesta paginada o sin paginar
-        const horariosArray = horariosData?.data || horariosData || [];
+        if (
+          horariosData &&
+          typeof horariosData === "object" &&
+          "data" in horariosData &&
+          "current_page" in horariosData
+        ) {
+          setHorarios(horariosData.data);
+          setPaginationData({
+            total: horariosData.total || 0,
+            lastPage: horariosData.last_page || 1,
+          });
+        } else {
+          const horariosArray = horariosData?.data || horariosData || [];
+          setHorarios(horariosArray);
+        }
 
-        setHorarios(horariosArray);
-        setSecciones(seccionesData || []);
-        setMaterias(materiasData || []);
+        setSecciones(
+          Array.isArray(seccionesData)
+            ? seccionesData
+            : seccionesData?.data || []
+        );
+        setMaterias(
+          Array.isArray(materiasData) ? materiasData : materiasData?.data || []
+        );
       }
     } catch (err) {
       console.error("Error al cargar horarios:", err);
@@ -347,13 +424,13 @@ export default function HorariosPage() {
               <table className="min-w-full border-collapse">
                 <thead>
                   <tr className="bg-gradient-to-r from-blue-600 to-blue-500">
-                    <th className="sticky left-0 z-10 bg-blue-600 border border-blue-400 px-4 py-4 text-left text-sm font-bold text-white">
+                    <th className="sticky left-0 z-10 bg-blue-600 border border-blue-400 px-2 py-2 text-left text-xs font-bold text-white w-16">
                       HORA
                     </th>
                     {dias.map((dia) => (
                       <th
                         key={dia}
-                        className="border border-blue-400 px-4 py-4 text-center text-sm font-bold text-white uppercase min-w-[180px]"
+                        className="border border-blue-400 px-2 py-2 text-center text-xs font-bold text-white uppercase min-w-[140px]"
                       >
                         {dia}
                       </th>
@@ -366,7 +443,7 @@ export default function HorariosPage() {
                       key={hora}
                       className={idx % 2 === 0 ? "bg-gray-50" : "bg-white"}
                     >
-                      <td className="sticky left-0 z-10 border border-gray-300 px-4 py-4 text-sm font-bold text-gray-800 whitespace-nowrap bg-gradient-to-r from-gray-100 to-gray-50">
+                      <td className="sticky left-0 z-10 border border-gray-300 px-2 py-2 text-xs font-bold text-gray-800 whitespace-nowrap bg-gradient-to-r from-gray-100 to-gray-50">
                         {hora}
                       </td>
                       {dias.map((dia) => {
@@ -374,27 +451,30 @@ export default function HorariosPage() {
                         return (
                           <td
                             key={`${dia}-${hora}`}
-                            className="border border-gray-300 p-2 align-top h-24"
+                            className="border border-gray-300 p-1 align-top h-20"
                           >
                             {horario && (
                               <div
                                 className={`${getColorMateria(
                                   horario.materia_id
-                                )} border-l-4 rounded-lg p-3 h-full cursor-pointer hover:shadow-lg transition-all transform hover:-translate-y-0.5`}
+                                )} border-l-4 rounded-lg p-2 h-full cursor-pointer hover:shadow-lg transition-all`}
                                 onClick={() =>
                                   (user?.role === "admin" ||
                                     user?.role === "auxiliar") &&
                                   handleEdit(horario)
                                 }
                               >
-                                <div className="font-bold text-sm mb-1">
+                                <div className="font-bold text-xs mb-0.5 line-clamp-2">
                                   {horario.materia?.nombre}
                                 </div>
-                                <div className="text-xs text-gray-700 mb-1">
-                                  {horario.seccion?.nombre} -{" "}
-                                  {horario.seccion?.grado?.nombre}
-                                </div>
-                                <div className="text-xs font-medium text-gray-600">
+                                {(user?.role === "admin" ||
+                                  user?.role === "auxiliar") && (
+                                  <div className="text-[10px] text-gray-700 mb-0.5 truncate">
+                                    {horario.seccion?.nombre} -{" "}
+                                    {horario.seccion?.grado?.nombre}
+                                  </div>
+                                )}
+                                <div className="text-[10px] font-medium text-gray-600">
                                   {horario.hora_inicio.substring(0, 5)} -{" "}
                                   {horario.hora_fin.substring(0, 5)}
                                 </div>
@@ -417,23 +497,42 @@ export default function HorariosPage() {
           )}
         </Card>
       ) : (
-        <Card>
-          <Table
-            columns={columns}
-            data={horariosFiltrados}
-            loading={loading}
-            onEdit={
-              user?.role === "admin" || user?.role === "auxiliar"
-                ? handleEdit
-                : undefined
-            }
-            onDelete={
-              user?.role === "admin" || user?.role === "auxiliar"
-                ? handleDelete
-                : undefined
-            }
-          />
-        </Card>
+        <>
+          <Card>
+            <Table
+              columns={columns}
+              data={horariosFiltrados}
+              loading={loading}
+              onEdit={
+                user?.role === "admin" || user?.role === "auxiliar"
+                  ? handleEdit
+                  : undefined
+              }
+              onDelete={
+                user?.role === "admin" || user?.role === "auxiliar"
+                  ? handleDelete
+                  : undefined
+              }
+            />
+          </Card>
+
+          {(user?.role === "admin" || user?.role === "auxiliar") && (
+            <Pagination
+              currentPage={currentPage}
+              lastPage={paginationData.lastPage}
+              total={paginationData.total}
+              perPage={perPage}
+              onPageChange={(page) => {
+                setCurrentPage(page);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              onPerPageChange={(newPerPage) => {
+                setPerPage(newPerPage);
+                setCurrentPage(1);
+              }}
+            />
+          )}
+        </>
       )}
 
       <Modal
