@@ -7,6 +7,7 @@ import { Card } from "@/src/components/ui/Card";
 import { Modal } from "@/src/components/ui/Modal";
 import { Table } from "@/src/components/ui/Table";
 import { Alert } from "@/src/components/ui/Alert";
+import { Pagination } from "@/src/components/ui/Pagination";
 
 interface Prestamo {
   id: number;
@@ -40,6 +41,12 @@ export default function PrestamosPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(50);
+  const [paginationData, setPaginationData] = useState({
+    total: 0,
+    lastPage: 1,
+  });
 
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -50,20 +57,35 @@ export default function PrestamosPage() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [currentPage, perPage]);
 
   const loadData = async () => {
     try {
       setLoading(true);
       const [prestamosData, librosData] = await Promise.all([
-        prestamoLibroService.getAll(),
-        libroService.getAll(),
+        prestamoLibroService.getAll({ page: currentPage, per_page: perPage }),
+        libroService.getAll({ all: true }),
       ]);
 
-      setPrestamos(Array.isArray(prestamosData) ? prestamosData : []);
+      if (
+        prestamosData &&
+        typeof prestamosData === "object" &&
+        "data" in prestamosData &&
+        "current_page" in prestamosData
+      ) {
+        setPrestamos(prestamosData.data);
+        setPaginationData({
+          total: prestamosData.total || 0,
+          lastPage: prestamosData.last_page || 1,
+        });
+      } else {
+        setPrestamos(Array.isArray(prestamosData) ? prestamosData : []);
+      }
 
       const disponibles = Array.isArray(librosData)
         ? librosData.filter((libro: Libro) => libro.disponible)
+        : librosData?.data
+        ? librosData.data.filter((libro: Libro) => libro.disponible)
         : [];
       setLibrosDisponibles(disponibles);
 
@@ -269,6 +291,21 @@ export default function PrestamosPage() {
           hideDelete
         />
       </Card>
+
+      <Pagination
+        currentPage={currentPage}
+        lastPage={paginationData.lastPage}
+        total={paginationData.total}
+        perPage={perPage}
+        onPageChange={(page) => {
+          setCurrentPage(page);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+        onPerPageChange={(newPerPage) => {
+          setPerPage(newPerPage);
+          setCurrentPage(1);
+        }}
+      />
 
       {/* Modal de formulario */}
       <Modal

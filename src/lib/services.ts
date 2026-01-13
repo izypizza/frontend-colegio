@@ -18,10 +18,47 @@ import {
 class CrudService<T> {
   constructor(private endpoint: string) {}
 
-  async getAll(): Promise<T[]> {
+  async getAll(params?: {
+    page?: number;
+    per_page?: number;
+    all?: boolean;
+  }): Promise<
+    T[] | { data: T[]; current_page: number; last_page: number; total: number }
+  > {
+    const queryParams: any = {};
+
+    if (params?.all) {
+      queryParams.all = "true";
+    } else {
+      if (params?.page) queryParams.page = params.page;
+      if (params?.per_page) queryParams.per_page = params.per_page;
+    }
+
     const response = await apiClient.get<
-      T[] | { data: T[]; especialidades?: any }
-    >(this.endpoint);
+      | T[]
+      | {
+          data: T[];
+          current_page?: number;
+          last_page?: number;
+          total?: number;
+          especialidades?: any;
+        }
+    >(this.endpoint, { params: queryParams });
+
+    // Handle paginated response
+    if (
+      response &&
+      typeof response === "object" &&
+      "data" in response &&
+      "current_page" in response
+    ) {
+      return response as {
+        data: T[];
+        current_page: number;
+        last_page: number;
+        total: number;
+      };
+    }
 
     // Handle multiple formats: direct array or wrapped in data
     if (Array.isArray(response)) {
@@ -121,7 +158,8 @@ class CalificacionServiceExtended extends CrudService<Calificacion> {
   async estadisticasAvanzadas(periodo_id?: number): Promise<any> {
     const params = periodo_id ? `?periodo_academico_id=${periodo_id}` : "";
     return await apiClient.get(
-      `/calificaciones/estadisticas-avanzadas${params}`
+      `/calificaciones/estadisticas-avanzadas${params}`,
+      { timeout: 120000 } // 120 segundos para estadísticas complejas
     );
   }
 }
@@ -289,5 +327,8 @@ export const configuracionService = {
   },
   infoSistema: async () => {
     return await apiClient.get("/sistema/info");
+  },
+  modulosActivos: async () => {
+    return await apiClient.get("/sistema/modulos-activos");
   },
 };

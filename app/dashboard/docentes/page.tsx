@@ -1,11 +1,21 @@
 "use client";
 
-import { Alert, Button, Card, Input, Modal, Table } from "@/src/components/ui";
+import {
+  Alert,
+  Button,
+  Card,
+  Input,
+  Modal,
+  Table,
+  Pagination,
+} from "@/src/components/ui";
 import { docenteService } from "@/src/lib/services";
 import { Docente } from "@/src/types/models";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/src/features/auth";
 
 export default function DocentesPage() {
+  const { user } = useAuth();
   const ESPECIALIDADES = [
     "Matemáticas",
     "Comunicación",
@@ -41,15 +51,42 @@ export default function DocentesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterEspecialidad, setFilterEspecialidad] = useState("");
 
+  // Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(50);
+  const [paginationData, setPaginationData] = useState({
+    total: 0,
+    lastPage: 1,
+  });
+
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [currentPage, perPage]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const data = await docenteService.getAll();
-      setDocentes(data);
+      const data = await docenteService.getAll({
+        page: currentPage,
+        per_page: perPage,
+      });
+
+      // Manejar respuesta paginada
+      if (
+        data &&
+        typeof data === "object" &&
+        "data" in data &&
+        "current_page" in data
+      ) {
+        setDocentes(data.data);
+        setPaginationData({
+          total: data.total || 0,
+          lastPage: data.last_page || 1,
+        });
+      } else {
+        const docentesArray = Array.isArray(data) ? data : data?.data || [];
+        setDocentes(docentesArray);
+      }
     } catch {
       setError("Error al cargar los docentes");
     } finally {
@@ -224,6 +261,23 @@ export default function DocentesPage() {
           onDelete={handleDelete}
         />
       </Card>
+
+      {(user?.role === "admin" || user?.role === "auxiliar") && (
+        <Pagination
+          currentPage={currentPage}
+          lastPage={paginationData.lastPage}
+          total={paginationData.total}
+          perPage={perPage}
+          onPageChange={(page) => {
+            setCurrentPage(page);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          onPerPageChange={(newPerPage) => {
+            setPerPage(newPerPage);
+            setCurrentPage(1);
+          }}
+        />
+      )}
 
       <Modal
         isOpen={isModalOpen}

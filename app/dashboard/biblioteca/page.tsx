@@ -12,6 +12,7 @@ import { Alert } from "@/src/components/ui/Alert";
 interface Libro {
   id: number;
   titulo: string;
+  tipo: "fisico" | "digital";
   autor: string;
   isbn?: string;
   editorial?: string;
@@ -21,6 +22,8 @@ interface Libro {
   categoria_id: number;
   categoria?: { id: number; nombre: string };
   disponible: boolean;
+  url_digital?: string;
+  formato_digital?: string;
 }
 
 interface Categoria {
@@ -42,6 +45,7 @@ export default function LibrosPage() {
   // Estados para el formulario
   const [formData, setFormData] = useState({
     titulo: "",
+    tipo: "fisico" as "fisico" | "digital",
     autor: "",
     isbn: "",
     editorial: "",
@@ -49,6 +53,8 @@ export default function LibrosPage() {
     cantidad_total: "1",
     categoria_id: "",
     disponible: true,
+    url_digital: "",
+    formato_digital: "",
   });
 
   // Estados para búsqueda y filtros
@@ -82,15 +88,22 @@ export default function LibrosPage() {
     try {
       const data = {
         titulo: formData.titulo,
+        tipo: formData.tipo,
         autor: formData.autor,
-        isbn: formData.isbn || null,
-        editorial: formData.editorial || null,
+        isbn: formData.tipo === "fisico" ? formData.isbn || null : null,
+        editorial:
+          formData.tipo === "fisico" ? formData.editorial || null : null,
         anio_publicacion: formData.anio_publicacion
           ? Number(formData.anio_publicacion)
           : null,
-        cantidad_total: Number(formData.cantidad_total),
+        cantidad_total:
+          formData.tipo === "fisico" ? Number(formData.cantidad_total) : 999,
         categoria_id: Number(formData.categoria_id),
         disponible: formData.disponible,
+        url_digital:
+          formData.tipo === "digital" ? formData.url_digital || null : null,
+        formato_digital:
+          formData.tipo === "digital" ? formData.formato_digital || null : null,
       };
 
       if (editingLibro) {
@@ -114,6 +127,7 @@ export default function LibrosPage() {
     setEditingLibro(libro);
     setFormData({
       titulo: libro.titulo,
+      tipo: libro.tipo || "fisico",
       autor: libro.autor,
       isbn: libro.isbn || "",
       editorial: libro.editorial || "",
@@ -121,6 +135,8 @@ export default function LibrosPage() {
       cantidad_total: libro.cantidad_total.toString(),
       categoria_id: libro.categoria_id.toString(),
       disponible: libro.disponible,
+      url_digital: libro.url_digital || "",
+      formato_digital: libro.formato_digital || "",
     });
     setShowModal(true);
   };
@@ -141,6 +157,7 @@ export default function LibrosPage() {
   const resetForm = () => {
     setFormData({
       titulo: "",
+      tipo: "fisico",
       autor: "",
       isbn: "",
       editorial: "",
@@ -148,6 +165,8 @@ export default function LibrosPage() {
       cantidad_total: "1",
       categoria_id: "",
       disponible: true,
+      url_digital: "",
+      formato_digital: "",
     });
     setEditingLibro(null);
   };
@@ -177,6 +196,21 @@ export default function LibrosPage() {
 
   const columns = [
     { key: "titulo", label: "Título" },
+    {
+      key: "tipo",
+      label: "Tipo",
+      render: (libro: Libro) => (
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium ${
+            libro.tipo === "fisico"
+              ? "bg-blue-100 text-blue-800"
+              : "bg-purple-100 text-purple-800"
+          }`}
+        >
+          {libro.tipo === "fisico" ? "📚 Físico" : "💻 Digital"}
+        </span>
+      ),
+    },
     { key: "autor", label: "Autor" },
     {
       key: "categoria",
@@ -186,18 +220,23 @@ export default function LibrosPage() {
     {
       key: "disponible",
       label: "Estado",
-      render: (libro: Libro) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs ${
-            libro.cantidad_disponible > 0
-              ? "bg-green-100 text-green-800"
-              : "bg-red-100 text-red-800"
-          }`}
-        >
-          {libro.cantidad_disponible} / {libro.cantidad_total} disponible
-          {libro.cantidad_disponible !== 1 ? "s" : ""}
-        </span>
-      ),
+      render: (libro: Libro) =>
+        libro.tipo === "digital" ? (
+          <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+            ♾️ Ilimitado
+          </span>
+        ) : (
+          <span
+            className={`px-2 py-1 rounded-full text-xs ${
+              libro.cantidad_disponible > 0
+                ? "bg-green-100 text-green-800"
+                : "bg-red-100 text-red-800"
+            }`}
+          >
+            {libro.cantidad_disponible} / {libro.cantidad_total} disponible
+            {libro.cantidad_disponible !== 1 ? "s" : ""}
+          </span>
+        ),
     },
   ];
 
@@ -305,6 +344,26 @@ export default function LibrosPage() {
             required
           />
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Tipo de Libro *
+            </label>
+            <select
+              value={formData.tipo}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  tipo: e.target.value as "fisico" | "digital",
+                })
+              }
+              className="w-full border border-gray-300 rounded-md px-3 py-2"
+              required
+            >
+              <option value="fisico">📚 Físico</option>
+              <option value="digital">💻 Digital</option>
+            </select>
+          </div>
+
           <Input
             label="Autor *"
             value={formData.autor}
@@ -314,38 +373,87 @@ export default function LibrosPage() {
             required
           />
 
-          <Input
-            label="ISBN"
-            value={formData.isbn}
-            onChange={(e) => setFormData({ ...formData, isbn: e.target.value })}
-          />
+          {/* Campos solo para libros físicos */}
+          {formData.tipo === "fisico" && (
+            <>
+              <Input
+                label="ISBN (opcional)"
+                value={formData.isbn}
+                onChange={(e) =>
+                  setFormData({ ...formData, isbn: e.target.value })
+                }
+                placeholder="Ej: 978-3-16-148410-0"
+              />
+
+              <Input
+                label="Editorial (opcional)"
+                value={formData.editorial}
+                onChange={(e) =>
+                  setFormData({ ...formData, editorial: e.target.value })
+                }
+                placeholder="Ej: Santillana"
+              />
+
+              <Input
+                label="Cantidad Total *"
+                type="number"
+                min="1"
+                value={formData.cantidad_total}
+                onChange={(e) =>
+                  setFormData({ ...formData, cantidad_total: e.target.value })
+                }
+                required
+              />
+            </>
+          )}
+
+          {/* Campos solo para libros digitales */}
+          {formData.tipo === "digital" && (
+            <>
+              <Input
+                label="URL / Enlace (opcional)"
+                value={formData.url_digital}
+                onChange={(e) =>
+                  setFormData({ ...formData, url_digital: e.target.value })
+                }
+                placeholder="https://..."
+              />
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Formato Digital (opcional)
+                </label>
+                <select
+                  value={formData.formato_digital}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      formato_digital: e.target.value,
+                    })
+                  }
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                >
+                  <option value="">Seleccionar formato</option>
+                  <option value="PDF">PDF</option>
+                  <option value="EPUB">EPUB</option>
+                  <option value="MOBI">MOBI</option>
+                  <option value="AZW">AZW (Kindle)</option>
+                  <option value="Online">Online / Web</option>
+                </select>
+              </div>
+            </>
+          )}
 
           <Input
-            label="Editorial"
-            value={formData.editorial}
-            onChange={(e) =>
-              setFormData({ ...formData, editorial: e.target.value })
-            }
-          />
-
-          <Input
-            label="Año de Publicación"
+            label="Año de Publicación (opcional)"
             type="number"
+            min="1900"
+            max={new Date().getFullYear()}
             value={formData.anio_publicacion}
             onChange={(e) =>
               setFormData({ ...formData, anio_publicacion: e.target.value })
             }
-          />
-
-          <Input
-            label="Cantidad Total *"
-            type="number"
-            min="1"
-            value={formData.cantidad_total}
-            onChange={(e) =>
-              setFormData({ ...formData, cantidad_total: e.target.value })
-            }
-            required
+            placeholder="Ej: 2024"
           />
 
           <div>
@@ -383,7 +491,9 @@ export default function LibrosPage() {
               htmlFor="disponible"
               className="text-sm font-medium text-gray-700"
             >
-              Disponible
+              Disponible{" "}
+              {formData.tipo === "digital" &&
+                "(siempre disponible para digitales)"}
             </label>
           </div>
 

@@ -91,7 +91,7 @@ export default function CalificacionesHijosPage() {
       const response = await padrePortalService.calificacionesHijos();
       const hijosData = response.hijos || [];
 
-      // Filtrar calificaciones por periodo
+      // Filtrar calificaciones por periodo seleccionado
       const hijosConCalificaciones = hijosData.map((hijo: Estudiante) => ({
         ...hijo,
         calificaciones: selectedPeriodo
@@ -104,6 +104,7 @@ export default function CalificacionesHijosPage() {
       setHijos(hijosConCalificaciones);
     } catch (error) {
       console.error("Error al cargar calificaciones:", error);
+      setHijos([]);
     } finally {
       setLoading(false);
     }

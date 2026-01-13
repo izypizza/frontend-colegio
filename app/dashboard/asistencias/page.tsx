@@ -1,6 +1,14 @@
 "use client";
 
-import { Alert, Button, Card, Input, Modal, Table } from "@/src/components/ui";
+import {
+  Alert,
+  Button,
+  Card,
+  Input,
+  Modal,
+  Table,
+  Pagination,
+} from "@/src/components/ui";
 import {
   asistenciaService,
   estudianteService,
@@ -30,6 +38,20 @@ export default function AsistenciasPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterMateria, setFilterMateria] = useState("");
   const [filterEstado, setFilterEstado] = useState("");
+
+  // Filtros de fecha optimizados
+  const currentYear = new Date().getFullYear();
+  const [filterMes, setFilterMes] = useState("");
+  const [filterDia, setFilterDia] = useState("");
+  const [filterAnio, setFilterAnio] = useState(currentYear.toString());
+
+  // Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(100);
+  const [paginationData, setPaginationData] = useState({
+    total: 0,
+    lastPage: 1,
+  });
 
   const handleExportExcel = () => {
     try {
@@ -96,6 +118,54 @@ export default function AsistenciasPage() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    if (user?.role === "admin" || user?.role === "auxiliar") {
+      fetchDataPaginated();
+    }
+  }, [currentPage, perPage, user]);
+
+  const fetchDataPaginated = async () => {
+    try {
+      setLoading(true);
+      const [asistenciasData, estudiantesData, materiasData] =
+        await Promise.all([
+          asistenciaService.getAll({ page: currentPage, per_page: perPage }),
+          estudianteService.getAll({ all: true }),
+          materiaService.getAll({ all: true }),
+        ]);
+
+      // Manejar respuesta paginada
+      if (
+        asistenciasData &&
+        typeof asistenciasData === "object" &&
+        "data" in asistenciasData &&
+        "current_page" in asistenciasData
+      ) {
+        setAsistencias(asistenciasData.data);
+        setPaginationData({
+          total: asistenciasData.total || 0,
+          lastPage: asistenciasData.last_page || 1,
+        });
+      } else {
+        const asistenciasArray = asistenciasData?.data || asistenciasData || [];
+        setAsistencias(asistenciasArray);
+      }
+
+      setEstudiantes(
+        Array.isArray(estudiantesData)
+          ? estudiantesData
+          : estudiantesData?.data || []
+      );
+      setMaterias(
+        Array.isArray(materiasData) ? materiasData : materiasData?.data || []
+      );
+    } catch (err: any) {
+      setError(err?.message || "Error al cargar los datos");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -112,8 +182,16 @@ export default function AsistenciasPage() {
           "Asistencias cargadas (docente):",
           asistenciasData.asistencias?.length || 0
         );
-        setAsistencias(asistenciasData.asistencias || []);
-        setEstudiantes(estudiantesData.estudiantes || []);
+        setAsistencias(
+          Array.isArray(asistenciasData.asistencias)
+            ? asistenciasData.asistencias
+            : []
+        );
+        setEstudiantes(
+          Array.isArray(estudiantesData.estudiantes)
+            ? estudiantesData.estudiantes
+            : []
+        );
         // Extraer materias únicas de las asignaciones usando Map
         const materiasMap = new Map();
         asignacionesData.asignaciones?.forEach((a: any) => {
@@ -141,9 +219,12 @@ export default function AsistenciasPage() {
 
         // Manejar respuesta paginada o sin paginar
         const asistenciasArray = asistenciasData?.data || asistenciasData || [];
-        setAsistencias(asistenciasArray);
-        setEstudiantes(estudiantesData || []);
-        setMaterias(materiasData || []);
+        const estudiantesArray = estudiantesData?.data || estudiantesData || [];
+        const materiasArray = materiasData?.data || materiasData || [];
+
+        setAsistencias(Array.isArray(asistenciasArray) ? asistenciasArray : []);
+        setEstudiantes(Array.isArray(estudiantesArray) ? estudiantesArray : []);
+        setMaterias(Array.isArray(materiasArray) ? materiasArray : []);
       }
     } catch (error) {
       console.error("Error al cargar datos:", error);
@@ -242,7 +323,24 @@ export default function AsistenciasPage() {
       (filterEstado === "presente"
         ? asistencia.presente
         : !asistencia.presente);
-    return matchesSearch && matchesMateria && matchesEstado;
+
+    // Filtros de fecha
+    const fechaAsistencia = new Date(asistencia.fecha);
+    const matchesAnio =
+      !filterAnio || fechaAsistencia.getFullYear().toString() === filterAnio;
+    const matchesMes =
+      !filterMes || (fechaAsistencia.getMonth() + 1).toString() === filterMes;
+    const matchesDia =
+      !filterDia || fechaAsistencia.getDate().toString() === filterDia;
+
+    return (
+      matchesSearch &&
+      matchesMateria &&
+      matchesEstado &&
+      matchesAnio &&
+      matchesMes &&
+      matchesDia
+    );
   });
 
   const columns = [
@@ -351,38 +449,117 @@ export default function AsistenciasPage() {
 
       {/* Filtros de búsqueda */}
       <Card>
-        <div className="flex flex-col md:flex-row gap-4 mb-4">
-          <Input
-            placeholder="Buscar por estudiante o materia..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1"
-          />
-          <select
-            value={filterMateria}
-            onChange={(e) => setFilterMateria(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Todas las materias</option>
-            {materias?.map((materia) => (
-              <option key={materia.id} value={materia.id}>
-                {materia.nombre}
-              </option>
-            ))}
-          </select>
-          <select
-            value={filterEstado}
-            onChange={(e) => setFilterEstado(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Todos los estados</option>
-            <option value="presente">Presente</option>
-            <option value="ausente">Ausente</option>
-          </select>
+        <div className="space-y-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            <Input
+              placeholder="Buscar por estudiante o materia..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="flex-1"
+            />
+            <select
+              value={filterMateria}
+              onChange={(e) => setFilterMateria(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Todas las materias</option>
+              {materias?.map((materia) => (
+                <option key={materia.id} value={materia.id}>
+                  {materia.nombre}
+                </option>
+              ))}
+            </select>
+            <select
+              value={filterEstado}
+              onChange={(e) => setFilterEstado(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Todos los estados</option>
+              <option value="presente">Presente</option>
+              <option value="ausente">Ausente</option>
+            </select>
+          </div>
+
+          {/* Filtros de fecha */}
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Año
+              </label>
+              <select
+                value={filterAnio}
+                onChange={(e) => setFilterAnio(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value={currentYear}>{currentYear} (Actual)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Mes
+              </label>
+              <select
+                value={filterMes}
+                onChange={(e) => setFilterMes(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Todos los meses</option>
+                <option value="1">Enero</option>
+                <option value="2">Febrero</option>
+                <option value="3">Marzo</option>
+                <option value="4">Abril</option>
+                <option value="5">Mayo</option>
+                <option value="6">Junio</option>
+                <option value="7">Julio</option>
+                <option value="8">Agosto</option>
+                <option value="9">Septiembre</option>
+                <option value="10">Octubre</option>
+                <option value="11">Noviembre</option>
+                <option value="12">Diciembre</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Día
+              </label>
+              <select
+                value={filterDia}
+                onChange={(e) => setFilterDia(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Todos los días</option>
+                {Array.from({ length: 31 }, (_, i) => i + 1).map((dia) => (
+                  <option key={dia} value={dia.toString()}>
+                    {dia}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-end">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setFilterMes("");
+                  setFilterDia("");
+                  setFilterAnio(currentYear.toString());
+                  setFilterMateria("");
+                  setFilterEstado("");
+                  setSearchTerm("");
+                }}
+                className="w-full"
+              >
+                Limpiar Filtros
+              </Button>
+            </div>
+          </div>
         </div>
-        <div className="text-sm text-gray-600">
+
+        <div className="text-sm text-gray-600 mt-4">
           Mostrando {asistenciasFiltradas.length} de {asistencias.length}{" "}
-          registros
+          registros {filterAnio && `del año ${filterAnio}`}
         </div>
       </Card>
 
@@ -393,6 +570,23 @@ export default function AsistenciasPage() {
           loading={loading}
         />
       </Card>
+
+      {(user?.role === "admin" || user?.role === "auxiliar") && (
+        <Pagination
+          currentPage={currentPage}
+          lastPage={paginationData.lastPage}
+          total={paginationData.total}
+          perPage={perPage}
+          onPageChange={(page) => {
+            setCurrentPage(page);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          onPerPageChange={(newPerPage) => {
+            setPerPage(newPerPage);
+            setCurrentPage(1);
+          }}
+        />
+      )}
 
       <Modal
         isOpen={isModalOpen}
