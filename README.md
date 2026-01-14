@@ -84,10 +84,19 @@ La aplicación estará disponible en `http://localhost:3000`
 
 #### Control de Asistencias
 
-- Registro diario por materia
-- Filtros por fecha, estudiante, materia
-- Reportes de porcentaje
-- Solo admin/auxiliar/docente
+- Registro diario por materia con **3 estados**:
+  - 🟢 **Presente**: Asistió puntualmente
+  - 🟡 **Llegó Tarde**: Asistió con tardanza
+  - 🔴 **Ausente**: No asistió
+- Campo de **observaciones** (opcional, 500 caracteres)
+- Filtros por fecha, estudiante, materia, estado
+- Reportes de porcentaje de asistencia
+- Estadísticas con tardanzas diferenciadas
+- Exportación a Excel/CSV
+- **Restricciones por rol**:
+  - Admin/Auxiliar: Ver todas, crear, editar, eliminar
+  - Docente: Solo de sus materias asignadas, crear y editar
+  - Estudiante/Padre: Solo consulta
 
 #### Biblioteca Digital
 
@@ -115,6 +124,7 @@ La aplicación estará disponible en `http://localhost:3000`
 - **Mis Clases** - Asignaciones materia-sección, lista de estudiantes
 - **Mis Estudiantes** - Vista consolidada, filtro por sección/materia
 - **Calificaciones** - Solo materias asignadas, registro por período
+- **Asistencias** - Registro con 3 estados y observaciones
 - **Horarios** - Vista de horarios personales
 
 ### 🟣 Portal Estudiante
@@ -125,7 +135,8 @@ La aplicación estará disponible en `http://localhost:3000`
   - Radar comparativo
   - Donut por rangos
   - Línea de evolución
-- **Mis Asistencias** - Porcentaje, gráficas (distribución, por materia, tendencia)
+- **Mis Asistencias** - Porcentaje, gráficas (distribución por estado, por materia, tendencia)
+  - Visualización de estados: Presente/Tarde/Ausente
 - **Biblioteca** - Catálogo, solicitud de préstamos, mis préstamos
 - **Elecciones** - Ver candidatos, votar, ver resultados (1 voto por elección)
 - **Horarios** - Vista semanal de clases
@@ -138,7 +149,8 @@ La aplicación estará disponible en `http://localhost:3000`
   - Selector de período académico
   - Gráficas por hijo (barras, radar)
   - Promedio general y tabla detallada
-  - Soporte para múltiples hijos (tarjetas separadas)
+  - Asistencias de Hijos\*\* - Visualización con estados (Presente/Tarde/Ausente)
+- \*\*Soporte para múltiples hijos (tarjetas separadas)
 - **Horarios** - Vista de horarios de los hijos
 
 ## 🎨 Características de UI/UX
@@ -260,11 +272,21 @@ npm run lint     # ESLint
 - **Horarios vacíos**: Admin debe crear horarios para la sección
 - **Padre no ve hijos**: Admin debe vincular padre-estudiante
 - **No puede pedir préstamo**: Verificar validaciones (límite 3, vencidos, stock)
+  � Historial de Actualizaciones
+
+### Versión 1.1.0 (14 Enero 2026)
+
+- ✅ **Sistema de Asistencias Mejorado**: 3 estados con badges de colores
+- ✅ **Interfaz Actualizada**: Formulario con radio buttons y observaciones
+- ✅ **Filtros Mejorados**: Incluye estado "Llegó Tarde"
+- ✅ **Exportación Excel**: Columna de estado actualizada
+- ✅ **Tipos TypeScript**: Interface Asistencia actualizada
+- ✅ **Acceso por Roles**: Todos los roles funcionan correctamente
 
 ## 📝 Próximas Funcionalidades
 
 - [ ] Notificaciones en tiempo real
-- [ ] Exportación PDF/Excel
+- [ ] Exportación PDF/Excel avanzada
 - [ ] Chat docente-padre
 - [ ] Sistema de tareas
 - [ ] Modo oscuro
@@ -277,4 +299,5 @@ Proyecto privado - I.E. N° 51006 "TÚPAC AMARU" - Cusco, Perú
 
 ---
 
+**Última actualización**: 14 Enero 2026 | **Versión**: 1.1
 **Última actualización**: Enero 2026 | **Versión**: 1.0.0
