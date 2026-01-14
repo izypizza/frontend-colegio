@@ -21,6 +21,11 @@ import { useAuth } from "@/src/features/auth";
 
 export default function AsistenciasPage() {
   const { user } = useAuth();
+
+  // Verificar que el usuario tenga un rol autorizado
+  const rolesAutorizados = ["admin", "auxiliar", "docente"];
+  const tieneAcceso = user && rolesAutorizados.includes(user.role);
+
   const [asistencias, setAsistencias] = useState<Asistencia[]>([]);
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [materias, setMaterias] = useState<Materia[]>([]);
@@ -31,7 +36,8 @@ export default function AsistenciasPage() {
     estudiante_id: "",
     materia_id: "",
     fecha: "",
-    presente: true,
+    estado: "presente" as "presente" | "tarde" | "ausente",
+    observaciones: "",
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -71,7 +77,12 @@ export default function AsistenciasPage() {
           month: "2-digit",
           year: "numeric",
         }),
-        Estado: asist.presente ? "Presente" : "Ausente",
+        Estado:
+          asist.estado === "presente"
+            ? "Presente"
+            : asist.estado === "tarde"
+            ? "Llegó Tarde"
+            : "Ausente",
       }));
 
       // Crear CSV con formato UTF-8 BOM para Excel
@@ -169,9 +180,31 @@ export default function AsistenciasPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
+      setError(null);
+
+      // Verificar que el usuario esté autenticado
+      if (!user) {
+        setError(
+          "Usuario no autenticado. Por favor, inicia sesión nuevamente."
+        );
+        setLoading(false);
+        return;
+      }
+
+      // Verificar que el usuario tenga un rol válido para esta sección
+      const rolesPermitidos = ["admin", "auxiliar", "docente"];
+      if (!rolesPermitidos.includes(user.role)) {
+        setError(
+          `No tienes permisos para acceder a esta sección. Tu rol actual es: ${user.role}`
+        );
+        setLoading(false);
+        return;
+      }
+
+      console.log("Cargando datos para usuario con rol:", user.role);
 
       // Si es docente, usar los endpoints del portal de docente
-      if (user?.role === "docente") {
+      if (user.role === "docente") {
         const [asistenciasData, estudiantesData, asignacionesData] =
           await Promise.all([
             docentePortalService.misAsistencias(),
@@ -202,7 +235,7 @@ export default function AsistenciasPage() {
         const materiasUnicas = Array.from(materiasMap.values());
         console.log("Materias únicas:", materiasUnicas.length);
         setMaterias(materiasUnicas);
-      } else {
+      } else if (user.role === "admin" || user.role === "auxiliar") {
         // Admin/Auxiliar usan endpoints generales
         const [asistenciasData, estudiantesData, materiasData] =
           await Promise.all([
@@ -226,9 +259,28 @@ export default function AsistenciasPage() {
         setEstudiantes(Array.isArray(estudiantesArray) ? estudiantesArray : []);
         setMaterias(Array.isArray(materiasArray) ? materiasArray : []);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error al cargar datos:", error);
-      setError("Error al cargar los datos");
+
+      // Mejorar el mensaje de error para el usuario
+      let errorMessage = "Error al cargar los datos";
+
+      if (error?.response?.status === 403) {
+        errorMessage = `No tienes permisos para acceder a este recurso. Rol actual: ${
+          user?.role || "desconocido"
+        }`;
+        if (error?.response?.data?.required_roles) {
+          errorMessage += `. Roles requeridos: ${error.response.data.required_roles.join(
+            ", "
+          )}`;
+        }
+      } else if (error?.response?.status === 401) {
+        errorMessage = "Sesión expirada. Por favor, inicia sesión nuevamente.";
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -240,7 +292,8 @@ export default function AsistenciasPage() {
       estudiante_id: "",
       materia_id: "",
       fecha: new Date().toISOString().split("T")[0],
-      presente: true,
+      estado: "presente",
+      observaciones: "",
     });
     setIsModalOpen(true);
   };
@@ -251,7 +304,8 @@ export default function AsistenciasPage() {
       estudiante_id: item.estudiante_id.toString(),
       materia_id: item.materia_id.toString(),
       fecha: item.fecha.split("T")[0], // Convertir a yyyy-MM-dd
-      presente: item.presente,
+      estado: item.estado || "presente",
+      observaciones: item.observaciones || "",
     });
     setIsModalOpen(true);
   };
@@ -278,7 +332,8 @@ export default function AsistenciasPage() {
         estudiante_id: parseInt(formData.estudiante_id),
         materia_id: parseInt(formData.materia_id),
         fecha: formData.fecha,
-        presente: formData.presente,
+        estado: formData.estado,
+        observaciones: formData.observaciones || undefined,
       };
 
       if (user?.role === "docente") {
@@ -301,28 +356,37 @@ export default function AsistenciasPage() {
       }
 
       setIsModalOpen(false);
+      setFormData({
+        estudiante_id: "",
+        materia_id: "",
+        fecha: "",
+        estado: "presente",
+        observaciones: "",
+      });
+      setEditingItem(null);
       fetchData();
-    } catch {
-      setError("Error al guardar la asistencia");
+    } catch (err: any) {
+      setError(err?.message || "Error al guardar la asistencia");
     }
   };
 
   // Filtrado de asistencias
   const asistenciasFiltradas = asistencias.filter((asistencia) => {
     const estudianteNombre =
-      (asistencia.estudiante as any)?.nombre?.toLowerCase() || "";
-    const materiaNombre =
-      (asistencia.materia as any)?.nombre?.toLowerCase() || "";
+      (asistencia.estudiante?.nombres || "") +
+      " " +
+      (asistencia.estudiante?.apellido_paterno || "");
+    const materiaNombre = asistencia.materia?.nombre || "";
+
     const matchesSearch =
-      estudianteNombre.includes(searchTerm.toLowerCase()) ||
-      materiaNombre.includes(searchTerm.toLowerCase());
+      !searchTerm ||
+      estudianteNombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      materiaNombre.toLowerCase().includes(searchTerm.toLowerCase());
+
     const matchesMateria =
       !filterMateria || asistencia.materia_id?.toString() === filterMateria;
-    const matchesEstado =
-      !filterEstado ||
-      (filterEstado === "presente"
-        ? asistencia.presente
-        : !asistencia.presente);
+
+    const matchesEstado = !filterEstado || asistencia.estado === filterEstado;
 
     // Filtros de fecha
     const fechaAsistencia = new Date(asistencia.fecha);
@@ -376,19 +440,25 @@ export default function AsistenciasPage() {
         }),
     },
     {
-      key: "presente",
+      key: "estado",
       label: "Estado",
-      render: (value: unknown) => {
-        const presente = value as boolean;
+      render: (value: unknown, asistencia: Asistencia) => {
+        const estado = asistencia.estado || "presente";
+        const badgeStyles = {
+          presente: "bg-green-100 text-green-800",
+          tarde: "bg-yellow-100 text-yellow-800",
+          ausente: "bg-red-100 text-red-800",
+        };
+        const labels = {
+          presente: "Presente",
+          tarde: "Llegó Tarde",
+          ausente: "Ausente",
+        };
         return (
           <span
-            className={`px-3 py-1 rounded-full text-xs font-semibold ${
-              presente
-                ? "bg-green-100 text-green-800"
-                : "bg-red-100 text-red-800"
-            }`}
+            className={`px-3 py-1 rounded-full text-xs font-semibold ${badgeStyles[estado]}`}
           >
-            {presente ? "Presente" : "Ausente"}
+            {labels[estado]}
           </span>
         );
       },
@@ -416,6 +486,77 @@ export default function AsistenciasPage() {
       ),
     },
   ];
+
+  // Renderizado condicional si el usuario no tiene acceso
+  if (!user) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <div className="p-8 text-center">
+            <div className="mb-4">
+              <svg
+                className="mx-auto h-12 w-12 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Autenticación requerida
+            </h3>
+            <p className="text-gray-600">
+              Debes iniciar sesión para acceder a esta página.
+            </p>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!tieneAcceso) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <div className="p-8 text-center">
+            <div className="mb-4">
+              <svg
+                className="mx-auto h-12 w-12 text-red-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Acceso denegado
+            </h3>
+            <p className="text-gray-600 mb-2">
+              No tienes permisos para acceder a esta página.
+            </p>
+            <p className="text-sm text-gray-500">
+              Tu rol actual: <span className="font-semibold">{user.role}</span>
+            </p>
+            <p className="text-sm text-gray-500">
+              Roles requeridos: Admin, Auxiliar o Docente
+            </p>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -476,6 +617,7 @@ export default function AsistenciasPage() {
             >
               <option value="">Todos los estados</option>
               <option value="presente">Presente</option>
+              <option value="tarde">Llegó Tarde</option>
               <option value="ausente">Ausente</option>
             </select>
           </div>
@@ -674,8 +816,18 @@ export default function AsistenciasPage() {
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="radio"
-                  checked={formData.presente === true}
-                  onChange={() => setFormData({ ...formData, presente: true })}
+                  name="estado"
+                  value="presente"
+                  checked={formData.estado === "presente"}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      estado: e.target.value as
+                        | "presente"
+                        | "tarde"
+                        | "ausente",
+                    })
+                  }
                   className="w-4 h-4 text-blue-600"
                 />
                 <span>Presente</span>
@@ -683,13 +835,61 @@ export default function AsistenciasPage() {
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="radio"
-                  checked={formData.presente === false}
-                  onChange={() => setFormData({ ...formData, presente: false })}
-                  className="w-4 h-4 text-blue-600"
+                  name="estado"
+                  value="tarde"
+                  checked={formData.estado === "tarde"}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      estado: e.target.value as
+                        | "presente"
+                        | "tarde"
+                        | "ausente",
+                    })
+                  }
+                  className="w-4 h-4 text-yellow-600"
+                />
+                <span>Llegó Tarde</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="estado"
+                  value="ausente"
+                  checked={formData.estado === "ausente"}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      estado: e.target.value as
+                        | "presente"
+                        | "tarde"
+                        | "ausente",
+                    })
+                  }
+                  className="w-4 h-4 text-red-600"
                 />
                 <span>Ausente</span>
               </label>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Observaciones (opcional)
+            </label>
+            <textarea
+              value={formData.observaciones}
+              onChange={(e) =>
+                setFormData({ ...formData, observaciones: e.target.value })
+              }
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              rows={3}
+              maxLength={500}
+              placeholder="Agregar observaciones sobre la asistencia..."
+            />
+            <p className="text-sm text-gray-500 mt-1">
+              {formData.observaciones.length}/500 caracteres
+            </p>
           </div>
         </form>
       </Modal>

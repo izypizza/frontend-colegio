@@ -57,6 +57,26 @@ class ApiClient {
         throw new Error("Sesión expirada. Por favor inicia sesión nuevamente.");
       }
 
+      // Verificar si es un error de permisos (403)
+      if (response.status === HTTP_STATUS.FORBIDDEN) {
+        const errorMessage =
+          data.message || "No tiene permisos para acceder a este recurso";
+        console.error("Error de permisos:", {
+          status: response.status,
+          message: errorMessage,
+          requiredRoles: data.required_roles,
+          userRole: data.user_role,
+          url: response.url,
+        });
+
+        const error: any = new Error(errorMessage);
+        error.response = {
+          status: response.status,
+          data: data,
+        };
+        throw error;
+      }
+
       // Crear un error con toda la información de respuesta
       const error: any = new Error(data.message || "Error en la solicitud");
       error.response = {

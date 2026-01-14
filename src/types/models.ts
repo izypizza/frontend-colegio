@@ -171,7 +171,9 @@ export interface Asistencia {
   estudiante_id: number;
   materia_id: number;
   fecha: string;
-  presente: boolean;
+  estado: "presente" | "tarde" | "ausente";
+  observaciones?: string;
+  presente?: boolean; // Computed field para compatibilidad
   estudiante?: Estudiante;
   materia?: Materia;
   created_at: string;
