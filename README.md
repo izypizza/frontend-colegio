@@ -1,23 +1,23 @@
-# Sistema de Gestión Escolar - Frontend
+# Sistema de Gestion Escolar - Frontend
 
-Aplicación web moderna desarrollada con **Next.js 16**, **React 19** y **TypeScript** para la gestión integral de la I.E. N° 51006 "TÚPAC AMARU". Interfaz responsive y profesional con sistema de roles completo.
+Aplicacion web moderna desarrollada con Next.js 16, React 19 y TypeScript para la gestion integral de la I.E. N° 51006 "TUPAC AMARU". Interfaz responsive y profesional con sistema de roles completo.
 
-## 🚀 Tecnologías
+## Tecnologias
 
-- **Framework**: Next.js 16.0.10 (App Router)
-- **UI Library**: React 19.2.0
-- **Lenguaje**: TypeScript 5
-- **Estilos**: Tailwind CSS 4
-- **Gráficas**: Recharts 3.6.0
-- **Autenticación**: JWT con Laravel Sanctum
+- Framework: Next.js 16.0.10 (App Router)
+- UI Library: React 19.2.0
+- Lenguaje: TypeScript 5
+- Estilos: Tailwind CSS 4
+- Graficas: Recharts 3.6.0
+- Autenticacion: JWT con Laravel Sanctum
 
-## 📋 Requisitos Previos
+## Requisitos Previos
 
 - Node.js 20 o superior
 - NPM o Yarn
 - Backend API corriendo en http://localhost:8000
 
-## ⚡ Instalación
+## Instalacion
 
 ```bash
 # Clonar repositorio
@@ -33,21 +33,21 @@ npm run dev
 
 La aplicación estará disponible en `http://localhost:3000`
 
-## 🔐 Credenciales de Prueba
+## Credenciales de Prueba
 
-| Rol               | Email                    | Contraseña     | Descripción              |
+| Rol               | Email                    | Contrasena     | Descripcion              |
 | ----------------- | ------------------------ | -------------- | ------------------------ |
-| **Admin**         | admin@colegio.pe         | admin123       | Acceso total al sistema  |
-| **Auxiliar**      | auxiliar@colegio.pe      | auxiliar123    | Gestión académica        |
-| **Bibliotecario** | bibliotecario@colegio.pe | biblioteca2025 | Gestión de biblioteca    |
-| **Docente**       | docente@colegio.pe       | docente123     | Portal docente           |
-| **Padre**         | padre@colegio.pe         | padre123       | Ver información de hijos |
-| **Estudiante**    | estudiante@colegio.pe    | estudiante123  | Portal estudiante        |
+| Admin             | admin@colegio.pe         | admin123       | Acceso total al sistema  |
+| Auxiliar          | auxiliar@colegio.pe      | auxiliar123    | Gestion academica        |
+| Bibliotecario     | bibliotecario@colegio.pe | biblioteca2025 | Gestion de biblioteca    |
+| Docente           | docente@colegio.pe       | docente123     | Portal docente           |
+| Padre             | padre@colegio.pe         | padre123       | Ver informacion de hijos |
+| Estudiante        | estudiante@colegio.pe    | estudiante123  | Portal estudiante        |
 
-**Usuarios adicionales:**
+Usuarios adicionales:
 
-- Docentes: `docente{número}@colegio.pe` (contraseña: `docente{número}`)
-- Padres: `padre{número}@colegio.pe` (contraseña: `padre{número}`)
+- Docentes: docente{numero}@colegio.pe (contrasena: docente{numero})
+- Padres: padre{numero}@colegio.pe (contrasena: padre{numero})
 - Estudiantes: `estudiante{número}@colegio.pe` (contraseña: `estudiante{número}`)
 
 ## 🎯 Módulos del Sistema
@@ -265,39 +265,36 @@ npm start        # Servidor producción
 npm run lint     # ESLint
 ```
 
-## 🐛 Problemas Conocidos
+## Problemas Conocidos
 
-- **Token inválido**: Logout y login nuevamente
-- **Calificaciones no cargan (docente)**: Admin debe asignar materias
-- **Horarios vacíos**: Admin debe crear horarios para la sección
-- **Padre no ve hijos**: Admin debe vincular padre-estudiante
-- **No puede pedir préstamo**: Verificar validaciones (límite 3, vencidos, stock)
-  � Historial de Actualizaciones
+- Token invalido: Logout y login nuevamente
+- Calificaciones no cargan (docente): Admin debe asignar materias
+- Horarios vacios: Admin debe crear horarios para la seccion
+- Padre no ve hijos: Admin debe vincular padre-estudiante
+- No puede pedir prestamo: Verificar validaciones (limite 3, vencidos, stock)
 
-### Versión 1.1.0 (14 Enero 2026)
+## Historial de Actualizaciones
 
-- ✅ **Sistema de Asistencias Mejorado**: 3 estados con badges de colores
-- ✅ **Interfaz Actualizada**: Formulario con radio buttons y observaciones
-- ✅ **Filtros Mejorados**: Incluye estado "Llegó Tarde"
-- ✅ **Exportación Excel**: Columna de estado actualizada
-- ✅ **Tipos TypeScript**: Interface Asistencia actualizada
-- ✅ **Acceso por Roles**: Todos los roles funcionan correctamente
+### Version 1.2.0 (19 Enero 2026) - Consolidacion UI
 
-## 📝 Próximas Funcionalidades
+- Sistema de Grados y Secciones unificado en una sola pagina
+- Vista dual con selector de modo (grados/secciones)
+- Cards de grados con contadores de secciones y estudiantes
+- Vista de secciones con turnos (Manana/Tarde) y barra de ocupacion
+- Navegacion directa a Configuraciones (sin dropdown)
+- Menu Secciones eliminado del Sidebar
+- Estadisticas en tiempo real (6 metricas)
 
-- [ ] Notificaciones en tiempo real
-- [ ] Exportación PDF/Excel avanzada
-- [ ] Chat docente-padre
-- [ ] Sistema de tareas
-- [ ] Modo oscuro
-- [ ] PWA
-- [ ] Tests (Jest + Playwright)
+### Version 1.1.0 (14 Enero 2026)
 
-## 📄 Licencia
-
-Proyecto privado - I.E. N° 51006 "TÚPAC AMARU" - Cusco, Perú
+- Sistema de Asistencias Mejorado: 3 estados con badges de colores
+- Interfaz Actualizada: Formulario con radio buttons y observaciones
+- Filtros Mejorados: Incluye estado "Llego Tarde"
+- Exportacion Excel: Columna de estado actualizada
+- Tipos TypeScript: Interface Asistencia actualizada
+- Acceso por Roles: Todos los roles funcionan correctamente
 
 ---
 
-**Última actualización**: 14 Enero 2026 | **Versión**: 1.1
-**Última actualización**: Enero 2026 | **Versión**: 1.0.0
+Ultima actualizacion: 19 Enero 2026 | Version: 1.2.0
+Proyecto para I.E. N 51006 "TUPAC AMARU" - Cusco, Peru

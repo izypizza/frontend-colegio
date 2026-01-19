@@ -85,12 +85,12 @@ export default function ConfiguracionesPage() {
         ([clave, valor]) => ({
           clave,
           valor,
-        })
+        }),
       );
 
       await configuracionService.actualizar(configuracionesArray);
       setSuccess(
-        "✅ Configuraciones guardadas correctamente. Los cambios se han aplicado al sistema."
+        "✅ Configuraciones guardadas correctamente. Los cambios se han aplicado al sistema.",
       );
       setCambios({});
       fetchData();
@@ -107,7 +107,7 @@ export default function ConfiguracionesPage() {
   const handleLimpiarCache = async () => {
     if (
       !confirm(
-        "¿Estás seguro de limpiar el cache? Esto puede afectar temporalmente el rendimiento del sistema."
+        "¿Estás seguro de limpiar el cache? Esto puede afectar temporalmente el rendimiento del sistema.",
       )
     ) {
       return;
@@ -178,21 +178,9 @@ export default function ConfiguracionesPage() {
   };
 
   const categoriaNombres: Record<string, string> = {
-    general: "Configuración General",
     modulos: "Módulos del Sistema",
     seguridad: "Seguridad",
-    sistema: "Sistema",
-    accesibilidad: "Accesibilidad",
   };
-
-  // Verificar si el modo mantenimiento está activo
-  const modoMantenimientoConfig = configuraciones.sistema?.find(
-    (c) => c.clave === "sistema_modo_mantenimiento"
-  );
-  const modoMantenimientoActivo =
-    cambios["sistema_modo_mantenimiento"] !== undefined
-      ? cambios["sistema_modo_mantenimiento"]
-      : modoMantenimientoConfig?.valor === "true";
 
   if (loading) {
     return (
@@ -225,12 +213,12 @@ export default function ConfiguracionesPage() {
               variant="outline"
               disabled={cacheLimpiando}
             >
-              {cacheLimpiando ? "Limpiando..." : "🗑️ Limpiar Cache"}
+              {cacheLimpiando ? "Limpiando..." : "Limpiar Cache"}
             </Button>
 
             {Object.keys(cambios).length > 0 && (
               <Button onClick={handleGuardar} variant="primary">
-                💾 Guardar Cambios ({Object.keys(cambios).length})
+                Guardar Cambios ({Object.keys(cambios).length})
               </Button>
             )}
           </div>
@@ -252,7 +240,7 @@ export default function ConfiguracionesPage() {
       {/* Preferencias de Accesibilidad - Disponible para todos */}
       <Card className="p-6 bg-blue-50 border-blue-200">
         <h2 className="text-xl font-bold mb-4 text-blue-900">
-          ♿ Preferencias de Accesibilidad
+          Preferencias de Accesibilidad
         </h2>
         <p className="text-sm text-blue-700 mb-4">
           Estas configuraciones se aplican solo en tu navegador actual y mejoran
@@ -302,7 +290,7 @@ export default function ConfiguracionesPage() {
       {/* Información del Sistema - Solo Admin */}
       {isAdmin && infoSistema && (
         <Card className="p-6">
-          <h2 className="text-xl font-bold mb-4">📊 Información del Sistema</h2>
+          <h2 className="text-xl font-bold mb-4">Información del Sistema</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div>
               <p className="text-sm text-gray-600">Versión PHP</p>
@@ -329,19 +317,37 @@ export default function ConfiguracionesPage() {
       )}
 
       {/* Modo de Mantenimiento - Solo Admin */}
-      {isAdmin && (
+      {isAdmin && configuraciones.sistema && (
         <Card className="p-6 bg-orange-50 border-orange-200">
           <div className="flex items-start gap-3 mb-4">
             <div className="flex-shrink-0 w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center text-white text-xl">
-              🔧
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
             </div>
             <div className="flex-1">
               <h2 className="text-xl font-bold text-orange-900">
                 Modo de Mantenimiento
               </h2>
               <p className="text-sm text-orange-700 mt-1">
-                Activa el modo mantenimiento para realizar actualizaciones o
-                reparaciones del sistema
+                Activa el modo mantenimiento para realizar actualizaciones del
+                sistema
               </p>
             </div>
           </div>
@@ -368,7 +374,7 @@ export default function ConfiguracionesPage() {
                                 handleCambio(
                                   config.clave,
                                   e.target.checked,
-                                  "boolean"
+                                  "boolean",
                                 )
                               }
                               className="sr-only peer"
@@ -378,8 +384,8 @@ export default function ConfiguracionesPage() {
                           <div>
                             <span className="text-sm font-medium text-gray-900">
                               {modoMantenimientoActivo
-                                ? "🟠 Modo Mantenimiento ACTIVADO"
-                                : "⚪ Modo Mantenimiento Desactivado"}
+                                ? "Modo Mantenimiento ACTIVADO"
+                                : "Modo Mantenimiento Desactivado"}
                             </span>
                             <p className="text-xs text-gray-500">
                               {modoMantenimientoActivo
@@ -398,7 +404,7 @@ export default function ConfiguracionesPage() {
                         </label>
                         {configuraciones.sistema
                           ?.filter(
-                            (c) => c.clave === "sistema_mensaje_mantenimiento"
+                            (c) => c.clave === "sistema_mensaje_mantenimiento",
                           )
                           .map((mensajeConfig) => (
                             <textarea
@@ -412,7 +418,7 @@ export default function ConfiguracionesPage() {
                                 handleCambio(
                                   mensajeConfig.clave,
                                   e.target.value,
-                                  "string"
+                                  "string",
                                 )
                               }
                               rows={3}
@@ -430,10 +436,12 @@ export default function ConfiguracionesPage() {
                 );
               })}
 
-            {modoMantenimientoActivo && (
+            {configuraciones.sistema?.find(
+              (c) => c.clave === "sistema_modo_mantenimiento",
+            )?.valor === "true" && (
               <div className="bg-orange-100 border border-orange-300 rounded-lg p-3">
                 <div className="flex items-start gap-2">
-                  <span className="text-orange-600 text-lg">⚠️</span>
+                  <span className="text-orange-600 text-lg">⚠</span>
                   <div className="text-sm text-orange-800">
                     <p className="font-semibold">Advertencia:</p>
                     <ul className="list-disc list-inside mt-1 space-y-1">
@@ -460,53 +468,65 @@ export default function ConfiguracionesPage() {
       {/* Configuraciones del Sistema - Solo Admin */}
       {isAdmin &&
         Object.entries(configuraciones)
-          .filter(([categoria]) => categoria !== "accesibilidad") // Ocultar categoría accesibilidad (ahora es local)
-          .map(([categoria, configs]) => (
-            <Card key={categoria} className="p-6">
-              <h2 className="text-xl font-bold mb-4">
-                {categoria === "modulos" && "🧩 "}
-                {categoria === "seguridad" && "🔒 "}
-                {categoria === "general" && "⚙️ "}
-                {categoria === "sistema" && "💻 "}
-                {categoriaNombres[categoria] || categoria}
-              </h2>
+          .filter(
+            ([categoria]) => !["accesibilidad", "general"].includes(categoria),
+          )
+          .map(([categoria, configs]) => {
+            // Filtrar configuraciones de mantenimiento que ya se muestran arriba
+            const filteredConfigs = configs.filter(
+              (c) =>
+                ![
+                  "sistema_modo_mantenimiento",
+                  "sistema_mensaje_mantenimiento",
+                ].includes(c.clave),
+            );
 
-              <div className="space-y-4">
-                {configs.map((config) => (
-                  <div
-                    key={config.id}
-                    className="border-b border-gray-200 pb-4 last:border-0"
-                  >
-                    <div className="mb-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        {config.descripcion || config.clave}
-                      </label>
-                      <div className="flex items-center gap-3">
-                        <div className="flex-1">{renderInput(config)}</div>
-                        {cambios[config.clave] !== undefined && (
-                          <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
-                            Modificado
-                          </span>
-                        )}
+            // Si no quedan configuraciones después de filtrar, no mostrar esta categoría
+            if (filteredConfigs.length === 0) return null;
+
+            return (
+              <Card key={categoria} className="p-6">
+                <h2 className="text-xl font-bold mb-4">
+                  {categoriaNombres[categoria] || categoria}
+                </h2>
+
+                <div className="space-y-4">
+                  {filteredConfigs.map((config) => (
+                    <div
+                      key={config.id}
+                      className="border-b border-gray-200 pb-4 last:border-0"
+                    >
+                      <div className="mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {config.descripcion || config.clave}
+                        </label>
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1">{renderInput(config)}</div>
+                          {cambios[config.clave] !== undefined && (
+                            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
+                              Modificado
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Clave:{" "}
+                          <code className="bg-gray-100 px-1 rounded">
+                            {config.clave}
+                          </code>
+                        </p>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Clave:{" "}
-                        <code className="bg-gray-100 px-1 rounded">
-                          {config.clave}
-                        </code>
-                      </p>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          ))}
+                  ))}
+                </div>
+              </Card>
+            );
+          })}
 
       {/* Advertencias - Solo Admin */}
       {isAdmin && (
         <Card className="p-6 bg-yellow-50 border-yellow-200">
           <h3 className="font-bold text-yellow-800 mb-2">
-            ⚠️ Advertencias Importantes
+            Advertencias Importantes
           </h3>
           <ul className="text-sm text-yellow-700 space-y-1">
             <li>
