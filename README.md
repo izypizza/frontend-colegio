@@ -35,125 +35,128 @@ La aplicación estará disponible en `http://localhost:3000`
 
 ## Credenciales de Prueba
 
-| Rol               | Email                    | Contrasena     | Descripcion              |
-| ----------------- | ------------------------ | -------------- | ------------------------ |
-| Admin             | admin@colegio.pe         | admin123       | Acceso total al sistema  |
-| Auxiliar          | auxiliar@colegio.pe      | auxiliar123    | Gestion academica        |
-| Bibliotecario     | bibliotecario@colegio.pe | biblioteca2025 | Gestion de biblioteca    |
-| Docente           | docente@colegio.pe       | docente123     | Portal docente           |
-| Padre             | padre@colegio.pe         | padre123       | Ver informacion de hijos |
-| Estudiante        | estudiante@colegio.pe    | estudiante123  | Portal estudiante        |
+| Rol           | Email                    | Contrasena     | Descripcion              |
+| ------------- | ------------------------ | -------------- | ------------------------ |
+| Admin         | admin@colegio.pe         | admin123       | Acceso total al sistema  |
+| Auxiliar      | auxiliar@colegio.pe      | auxiliar123    | Gestion academica        |
+| Bibliotecario | bibliotecario@colegio.pe | biblioteca2025 | Gestion de biblioteca    |
+| Docente       | docente@colegio.pe       | docente123     | Portal docente           |
+| Padre         | padre@colegio.pe         | padre123       | Ver informacion de hijos |
+| Estudiante    | estudiante@colegio.pe    | estudiante123  | Portal estudiante        |
 
 Usuarios adicionales:
 
 - Docentes: docente{numero}@colegio.pe (contrasena: docente{numero})
 - Padres: padre{numero}@colegio.pe (contrasena: padre{numero})
-- Estudiantes: `estudiante{número}@colegio.pe` (contraseña: `estudiante{número}`)
+- Estudiantes: estudiante{numero}@colegio.pe (contrasena: estudiante{numero})
 
-## 🎯 Módulos del Sistema
+## Modulos del Sistema
 
-### 🔵 Portal Administrativo (Admin/Auxiliar)
+### Portal Administrativo (Admin/Auxiliar)
 
-#### Gestión de Personal
+#### Gestion de Personal
 
-- **Estudiantes** - CRUD completo, asignación a secciones, vinculación con padres
-- **Docentes** - Registro con especialidad, asignación de materias
-- **Padres** - Registro y vinculación con estudiantes
-- **Usuarios** - Gestión de credenciales y roles
+- Estudiantes: CRUD completo, asignacion a secciones, vinculacion con padres
+- Docentes: Registro con especialidad, asignacion de materias
+- Padres: Registro y vinculacion con estudiantes
+- Usuarios: Gestion de credenciales y roles
 
-#### Gestión Académica
+#### Gestion Academica
 
-- **Grados** - Niveles de Primaria y Secundaria
-- **Secciones** - Múltiples secciones con tutores asignados
-- **Materias** - Currículo Nacional Peruano completo
-- **Períodos Académicos** - Bimestres por año escolar
-- **Horarios** - Asignación semanal por materia, docente y sección
+- Grados y Secciones: Sistema unificado con vista dual
+  - Vista Grados: Cards con contador de secciones y estudiantes
+  - Vista Secciones: Filtrado por grado con turnos (Manana/Tarde)
+  - Gestion integrada desde una sola pagina
+- Materias: Curriculo Nacional Peruano completo
+- Periodos Academicos: Bimestres por ano escolar
+- Horarios: Asignacion semanal por materia, docente y seccion
 
-#### Gestión de Calificaciones
+#### Gestion de Calificaciones
 
-- Registro por estudiante, materia y período (escala vigesimal 0-20)
-- **Estadísticas avanzadas** (solo admin/auxiliar):
-  - Distribución de notas
+- Registro por estudiante, materia y periodo (escala vigesimal 0-20)
+- Estadisticas avanzadas (solo admin/auxiliar):
+  - Distribucion de notas
   - Rendimiento por materia
   - Comparativas por grado
   - Top estudiantes
-- **Restricciones por rol**:
+- Restricciones por rol:
   - Admin/Auxiliar: Ver y crear todas
   - Docente: Solo materias asignadas
   - Estudiante/Padre: Solo consulta
 
 #### Control de Asistencias
 
-- Registro diario por materia con **3 estados**:
-  - 🟢 **Presente**: Asistió puntualmente
-  - 🟡 **Llegó Tarde**: Asistió con tardanza
-  - 🔴 **Ausente**: No asistió
-- Campo de **observaciones** (opcional, 500 caracteres)
+- Registro diario por materia con 3 estados:
+  - Presente: Asistio puntualmente
+  - Llego Tarde: Asistio con tardanza
+  - Ausente: No asistio
+- Campo de observaciones (opcional, 500 caracteres)
 - Filtros por fecha, estudiante, materia, estado
 - Reportes de porcentaje de asistencia
-- Estadísticas con tardanzas diferenciadas
-- Exportación a Excel/CSV
-- **Restricciones por rol**:
+- Estadisticas con tardanzas diferenciadas
+- Exportacion a Excel/CSV
+- Restricciones por rol:
   - Admin/Auxiliar: Ver todas, crear, editar, eliminar
   - Docente: Solo de sus materias asignadas, crear y editar
   - Estudiante/Padre: Solo consulta
 
 #### Biblioteca Digital
 
-- Gestión de libros (ISBN, editorial, año, stock)
-- **Sistema de préstamos con estados**:
+- Gestion de libros (ISBN, editorial, ano, stock)
+- Sistema de prestamos con estados:
   - Pendiente → Aprobado/Rechazado → Devuelto
-  - Aprobación por bibliotecario
-  - Validaciones: stock disponible, límite 3 activos, no vencidos, no duplicados
+  - Aprobacion por bibliotecario
+  - Validaciones: stock disponible, limite 3 activos, no vencidos, no duplicados
 
 #### Sistema Electoral
 
-- Creación de elecciones estudiantiles
+- Creacion de elecciones estudiantiles
 - Registro de candidatos con propuestas
-- Gestión de estados (pendiente/activa/cerrada)
-- Publicación de resultados
+- Gestion de estados (pendiente/activa/cerrada)
+- Publicacion de resultados
 
 #### Configuraciones
 
-- **Modo Mantenimiento** - Activación/desactivación (solo admin)
-- **Permisos Auxiliares** - Gestión de permisos granulares
+- Modo Mantenimiento: Activacion/desactivacion (solo admin)
+- Permisos Auxiliares: Gestion de permisos granulares
+- Navegacion directa sin dropdowns
 
-### 🟢 Portal Docente
+### Portal Docente
 
-- **Dashboard** - KPIs, clases asignadas, accesos rápidos
-- **Mis Clases** - Asignaciones materia-sección, lista de estudiantes
-- **Mis Estudiantes** - Vista consolidada, filtro por sección/materia
-- **Calificaciones** - Solo materias asignadas, registro por período
-- **Asistencias** - Registro con 3 estados y observaciones
-- **Horarios** - Vista de horarios personales
+- Dashboard: KPIs, clases asignadas, accesos rapidos
+- Mis Clases: Asignaciones materia-seccion, lista de estudiantes
+- Mis Estudiantes: Vista consolidada, filtro por seccion/materia
+- Calificaciones: Solo materias asignadas, registro por periodo
+- Asistencias: Registro con 3 estados y observaciones
+- Horarios: Vista de horarios personales
 
-### 🟣 Portal Estudiante
+### Portal Estudiante
 
-- **Dashboard** - Promedio general, gráficas de rendimiento, asistencias, préstamos
-- **Mis Calificaciones** - Vista por período con 4 tipos de gráficas interactivas:
+- Dashboard: Promedio general, graficas de rendimiento, asistencias, prestamos
+- Mis Calificaciones: Vista por periodo con 4 tipos de graficas interactivas:
   - Barras por materia
   - Radar comparativo
   - Donut por rangos
-  - Línea de evolución
-- **Mis Asistencias** - Porcentaje, gráficas (distribución por estado, por materia, tendencia)
-  - Visualización de estados: Presente/Tarde/Ausente
-- **Biblioteca** - Catálogo, solicitud de préstamos, mis préstamos
-- **Elecciones** - Ver candidatos, votar, ver resultados (1 voto por elección)
-- **Horarios** - Vista semanal de clases
+  - Linea de evolucion
+- Mis Asistencias: Porcentaje, graficas (distribucion por estado, por materia, tendencia)
+  - Visualizacion de estados: Presente/Tarde/Ausente
+- Biblioteca: Catalogo, solicitud de prestamos, mis prestamos
+- Elecciones: Ver candidatos, votar, ver resultados (1 voto por eleccion)
+- Horarios: Vista semanal de clases
 
-### 🟡 Portal Padre
+### Portal Padre
 
-- **Dashboard** - Resumen de todos los hijos, comparativas
-- **Mis Hijos** - Lista de hijos matriculados, información académica
-- **Calificaciones de Hijos** - Vista por hijo con:
-  - Selector de período académico
-  - Gráficas por hijo (barras, radar)
+- Dashboard: Resumen de todos los hijos, comparativas
+- Mis Hijos: Lista de hijos matriculados, informacion academica
+- Calificaciones de Hijos: Vista por hijo con:
+  - Selector de periodo academico
+  - Graficas por hijo (barras, radar)
   - Promedio general y tabla detallada
-  - Asistencias de Hijos\*\* - Visualización con estados (Presente/Tarde/Ausente)
-- \*\*Soporte para múltiples hijos (tarjetas separadas)
-- **Horarios** - Vista de horarios de los hijos
+  - Asistencias de Hijos: Visualizacion con estados (Presente/Tarde/Ausente)
+- Soporte para multiples hijos (tarjetas separadas)
+- Horarios: Vista de horarios de los hijos
 
-## 🎨 Características de UI/UX
+## Caracteristicas de UI/UX
 
 ### Diseño Responsive
 
@@ -179,15 +182,15 @@ Usuarios adicionales:
 - Navbar con usuario y logout
 - Links activos con highlight
 
-## 🔒 Seguridad
+## Seguridad
 
 - JWT tokens en localStorage
-- Middleware de autenticación en rutas protegidas
-- Autorización por 6 roles
-- Sidebar dinámico según permisos
-- Validación frontend y backend
+- Middleware de autenticacion en rutas protegidas
+- Autorizacion por 6 roles
+- Sidebar dinamico segun permisos
+- Validacion frontend y backend
 
-## 📁 Estructura del Proyecto
+## Estructura del Proyecto
 
 ```
 frontend-colegio/
@@ -214,7 +217,7 @@ frontend-colegio/
 └── [config files]
 ```
 
-## 🔧 Configuración
+## Configuracion
 
 ### Variables de Entorno
 
@@ -225,7 +228,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8000/api
 NODE_ENV=development
 ```
 
-## 📊 Services API
+## Services API
 
 ```typescript
 // Autenticación
@@ -256,7 +259,7 @@ estudiantePortalService.misCalificaciones() / .misAsistencias()
 padrePortalService.misHijos() / .calificacionesHijos()
 ```
 
-## 🚀 Comandos
+## Comandos
 
 ```bash
 npm run dev      # Desarrollo (localhost:3000)
