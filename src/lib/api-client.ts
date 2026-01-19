@@ -43,8 +43,11 @@ class ApiClient {
       // Verificar si el sistema está en modo mantenimiento (503)
       if (response.status === 503 && data.maintenance_mode) {
         if (typeof window !== "undefined") {
-          // Redirigir a la página de mantenimiento
-          window.location.href = "/maintenance";
+          // No redirigir si ya estamos en login o maintenance
+          const currentPath = window.location.pathname;
+          if (currentPath !== "/login" && currentPath !== "/maintenance") {
+            window.location.href = "/maintenance";
+          }
         }
         throw new Error(data.message || "Sistema en mantenimiento");
       }
@@ -91,7 +94,7 @@ class ApiClient {
 
   async request<T>(
     endpoint: string,
-    options: RequestInit & { timeout?: number } = {}
+    options: RequestInit & { timeout?: number } = {},
   ): Promise<T> {
     const { timeout = this.timeout, ...fetchOptions } = options;
     const url = `${this.baseURL}${endpoint}`;
@@ -119,7 +122,7 @@ class ApiClient {
 
   async get<T>(
     endpoint: string,
-    options?: { params?: Record<string, any> }
+    options?: { params?: Record<string, any> },
   ): Promise<T> {
     let url = endpoint;
     if (options?.params) {
