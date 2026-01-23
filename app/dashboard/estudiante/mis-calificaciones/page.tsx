@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card } from "@/src/components/ui";
+import { Pagination } from "@/src/components/ui/Pagination";
 import { estudiantePortalService, periodoService } from "@/src/lib/services";
 import { useAuth } from "@/src/features/auth";
 import {
@@ -49,6 +50,13 @@ interface Periodo {
   nombre: string;
 }
 
+interface PaginationMeta {
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
+}
+
 export default function MisCalificacionesPage() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -59,6 +67,12 @@ export default function MisCalificacionesPage() {
   const [nivelEstudiante, setNivelEstudiante] = useState<
     "primaria" | "secundaria" | null
   >(null);
+  const [pagination, setPagination] = useState<PaginationMeta>({
+    current_page: 1,
+    last_page: 1,
+    per_page: 50,
+    total: 0,
+  });
 
   useEffect(() => {
     fetchPeriodos();
@@ -66,9 +80,17 @@ export default function MisCalificacionesPage() {
 
   useEffect(() => {
     if (selectedPeriodo) {
-      fetchCalificaciones();
+      fetchCalificaciones(pagination.current_page);
     }
-  }, [selectedPeriodo]);
+  }, [selectedPeriodo, pagination.current_page]);
+
+  const handlePageChange = (page: number) => {
+    setPagination((prev) => ({ ...prev, current_page: page }));
+  };
+
+  const handlePerPageChange = (perPage: number) => {
+    setPagination((prev) => ({ ...prev, per_page: perPage, current_page: 1 }));
+  };
 
   const fetchPeriodos = async () => {
     try {
@@ -84,15 +106,30 @@ export default function MisCalificacionesPage() {
     }
   };
 
-  const fetchCalificaciones = async () => {
+  const fetchCalificaciones = async (page = 1) => {
     try {
       setLoading(true);
       const [calificacionesResponse, perfilResponse] = await Promise.all([
-        estudiantePortalService.misCalificaciones(),
+        estudiantePortalService.misCalificaciones({
+          page,
+          per_page: pagination.per_page,
+        }),
         estudiantePortalService.miPerfil(),
       ]);
 
       const allCalificaciones = calificacionesResponse.calificaciones || [];
+      const paginationData = calificacionesResponse.pagination;
+      const promedioData = calificacionesResponse.promedio || 0;
+
+      if (paginationData) {
+        setPagination({
+          current_page: paginationData.current_page,
+          last_page: paginationData.last_page,
+          per_page: paginationData.per_page,
+          total: paginationData.total,
+        });
+      }
+
       setAllData(allCalificaciones);
 
       // Obtener nivel del estudiante (primaria/secundaria)
@@ -114,7 +151,7 @@ export default function MisCalificacionesPage() {
               (sum: number, c: Calificacion) => sum + c.nota,
               0
             ) / calificacionesFiltradas.length
-          : 0;
+          : promedioData;
 
       setData({ calificaciones: calificacionesFiltradas, promedio });
     } catch (error) {
@@ -490,7 +527,7 @@ export default function MisCalificacionesPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <span
                         className={`text-2xl ${getNotaColor(
-                          calificacion.nota
+                          Number(calificacion.nota || 0)
                         )}`}
                       >
                         {typeof calificacion.nota === "number"
@@ -502,21 +539,21 @@ export default function MisCalificacionesPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         <span
                           className="text-4xl"
-                          title={`Nota: ${calificacion.nota.toFixed(2)}`}
+                          title={`Nota: ${Number(calificacion.nota || 0).toFixed(2)}`}
                         >
-                          {getEmojiNota(calificacion.nota)}
+                          {getEmojiNota(Number(calificacion.nota || 0))}
                         </span>
                       </td>
                     )}
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <span
                         className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          calificacion.nota >= 11
+                          Number(calificacion.nota || 0) >= 11
                             ? "bg-green-100 text-green-800"
                             : "bg-red-100 text-red-800"
                         }`}
                       >
-                        {getEstadoNota(calificacion.nota)}
+                        {getEstadoNota(Number(calificacion.nota || 0))}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -528,6 +565,20 @@ export default function MisCalificacionesPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Paginación */}
+        {data?.calificaciones && data.calificaciones.length > 0 && (
+          <div className="mt-4">
+            <Pagination
+              currentPage={pagination.current_page}
+              lastPage={pagination.last_page}
+              total={pagination.total}
+              perPage={pagination.per_page}
+              onPageChange={handlePageChange}
+              onPerPageChange={handlePerPageChange}
+            />
           </div>
         )}
       </Card>

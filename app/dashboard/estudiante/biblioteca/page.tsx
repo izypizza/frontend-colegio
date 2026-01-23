@@ -58,11 +58,16 @@ export default function BibliotecaEstudiantePage() {
       console.log(
         `[Biblioteca] Datos cargados en ${(endTime - startTime).toFixed(0)}ms`
       );
-      console.log("[Biblioteca] Libros:", librosData?.length || 0);
-      console.log("[Biblioteca] Préstamos:", prestamosData?.length || 0);
+      
+      // Manejar respuesta que puede venir paginada o como array directo
+      const librosArray = Array.isArray(librosData) ? librosData : (librosData?.data || []);
+      const prestamosArray = Array.isArray(prestamosData) ? prestamosData : (prestamosData?.data || []);
+      
+      console.log("[Biblioteca] Libros:", librosArray.length);
+      console.log("[Biblioteca] Préstamos:", prestamosArray.length);
 
-      setLibros(librosData || []);
-      setMisPrestamos(prestamosData || []);
+      setLibros(librosArray);
+      setMisPrestamos(prestamosArray);
     } catch (err) {
       console.error("[Biblioteca] Error:", err);
       setError("Error al cargar los datos de la biblioteca");
