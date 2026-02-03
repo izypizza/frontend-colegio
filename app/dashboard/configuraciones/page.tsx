@@ -6,6 +6,7 @@ import { Button } from "@/src/components/ui/Button";
 import { configuracionService } from "@/src/lib/services";
 import { useTheme } from "@/src/contexts/ThemeContext";
 import { useAuth } from "@/src/features/auth";
+import { useAssistantPreference } from "@/src/hooks/useAssistantPreference";
 import { UserRole } from "@/src/types";
 
 interface Configuracion {
@@ -21,6 +22,11 @@ export default function ConfiguracionesPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === UserRole.ADMIN;
   const { fontSize, screenReader, setFontSize, setScreenReader } = useTheme();
+  const {
+    assistantEnabled,
+    toggleAssistant,
+    isLoaded: assistantLoaded,
+  } = useAssistantPreference();
   const [configuraciones, setConfiguraciones] = useState<
     Record<string, Configuracion[]>
   >({});
@@ -90,7 +96,7 @@ export default function ConfiguracionesPage() {
 
       await configuracionService.actualizar(configuracionesArray);
       setSuccess(
-        "✅ Configuraciones guardadas correctamente. Los cambios se han aplicado al sistema.",
+        "Configuraciones guardadas correctamente. Los cambios se han aplicado al sistema.",
       );
       setCambios({});
       fetchData();
@@ -287,6 +293,45 @@ export default function ConfiguracionesPage() {
         </div>
       </Card>
 
+      {/* Asistente Virtual - Disponible para todos */}
+      {assistantLoaded && (
+        <Card className="p-6 bg-teal-50 border-teal-200">
+          <h2 className="text-xl font-bold mb-4 text-teal-900">
+            Asistente Virtual
+          </h2>
+          <p className="text-sm text-teal-700 mb-4">
+            Habilita o deshabilita el tour interactivo del sistema que te ayuda
+            a conocer todas las funcionalidades
+          </p>
+
+          <div className="bg-white rounded-lg p-4">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <div className="relative">
+                <input
+                  type="checkbox"
+                  checked={assistantEnabled}
+                  onChange={(e) => toggleAssistant(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500"></div>
+              </div>
+              <div>
+                <span className="text-sm font-medium text-gray-900">
+                  {assistantEnabled
+                    ? "Asistente Virtual Habilitado"
+                    : "Asistente Virtual Deshabilitado"}
+                </span>
+                <p className="text-xs text-gray-500">
+                  {assistantEnabled
+                    ? "El botón flotante aparecerá en la esquina inferior derecha"
+                    : "El asistente no será visible en el dashboard"}
+                </p>
+              </div>
+            </label>
+          </div>
+        </Card>
+      )}
+
       {/* Información del Sistema - Solo Admin */}
       {isAdmin && infoSistema && (
         <Card className="p-6">
@@ -441,7 +486,7 @@ export default function ConfiguracionesPage() {
             )?.valor === "true" && (
               <div className="bg-orange-100 border border-orange-300 rounded-lg p-3">
                 <div className="flex items-start gap-2">
-                  <span className="text-orange-600 text-lg">⚠</span>
+                  <span className="text-orange-600 text-lg">[!]</span>
                   <div className="text-sm text-orange-800">
                     <p className="font-semibold">Advertencia:</p>
                     <ul className="list-disc list-inside mt-1 space-y-1">

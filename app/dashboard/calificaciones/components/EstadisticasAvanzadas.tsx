@@ -53,7 +53,7 @@ export default function EstadisticasAvanzadas({
       aprobados: stats.aprobados,
       desaprobados: stats.desaprobados,
       total: stats.total,
-    })
+    }),
   );
 
   const datosGrados = (por_grado || []).map((grado: any) => ({
@@ -99,7 +99,7 @@ export default function EstadisticasAvanzadas({
                 : "text-gray-600 hover:text-gray-800"
             }`}
           >
-            📊 Resumen General
+            Resumen General
           </button>
           <button
             onClick={() => setVistaActiva("niveles")}
@@ -109,7 +109,7 @@ export default function EstadisticasAvanzadas({
                 : "text-gray-600 hover:text-gray-800"
             }`}
           >
-            🎓 Por Nivel Educativo
+            Por Nivel Educativo
           </button>
           <button
             onClick={() => setVistaActiva("grados")}
@@ -119,7 +119,7 @@ export default function EstadisticasAvanzadas({
                 : "text-gray-600 hover:text-gray-800"
             }`}
           >
-            📚 Por Grado
+            Por Grado
           </button>
           <button
             onClick={() => setVistaActiva("distribucion")}
@@ -129,7 +129,7 @@ export default function EstadisticasAvanzadas({
                 : "text-gray-600 hover:text-gray-800"
             }`}
           >
-            📈 Distribución de Notas
+            Distribución de Notas
           </button>
         </div>
       </Card>

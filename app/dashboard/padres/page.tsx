@@ -64,7 +64,7 @@ export default function PadresPage() {
           lastPage: data.last_page || 1,
         });
       } else {
-        const padresArray = Array.isArray(data) ? data : data?.data || [];
+        const padresArray = Array.isArray(data) ? data : [];
         setPadres(padresArray);
       }
     } catch {

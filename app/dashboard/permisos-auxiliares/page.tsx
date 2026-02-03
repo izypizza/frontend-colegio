@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { Alert, Button, Card, Input, Modal, Table } from '@/src/components/ui';
-import { apiClient } from '@/src/lib/api-client';
-import { useEffect, useState } from 'react';
+import { Alert, Button, Card, Input, Modal, Table } from "@/src/components/ui";
+import { apiClient } from "@/src/lib/api-client";
+import { useEffect, useState } from "react";
 
 interface User {
   id: number;
@@ -31,12 +31,12 @@ export default function PermisosAuxiliaresPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
-    user_id: '',
+    user_id: "",
     puede_editar_estudiantes: false,
     puede_editar_asistencias: false,
     puede_editar_calificaciones: false,
-    activado_hasta: '',
-    motivo: '',
+    activado_hasta: "",
+    motivo: "",
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -49,14 +49,14 @@ export default function PermisosAuxiliaresPage() {
     try {
       setLoading(true);
       const [permisosData, usersData] = await Promise.all([
-        apiClient.get('/auxiliar-permisos'),
-        apiClient.get('/auxiliares'),
+        apiClient.get("/auxiliar-permisos"),
+        apiClient.get("/auxiliares"),
       ]);
       setPermisos(permisosData as AuxiliarPermiso[]);
       const usersResponse = usersData as { auxiliares?: User[] };
       setAuxiliares(usersResponse.auxiliares || []);
     } catch (err) {
-      setError('Error al cargar los permisos');
+      setError("Error al cargar los permisos");
     } finally {
       setLoading(false);
     }
@@ -68,14 +68,14 @@ export default function PermisosAuxiliaresPage() {
     const defaultDate = new Date();
     defaultDate.setDate(defaultDate.getDate() + 7);
     const formattedDate = defaultDate.toISOString().slice(0, 16);
-    
+
     setFormData({
-      user_id: '',
+      user_id: "",
       puede_editar_estudiantes: false,
       puede_editar_asistencias: false,
       puede_editar_calificaciones: false,
       activado_hasta: formattedDate,
-      motivo: '',
+      motivo: "",
     });
     setIsModalOpen(true);
   };
@@ -87,23 +87,24 @@ export default function PermisosAuxiliaresPage() {
       puede_editar_estudiantes: permiso.puede_editar_estudiantes,
       puede_editar_asistencias: permiso.puede_editar_asistencias,
       puede_editar_calificaciones: permiso.puede_editar_calificaciones,
-      activado_hasta: permiso.activado_hasta 
+      activado_hasta: permiso.activado_hasta
         ? new Date(permiso.activado_hasta).toISOString().slice(0, 16)
-        : '',
-      motivo: permiso.motivo || '',
+        : "",
+      motivo: permiso.motivo || "",
     });
     setIsModalOpen(true);
   };
 
   const handleDesactivar = async (userId: number) => {
-    if (!confirm('¿Desactivar todos los permisos especiales de este auxiliar?')) return;
+    if (!confirm("¿Desactivar todos los permisos especiales de este auxiliar?"))
+      return;
 
     try {
       await apiClient.delete(`/auxiliar-permisos/${userId}`);
-      setSuccess('Permisos desactivados correctamente');
+      setSuccess("Permisos desactivados correctamente");
       fetchData();
     } catch (err) {
-      setError('Error al desactivar los permisos');
+      setError("Error al desactivar los permisos");
     }
   };
 
@@ -111,79 +112,92 @@ export default function PermisosAuxiliaresPage() {
     e.preventDefault();
     setError(null);
 
-    if (!formData.puede_editar_estudiantes && 
-        !formData.puede_editar_asistencias && 
-        !formData.puede_editar_calificaciones) {
-      setError('Debe seleccionar al menos un permiso');
+    if (
+      !formData.puede_editar_estudiantes &&
+      !formData.puede_editar_asistencias &&
+      !formData.puede_editar_calificaciones
+    ) {
+      setError("Debe seleccionar al menos un permiso");
       return;
     }
 
     try {
-      await apiClient.post('/auxiliar-permisos', {
+      await apiClient.post("/auxiliar-permisos", {
         ...formData,
         user_id: parseInt(formData.user_id),
       });
 
-      setSuccess('Permisos configurados exitosamente');
+      setSuccess("Permisos configurados exitosamente");
       setIsModalOpen(false);
       fetchData();
     } catch (err: unknown) {
-      if (err && typeof err === 'object' && 'response' in err) {
-        const response = (err as { response?: { data?: { errors?: Record<string, string[]>; message?: string } } }).response;
+      if (err && typeof err === "object" && "response" in err) {
+        const response = (
+          err as {
+            response?: {
+              data?: { errors?: Record<string, string[]>; message?: string };
+            };
+          }
+        ).response;
         if (response?.data?.errors) {
           const firstError = Object.values(response.data.errors)[0];
           setError(Array.isArray(firstError) ? firstError[0] : firstError);
         } else if (response?.data?.message) {
           setError(response.data.message);
         } else {
-          setError('Error al configurar los permisos');
+          setError("Error al configurar los permisos");
         }
       } else {
-        setError('Error al configurar los permisos');
+        setError("Error al configurar los permisos");
       }
     }
   };
 
   const columns = [
-    { 
-      key: 'user', 
-      label: 'Auxiliar',
-      render: (value: unknown, item: AuxiliarPermiso) => item.user?.name || `Usuario #${item.user_id}`
+    {
+      key: "user",
+      label: "Auxiliar",
+      render: (value: unknown, item: AuxiliarPermiso) =>
+        item.user?.name || `Usuario #${item.user_id}`,
     },
-    { 
-      key: 'puede_editar_estudiantes', 
-      label: 'Editar Estudiantes',
-      render: (value: unknown) => (value as boolean) ? '✅' : '❌'
+    {
+      key: "puede_editar_estudiantes",
+      label: "Editar Estudiantes",
+      render: (value: unknown) => ((value as boolean) ? "Si" : "No"),
     },
-    { 
-      key: 'puede_editar_asistencias', 
-      label: 'Editar Asistencias',
-      render: (value: unknown) => (value as boolean) ? '✅' : '❌'
+    {
+      key: "puede_editar_asistencias",
+      label: "Editar Asistencias",
+      render: (value: unknown) => ((value as boolean) ? "Si" : "No"),
     },
-    { 
-      key: 'puede_editar_calificaciones', 
-      label: 'Editar Calificaciones',
-      render: (value: unknown) => (value as boolean) ? '✅' : '❌'
+    {
+      key: "puede_editar_calificaciones",
+      label: "Editar Calificaciones",
+      render: (value: unknown) => ((value as boolean) ? "Si" : "No"),
     },
-    { 
-      key: 'activado_hasta', 
-      label: 'Válido Hasta',
+    {
+      key: "activado_hasta",
+      label: "Válido Hasta",
       render: (value: unknown) => {
-        if (!value) return 'Sin expiración';
+        if (!value) return "Sin expiración";
         const fecha = new Date(value as string);
         const ahora = new Date();
         const estaActivo = fecha > ahora;
         return (
-          <span className={estaActivo ? 'text-green-600' : 'text-red-600'}>
-            {fecha.toLocaleDateString('es-PE')} {fecha.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}
+          <span className={estaActivo ? "text-green-600" : "text-red-600"}>
+            {fecha.toLocaleDateString("es-PE")}{" "}
+            {fecha.toLocaleTimeString("es-PE", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
           </span>
         );
-      }
+      },
     },
-    { 
-      key: 'motivo', 
-      label: 'Motivo',
-      render: (value: unknown) => (value as string | null) || '-'
+    {
+      key: "motivo",
+      label: "Motivo",
+      render: (value: unknown) => (value as string | null) || "-",
     },
   ];
 
@@ -191,16 +205,28 @@ export default function PermisosAuxiliaresPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Permisos Especiales para Auxiliares</h1>
-          <p className="text-gray-600 mt-2">Gestión de permisos temporales para auxiliares</p>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Permisos Especiales para Auxiliares
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Gestión de permisos temporales para auxiliares
+          </p>
         </div>
         <Button variant="primary" onClick={handleCreate}>
           + Configurar Permiso
         </Button>
       </div>
 
-      {error && <Alert type="error" message={error} onClose={() => setError(null)} />}
-      {success && <Alert type="success" message={success} onClose={() => setSuccess(null)} />}
+      {error && (
+        <Alert type="error" message={error} onClose={() => setError(null)} />
+      )}
+      {success && (
+        <Alert
+          type="success"
+          message={success}
+          onClose={() => setSuccess(null)}
+        />
+      )}
 
       <Card>
         <Table
@@ -215,7 +241,7 @@ export default function PermisosAuxiliaresPage() {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={selectedUserId ? 'Editar Permisos' : 'Configurar Permisos'}
+        title={selectedUserId ? "Editar Permisos" : "Configurar Permisos"}
         size="lg"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -225,13 +251,15 @@ export default function PermisosAuxiliaresPage() {
             </label>
             <select
               value={formData.user_id}
-              onChange={(e) => setFormData({ ...formData, user_id: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, user_id: e.target.value })
+              }
               required
               disabled={!!selectedUserId}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Seleccionar auxiliar</option>
-              {auxiliares.map(aux => (
+              {auxiliares.map((aux) => (
                 <option key={aux.id} value={aux.id}>
                   {aux.name} - {aux.email}
                 </option>
@@ -248,7 +276,12 @@ export default function PermisosAuxiliaresPage() {
                 <input
                   type="checkbox"
                   checked={formData.puede_editar_estudiantes}
-                  onChange={(e) => setFormData({ ...formData, puede_editar_estudiantes: e.target.checked })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      puede_editar_estudiantes: e.target.checked,
+                    })
+                  }
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
                 <span>Puede editar estudiantes</span>
@@ -257,7 +290,12 @@ export default function PermisosAuxiliaresPage() {
                 <input
                   type="checkbox"
                   checked={formData.puede_editar_asistencias}
-                  onChange={(e) => setFormData({ ...formData, puede_editar_asistencias: e.target.checked })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      puede_editar_asistencias: e.target.checked,
+                    })
+                  }
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
                 <span>Puede editar asistencias</span>
@@ -266,7 +304,12 @@ export default function PermisosAuxiliaresPage() {
                 <input
                   type="checkbox"
                   checked={formData.puede_editar_calificaciones}
-                  onChange={(e) => setFormData({ ...formData, puede_editar_calificaciones: e.target.checked })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      puede_editar_calificaciones: e.target.checked,
+                    })
+                  }
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
                 <span>Puede editar calificaciones</span>
@@ -278,7 +321,9 @@ export default function PermisosAuxiliaresPage() {
             label="Válido Hasta (opcional)"
             type="datetime-local"
             value={formData.activado_hasta}
-            onChange={(e) => setFormData({ ...formData, activado_hasta: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, activado_hasta: e.target.value })
+            }
             helperText="Dejar vacío para permiso sin fecha de expiración"
           />
 
@@ -288,7 +333,9 @@ export default function PermisosAuxiliaresPage() {
             </label>
             <textarea
               value={formData.motivo}
-              onChange={(e) => setFormData({ ...formData, motivo: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, motivo: e.target.value })
+              }
               required
               rows={3}
               maxLength={500}
@@ -301,7 +348,11 @@ export default function PermisosAuxiliaresPage() {
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button variant="secondary" type="button" onClick={() => setIsModalOpen(false)}>
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+            >
               Cancelar
             </Button>
             <Button variant="primary" type="submit">

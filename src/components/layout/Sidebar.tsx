@@ -243,9 +243,30 @@ const menuItems: MenuItem[] = [
     ),
   },
   {
+    label: "Biblioteca",
+    href: "/dashboard/biblioteca",
+    roles: [UserRole.ADMIN, UserRole.BIBLIOTECARIO],
+    modulo: "biblioteca",
+    icon: (
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+        />
+      </svg>
+    ),
+  },
+  {
     label: "Préstamos",
     href: "/dashboard/prestamos",
-    roles: [UserRole.ADMIN, UserRole.AUXILIAR],
+    roles: [UserRole.ADMIN, UserRole.BIBLIOTECARIO],
     modulo: "biblioteca",
     icon: (
       <svg
@@ -347,6 +368,72 @@ const menuItems: MenuItem[] = [
     ),
   },
   {
+    label: "Chat Docente-Padre",
+    href: "/dashboard/chat",
+    roles: [UserRole.DOCENTE, UserRole.PADRE],
+    icon: (
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+        />
+      </svg>
+    ),
+  },
+  {
+    label: "Monitoreo Chat",
+    href: "/dashboard/chat-admin",
+    roles: [UserRole.ADMIN],
+    icon: (
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+        />
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+        />
+      </svg>
+    ),
+  },
+  {
+    label: "Auditoría",
+    href: "/dashboard/auditoria",
+    roles: [UserRole.ADMIN],
+    icon: (
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+        />
+      </svg>
+    ),
+  },
+  {
     label: "Mis Permisos",
     href: "/dashboard/mis-permisos",
     roles: [UserRole.AUXILIAR],
@@ -367,27 +454,7 @@ const menuItems: MenuItem[] = [
       </svg>
     ),
   },
-  {
-    label: "Biblioteca",
-    href: "/dashboard/biblioteca",
-    roles: [UserRole.ADMIN, UserRole.BIBLIOTECARIO],
-    modulo: "biblioteca",
-    icon: (
-      <svg
-        className="w-5 h-5"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-        />
-      </svg>
-    ),
-  },
+  // Portal Estudiante - Biblioteca
   {
     label: "Biblioteca",
     href: "/dashboard/estudiante/biblioteca",
@@ -591,11 +658,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 </p>
                 {user && (
                   <p className="text-[10px] sm:text-xs text-gray-500 mt-0.5 capitalize truncate">
-                    {user.role === "admin" && "👨‍💼 Administrador"}
-                    {user.role === "auxiliar" && "🧑‍💼 Auxiliar"}
-                    {user.role === "docente" && "👨‍🏫 Docente"}
-                    {user.role === "padre" && "👨‍👩‍👧 Padre de Familia"}
-                    {user.role === "estudiante" && "👨‍🎓 Estudiante"}
+                    {user.role === "admin" && "Administrador"}
+                    {user.role === "auxiliar" && "Auxiliar"}
+                    {user.role === "docente" && "Docente"}
+                    {user.role === "padre" && "Padre de Familia"}
+                    {user.role === "estudiante" && "Estudiante"}
                   </p>
                 )}
               </div>

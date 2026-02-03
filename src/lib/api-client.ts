@@ -36,12 +36,15 @@ class ApiClient {
     return localStorage.getItem(TOKEN_KEY);
   }
 
-  private async handleResponse<T>(response: Response): Promise<T> {
-    const data = await response.json();
+  private async handleResponse<T>(
+    response: Response,
+    responseType: "json" | "blob" = "json",
+  ): Promise<T> {
+    const data = responseType === "blob" ? null : await response.json();
 
     if (!response.ok) {
       // Verificar si el sistema está en modo mantenimiento (503)
-      if (response.status === 503 && data.maintenance_mode) {
+      if (response.status === 503 && data?.maintenance_mode) {
         if (typeof window !== "undefined") {
           // No redirigir si ya estamos en login o maintenance
           const currentPath = window.location.pathname;
@@ -49,7 +52,7 @@ class ApiClient {
             window.location.href = "/maintenance";
           }
         }
-        throw new Error(data.message || "Sistema en mantenimiento");
+        throw new Error(data?.message || "Sistema en mantenimiento");
       }
 
       if (response.status === HTTP_STATUS.UNAUTHORIZED) {
@@ -63,12 +66,12 @@ class ApiClient {
       // Verificar si es un error de permisos (403)
       if (response.status === HTTP_STATUS.FORBIDDEN) {
         const errorMessage =
-          data.message || "No tiene permisos para acceder a este recurso";
+          data?.message || "No tiene permisos para acceder a este recurso";
         console.error("Error de permisos:", {
           status: response.status,
           message: errorMessage,
-          requiredRoles: data.required_roles,
-          userRole: data.user_role,
+          requiredRoles: data?.required_roles,
+          userRole: data?.user_role,
           url: response.url,
         });
 
@@ -81,7 +84,7 @@ class ApiClient {
       }
 
       // Crear un error con toda la información de respuesta
-      const error: any = new Error(data.message || "Error en la solicitud");
+      const error: any = new Error(data?.message || "Error en la solicitud");
       error.response = {
         status: response.status,
         data: data,
@@ -89,14 +92,25 @@ class ApiClient {
       throw error;
     }
 
+    if (responseType === "blob") {
+      return (await response.blob()) as T;
+    }
+
     return data as T;
   }
 
   async request<T>(
     endpoint: string,
-    options: RequestInit & { timeout?: number } = {},
+    options: RequestInit & {
+      timeout?: number;
+      responseType?: "json" | "blob";
+    } = {},
   ): Promise<T> {
-    const { timeout = this.timeout, ...fetchOptions } = options;
+    const {
+      timeout = this.timeout,
+      responseType = "json",
+      ...fetchOptions
+    } = options;
     const url = `${this.baseURL}${endpoint}`;
 
     const controller = new AbortController();
@@ -109,7 +123,7 @@ class ApiClient {
         signal: controller.signal,
       });
 
-      return await this.handleResponse<T>(response);
+      return await this.handleResponse<T>(response, responseType);
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
         throw new Error("La solicitud ha excedido el tiempo de espera");
@@ -122,7 +136,7 @@ class ApiClient {
 
   async get<T>(
     endpoint: string,
-    options?: { params?: Record<string, any> },
+    options?: { params?: Record<string, any>; responseType?: "json" | "blob" },
   ): Promise<T> {
     let url = endpoint;
     if (options?.params) {
@@ -137,7 +151,10 @@ class ApiClient {
         url = `${endpoint}?${queryString}`;
       }
     }
-    return this.request<T>(url, { method: "GET" });
+    return this.request<T>(url, {
+      method: "GET",
+      responseType: options?.responseType,
+    });
   }
 
   async post<T>(endpoint: string, body?: unknown): Promise<T> {

@@ -3,12 +3,15 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 export type FontSize = "small" | "normal" | "large";
+export type ThemeMode = "light" | "dark";
 
 interface ThemeContextType {
   fontSize: FontSize;
   screenReader: boolean;
+  theme: ThemeMode;
   setFontSize: (size: FontSize) => void;
   setScreenReader: (enabled: boolean) => void;
+  setTheme: (mode: ThemeMode) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -18,15 +21,18 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [fontSize, setFontSizeState] = useState<FontSize>("normal");
   const [screenReader, setScreenReaderState] = useState(false);
+  const [theme, setThemeState] = useState<ThemeMode>("light");
   const [mounted, setMounted] = useState(false);
 
   // Cargar preferencias del localStorage al montar
   useEffect(() => {
     const savedFontSize = localStorage.getItem("font-size") as FontSize;
     const savedScreenReader = localStorage.getItem("screen-reader") === "true";
+    const savedTheme = (localStorage.getItem("theme") as ThemeMode) || "light";
 
     if (savedFontSize) setFontSizeState(savedFontSize);
     if (savedScreenReader) setScreenReaderState(savedScreenReader);
+    if (savedTheme) setThemeState(savedTheme);
 
     setMounted(true);
   }, []);
@@ -42,7 +48,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
       "font-small",
       "font-normal",
       "font-large",
-      "screen-reader"
+      "screen-reader",
+      "dark",
     );
 
     // Aplicar tamaño de fuente
@@ -52,7 +59,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
     if (screenReader) {
       root.classList.add("screen-reader");
     }
-  }, [fontSize, screenReader, mounted]);
+
+    if (theme === "dark") {
+      root.classList.add("dark");
+    }
+  }, [fontSize, screenReader, theme, mounted]);
 
   const setFontSize = (size: FontSize) => {
     setFontSizeState(size);
@@ -62,6 +73,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   const setScreenReader = (enabled: boolean) => {
     setScreenReaderState(enabled);
     localStorage.setItem("screen-reader", enabled.toString());
+  };
+
+  const setTheme = (mode: ThemeMode) => {
+    setThemeState(mode);
+    localStorage.setItem("theme", mode);
   };
 
   // Evitar flash de tema incorrecto
@@ -74,8 +90,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
       value={{
         fontSize,
         screenReader,
+        theme,
         setFontSize,
         setScreenReader,
+        setTheme,
       }}
     >
       {children}

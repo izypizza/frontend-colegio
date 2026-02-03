@@ -34,7 +34,7 @@ export default function HorariosPage() {
     lastPage: 1,
   });
   const [viewMode, setViewMode] = useState<"calendario" | "lista">(
-    "calendario"
+    "calendario",
   );
   const [selectedSeccion, setSelectedSeccion] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -101,10 +101,12 @@ export default function HorariosPage() {
       }
 
       setSecciones(
-        Array.isArray(seccionesData) ? seccionesData : seccionesData?.data || []
+        Array.isArray(seccionesData)
+          ? seccionesData
+          : seccionesData?.data || [],
       );
       setMaterias(
-        Array.isArray(materiasData) ? materiasData : materiasData?.data || []
+        Array.isArray(materiasData) ? materiasData : materiasData?.data || [],
       );
     } catch (err) {
       console.error("Error al cargar horarios:", err);
@@ -126,13 +128,13 @@ export default function HorariosPage() {
         // Extraer secciones y materias únicas
         const seccionesUnicas = Array.from(
           new Map(
-            asignaciones.map((a: any) => [a.seccion.id, a.seccion])
-          ).values()
+            asignaciones.map((a: any) => [a.seccion.id, a.seccion]),
+          ).values(),
         );
         const materiasUnicas = Array.from(
           new Map(
-            asignaciones.map((a: any) => [a.materia.id, a.materia])
-          ).values()
+            asignaciones.map((a: any) => [a.materia.id, a.materia]),
+          ).values(),
         );
 
         setSecciones(seccionesUnicas as Seccion[]);
@@ -142,7 +144,7 @@ export default function HorariosPage() {
         const seccionIds = seccionesUnicas.map((s: any) => s.id);
         const horariosData = await horarioService.getAll();
         const horariosFiltrados = horariosData.filter((h: Horario) =>
-          seccionIds.includes(h.seccion_id)
+          seccionIds.includes(h.seccion_id),
         );
         setHorarios(horariosFiltrados);
       } else if (user?.role === "estudiante") {
@@ -160,7 +162,7 @@ export default function HorariosPage() {
           const horariosArray = horariosData?.data || horariosData || [];
 
           const horariosFiltrados = horariosArray.filter(
-            (h: Horario) => h.seccion_id === estudiante.seccion_id
+            (h: Horario) => h.seccion_id === estudiante.seccion_id,
           );
           setHorarios(horariosFiltrados);
           setSecciones([estudiante.seccion]);
@@ -182,7 +184,7 @@ export default function HorariosPage() {
 
           const seccionIds = hijos.map((h: any) => h.seccion_id);
           const horariosFiltrados = horariosArray.filter((h: Horario) =>
-            seccionIds.includes(h.seccion_id)
+            seccionIds.includes(h.seccion_id),
           );
           setHorarios(horariosFiltrados);
           setSecciones(hijos.map((h: any) => h.seccion).filter(Boolean));
@@ -215,10 +217,10 @@ export default function HorariosPage() {
         setSecciones(
           Array.isArray(seccionesData)
             ? seccionesData
-            : seccionesData?.data || []
+            : seccionesData?.data || [],
         );
         setMaterias(
-          Array.isArray(materiasData) ? materiasData : materiasData?.data || []
+          Array.isArray(materiasData) ? materiasData : materiasData?.data || [],
         );
       }
     } catch (err) {
@@ -402,8 +404,8 @@ export default function HorariosPage() {
             onChange={(e) => setSelectedSeccion(e.target.value)}
           >
             <option value="">Todas las secciones</option>
-            {secciones.map((seccion) => (
-              <option key={seccion.id} value={seccion.id}>
+            {secciones.map((seccion, index) => (
+              <option key={`${seccion.id}-${index}`} value={seccion.id}>
                 {seccion.nombre} - {seccion.grado?.nombre}
               </option>
             ))}
@@ -456,7 +458,7 @@ export default function HorariosPage() {
                             {horario && (
                               <div
                                 className={`${getColorMateria(
-                                  horario.materia_id
+                                  horario.materia_id,
                                 )} border-l-4 rounded-lg p-2 h-full cursor-pointer hover:shadow-lg transition-all`}
                                 onClick={() =>
                                   (user?.role === "admin" ||

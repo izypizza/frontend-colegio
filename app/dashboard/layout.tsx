@@ -1,15 +1,19 @@
 "use client";
 
 import { DashboardLayout } from "@/src/components/layout";
+import { Assistant } from "@/src/components/ui/Assistant";
 import { ROUTES } from "@/src/config/constants";
 import { AuthProvider, useAuth, useRequireAuth } from "@/src/features/auth";
 import { ThemeProvider } from "@/src/contexts/ThemeContext";
+import { useAssistantPreference } from "@/src/hooks/useAssistantPreference";
 import { useRouter } from "next/navigation";
+import "@/src/components/ui/shepherd-styles.css";
 
 function DashboardLayoutWrapper({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const { loading } = useRequireAuth();
   const router = useRouter();
+  const { assistantEnabled, isLoaded } = useAssistantPreference();
 
   const handleLogout = () => {
     logout();
@@ -32,6 +36,9 @@ function DashboardLayoutWrapper({ children }: { children: React.ReactNode }) {
   return (
     <DashboardLayout userName={user?.name} onLogout={handleLogout}>
       {children}
+      {isLoaded && assistantEnabled && (
+        <Assistant tourName="completo" enabled={true} />
+      )}
     </DashboardLayout>
   );
 }
