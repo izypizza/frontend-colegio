@@ -92,7 +92,7 @@ export default function LibrosPage() {
         libroService.getAll({ page: currentPage, per_page: perPage }),
         categoriaLibroService.getAll({ all: true }),
       ]);
-      
+
       // Manejar respuesta paginada
       if (
         librosData &&
@@ -111,8 +111,12 @@ export default function LibrosPage() {
           : librosData?.data || [];
         setLibros(librosArray);
       }
-      
-      setCategorias(Array.isArray(categoriasData) ? categoriasData : categoriasData?.data || []);
+
+      setCategorias(
+        Array.isArray(categoriasData)
+          ? categoriasData
+          : categoriasData?.data || [],
+      );
       setError(null);
     } catch (err: any) {
       setError(err.message || "Error al cargar los datos");
