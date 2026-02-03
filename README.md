@@ -340,6 +340,7 @@ Impacto:
 Implementacion de paginacion en todas las vistas principales para mejorar rendimiento y experiencia de usuario.
 
 **Componente Reutilizable:**
+
 - `src/components/ui/Pagination.tsx`
   - Navegacion completa (Anterior/Siguiente)
   - Numeros de pagina con ellipsis
@@ -360,12 +361,14 @@ Implementacion de paginacion en todas las vistas principales para mejorar rendim
    - `biblioteca/page.tsx`: Gestion de libros con paginacion 50/pag
 
 **Impacto en Rendimiento:**
+
 - Antes: 20,480 calificaciones = ~2-3 MB, 2-3 segundos
 - Despues: 50 registros = ~50-100 KB, 200-300 ms
 - Reduccion: 90-95%
 - Con cache: 95-98% de mejora total
 
 **Patron de Uso:**
+
 ```typescript
 const [pagination, setPagination] = useState({
   current_page: 1,

@@ -527,7 +527,7 @@ export default function MisCalificacionesPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <span
                         className={`text-2xl ${getNotaColor(
-                          Number(calificacion.nota || 0)
+                          Number(calificacion.nota || 0),
                         )}`}
                       >
                         {typeof calificacion.nota === "number"
