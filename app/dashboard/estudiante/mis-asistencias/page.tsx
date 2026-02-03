@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card } from "@/src/components/ui";
+import { Pagination } from "@/src/components/ui/Pagination";
 import { estudiantePortalService } from "@/src/lib/services";
 import {
   PieChart,
@@ -40,6 +41,13 @@ interface AsistenciasData {
   };
 }
 
+interface PaginationMeta {
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
+}
+
 export default function MisAsistenciasPage() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<AsistenciasData | null>(null);
@@ -47,19 +55,45 @@ export default function MisAsistenciasPage() {
     fecha_inicio: "",
     fecha_fin: "",
   });
+  const [pagination, setPagination] = useState<PaginationMeta>({
+    current_page: 1,
+    last_page: 1,
+    per_page: 50,
+    total: 0,
+  });
 
   useEffect(() => {
-    fetchAsistencias();
-  }, []);
+    fetchAsistencias(pagination.current_page);
+  }, [pagination.current_page]);
 
-  const fetchAsistencias = async () => {
+  const handlePageChange = (page: number) => {
+    setPagination((prev) => ({ ...prev, current_page: page }));
+  };
+
+  const handlePerPageChange = (perPage: number) => {
+    setPagination((prev) => ({ ...prev, per_page: perPage, current_page: 1 }));
+  };
+
+  const fetchAsistencias = async (page = 1) => {
     try {
       setLoading(true);
       const params = {
         ...(filtros.fecha_inicio && { fecha_inicio: filtros.fecha_inicio }),
         ...(filtros.fecha_fin && { fecha_fin: filtros.fecha_fin }),
+        page,
+        per_page: pagination.per_page,
       };
       const response = await estudiantePortalService.misAsistencias(params);
+      
+      if (response.pagination) {
+        setPagination({
+          current_page: response.pagination.current_page,
+          last_page: response.pagination.last_page,
+          per_page: response.pagination.per_page,
+          total: response.pagination.total,
+        });
+      }
+      
       setData(response);
     } catch (error) {
       console.error("Error al cargar asistencias:", error);
@@ -69,7 +103,8 @@ export default function MisAsistenciasPage() {
   };
 
   const handleFiltrar = () => {
-    fetchAsistencias();
+    setPagination((prev) => ({ ...prev, current_page: 1 }));
+    fetchAsistencias(1);
   };
 
   const getEstadoBadge = (estado: string) => {
@@ -488,6 +523,20 @@ export default function MisAsistenciasPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Paginación */}
+        {data?.asistencias && data.asistencias.length > 0 && (
+          <div className="mt-4">
+            <Pagination
+              currentPage={pagination.current_page}
+              lastPage={pagination.last_page}
+              total={pagination.total}
+              perPage={pagination.per_page}
+              onPageChange={handlePageChange}
+              onPerPageChange={handlePerPageChange}
+            />
           </div>
         )}
       </Card>

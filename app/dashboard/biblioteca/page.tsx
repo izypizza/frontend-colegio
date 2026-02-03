@@ -9,6 +9,7 @@ import { Modal } from "@/src/components/ui/Modal";
 import { Table } from "@/src/components/ui/Table";
 import { Alert } from "@/src/components/ui/Alert";
 import { useAuth } from "@/src/features/auth";
+import { Pagination } from "@/src/components/ui/Pagination";
 
 interface Libro {
   id: number;
@@ -46,6 +47,14 @@ export default function LibrosPage() {
   const [showCategoriaModal, setShowCategoriaModal] = useState(false);
   const [editingLibro, setEditingLibro] = useState<Libro | null>(null);
 
+  // Estados para paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(50);
+  const [paginationData, setPaginationData] = useState({
+    total: 0,
+    lastPage: 1,
+  });
+
   // Estados para el formulario
   const [formData, setFormData] = useState({
     titulo: "",
@@ -74,17 +83,36 @@ export default function LibrosPage() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [currentPage, perPage]);
 
   const loadData = async () => {
     try {
       setLoading(true);
       const [librosData, categoriasData] = await Promise.all([
-        libroService.getAll(),
-        categoriaLibroService.getAll(),
+        libroService.getAll({ page: currentPage, per_page: perPage }),
+        categoriaLibroService.getAll({ all: true }),
       ]);
-      setLibros(Array.isArray(librosData) ? librosData : []);
-      setCategorias(Array.isArray(categoriasData) ? categoriasData : []);
+      
+      // Manejar respuesta paginada
+      if (
+        librosData &&
+        typeof librosData === "object" &&
+        "data" in librosData &&
+        "current_page" in librosData
+      ) {
+        setLibros(librosData.data);
+        setPaginationData({
+          total: librosData.total || 0,
+          lastPage: librosData.last_page || 1,
+        });
+      } else {
+        const librosArray = Array.isArray(librosData)
+          ? librosData
+          : librosData?.data || [];
+        setLibros(librosArray);
+      }
+      
+      setCategorias(Array.isArray(categoriasData) ? categoriasData : categoriasData?.data || []);
       setError(null);
     } catch (err: any) {
       setError(err.message || "Error al cargar los datos");
