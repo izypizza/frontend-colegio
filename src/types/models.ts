@@ -13,6 +13,27 @@ export interface User {
   is_active: boolean;
   created_at: string;
   persona?: any;
+  // Relaciones específicas por rol
+  docente?: {
+    id: number;
+    nombres: string;
+    apellido_paterno: string;
+    apellido_materno: string;
+    especialidad?: string;
+  };
+  padre?: {
+    id: number;
+    nombres: string;
+    apellido_paterno: string;
+    apellido_materno: string;
+  };
+  estudiante?: {
+    id: number;
+    nombres: string;
+    apellido_paterno: string;
+    apellido_materno: string;
+    codigo: string;
+  };
 }
 
 export interface PersonaSinUsuario {
@@ -92,6 +113,7 @@ export interface Padre {
   direccion?: string;
   ocupacion?: string;
   estudiantes?: Estudiante[];
+  hijos?: Estudiante[];
   created_at: string;
   updated_at: string;
 }
@@ -205,4 +227,38 @@ export interface DashboardStats {
   grados: number;
   asistencias_hoy?: number;
   calificaciones_pendientes?: number;
+}
+
+// Notificacion
+export interface Notificacion {
+  id: number;
+  user_id?: number;
+  titulo: string;
+  mensaje: string;
+  tipo?: string;
+  data?: Record<string, any>;
+  leido_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Chat
+export interface ChatConversacion {
+  id: number;
+  docente_id: number;
+  padre_id: number;
+  estudiante_id?: number | null;
+  ultimo_mensaje_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ChatMensaje {
+  id: number;
+  conversacion_id: number;
+  user_id: number;
+  mensaje: string;
+  leido_at?: string | null;
+  created_at: string;
+  updated_at: string;
 }

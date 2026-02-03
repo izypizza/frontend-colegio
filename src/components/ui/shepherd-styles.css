@@ -1,0 +1,67 @@
+/* Shepherd.js Styles */
+.shepherd-modal-overlay {
+  z-index: 9999;
+}
+
+.shepherd-element {
+  z-index: 10000;
+  max-width: 400px;
+}
+
+.shepherd-popper {
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.15));
+}
+
+.shepherd-button-primary {
+  background-color: #04adbf;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  margin-left: 8px;
+  transition: background-color 0.2s;
+}
+
+.shepherd-button-primary:hover {
+  background-color: #038a9a;
+}
+
+.shepherd-button-secondary {
+  background-color: #e5e7eb;
+  color: #374151;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  margin-left: 8px;
+  transition: background-color 0.2s;
+}
+
+.shepherd-button-secondary:hover {
+  background-color: #d1d5db;
+}
+
+.shepherd-text {
+  color: #4b5563;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.shepherd-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.shepherd-content {
+  padding: 20px;
+}
+
+/* Estilos para modal overlay */
+.shepherd-modal-overlay-container {
+  background-color: rgba(0, 0, 0, 0.5);
+}

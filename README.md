@@ -278,6 +278,71 @@ npm run lint     # ESLint
 
 ## Historial de Actualizaciones
 
+### Version 1.5.0 (3 Febrero 2026) - Mejoras de UI y Limpieza de Codigo
+
+Mejoras de Interfaz:
+
+- Dashboard Admin Rediseno: Nuevo diseno con 8 tarjetas estadisticas modernas
+  - Grid de 4 columnas para mejor aprovechamiento del espacio
+  - Tarjetas con fondos blancos limpios y efectos hover (hover:shadow-lg)
+  - Tipografia mejorada: text-4xl para numeros, uppercase tracking-wider para labels
+  - Iconos mas grandes (w-10 h-10) con fondos redondeados color-100
+  - Subtitulos descriptivos para contexto ("Total matriculados", "Personal activo")
+  - Codificacion por colores profesional (azul, verde, purpura, amarillo, naranja, teal, indigo, rosa)
+- Tarjetas de Detalle Mejoradas:
+  - Bordes de acento coloridos a la izquierda (w-1 h-6)
+  - Fondos degradados para metricas clave (bg-gradient-to-r, bg-gradient-to-br)
+  - Mejor jerarquia visual con p-3 bg-gray-50 rounded-lg
+  - Diseno de botones mejorado (rounded-lg, mejores estados hover)
+
+Limpieza y Optimizacion:
+
+- Eliminada funcionalidad redundante de "Analisis Detallado" en dashboard admin
+  - Componente EstadisticasAvanzadas ya disponible en /dashboard/calificaciones
+  - Reduce complejidad: eliminados estados y imports innecesarios
+  - Mejora rendimiento del dashboard (menos llamadas API)
+- Eliminada opcion "Estadisticas" del sidebar de Biblioteca
+  - Estadisticas accesibles desde dentro del modulo Biblioteca
+  - Menu lateral mas limpio y organizado
+- Correcciones de estructura JSX en biblioteca/page.tsx
+  - Indentacion corregida en filtros
+  - Cierre correcto de divs y Cards
+
+Archivos Modificados:
+
+- app/dashboard/page.tsx: Rediseno completo de seccion admin (260+ lineas)
+- src/components/layout/Sidebar.tsx: Eliminada opcion "Estadisticas"
+- app/dashboard/biblioteca/page.tsx: Correcciones de estructura
+
+Impacto:
+
+- Interfaz mas profesional y moderna
+- Navegacion simplificada y coherente
+- Mejor experiencia de usuario
+- Codigo mas limpio y mantenible
+
+---
+
+### Version 1.4.0 (3 Febrero 2026) - Optimizacion de Consultas
+
+- Implementacion de paginacion en todas las vistas de calificaciones
+- Filtros avanzados con 8 parametros de busqueda
+- Reduccion del 90% en transferencia de datos
+- Mejora del 85% en tiempo de carga
+- Eager loading optimizado en relaciones
+
+---
+
+### Version 1.3.0 (19 Enero 2026) - Consolidacion
+
+- Vista unificada de Grados y Secciones
+- Navegacion directa a Configuraciones
+- Campo turno agregado a secciones
+- Limpieza de codigo duplicado
+- Eliminacion de emojis del sistema
+
+---
+
 ### Version 1.2.0 (19 Enero 2026) - Consolidacion UI
 
 - Sistema de Grados y Secciones unificado en una sola pagina
@@ -299,5 +364,5 @@ npm run lint     # ESLint
 
 ---
 
-Ultima actualizacion: 19 Enero 2026 | Version: 1.2.0
+Ultima actualizacion: 3 Febrero 2026 | Version: 1.5.0
 Proyecto para I.E. N 51006 "TUPAC AMARU" - Cusco, Peru

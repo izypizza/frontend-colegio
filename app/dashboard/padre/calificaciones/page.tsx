@@ -96,7 +96,7 @@ export default function CalificacionesHijosPage() {
         ...hijo,
         calificaciones: selectedPeriodo
           ? (hijo.calificaciones || []).filter(
-              (c) => c.periodo.id === selectedPeriodo
+              (c) => c.periodo.id === selectedPeriodo,
             )
           : hijo.calificaciones || [],
       }));
@@ -221,7 +221,7 @@ export default function CalificacionesHijosPage() {
                       </p>
                       <p
                         className={`text-4xl font-bold ${getNotaColor(
-                          promedio
+                          promedio,
                         )}`}
                       >
                         {promedio.toFixed(2)}
@@ -259,7 +259,7 @@ export default function CalificacionesHijosPage() {
                         {/* Gráfico de barras */}
                         <div>
                           <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                            📊 Notas por Materia
+                            Notas por Materia
                           </h3>
                           <ResponsiveContainer width="100%" height={250}>
                             <BarChart data={graficasData.barData}>
@@ -283,10 +283,10 @@ export default function CalificacionesHijosPage() {
                                         </p>
                                         <p
                                           className={`text-lg font-bold ${getNotaColor(
-                                            data.nota
+                                            data.nota,
                                           )}`}
                                         >
-                                          Nota: {data.nota.toFixed(2)}
+                                          Nota: {Number(data.nota).toFixed(2)}
                                         </p>
                                       </div>
                                     );
@@ -306,7 +306,7 @@ export default function CalificacionesHijosPage() {
                         {/* Gráfico de radar */}
                         <div>
                           <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                            🎯 Vista Comparativa
+                            Vista Comparativa
                           </h3>
                           <ResponsiveContainer width="100%" height={250}>
                             <RadarChart data={graficasData.radarData}>
@@ -358,10 +358,10 @@ export default function CalificacionesHijosPage() {
                               <td className="px-6 py-4 whitespace-nowrap text-center">
                                 <span
                                   className={`text-2xl font-bold ${getNotaColor(
-                                    calificacion.nota
+                                    calificacion.nota,
                                   )}`}
                                 >
-                                  {calificacion.nota.toFixed(2)}
+                                  {Number(calificacion.nota).toFixed(2)}
                                 </span>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-center">

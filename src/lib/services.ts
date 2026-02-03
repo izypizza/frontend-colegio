@@ -75,7 +75,7 @@ class CrudService<T> {
 
   async getById(id: number): Promise<T> {
     const response = await apiClient.get<T | { data: T }>(
-      `${this.endpoint}/${id}`
+      `${this.endpoint}/${id}`,
     );
     // Handle both formats: direct object or wrapped in { data: {...} }
     return response && typeof response === "object" && "data" in response
@@ -145,10 +145,10 @@ export const seccionService = new CrudService<Seccion>("/secciones");
 export const materiaService = new CrudService<Materia>("/materias");
 export const periodoService = new CrudService<PeriodoAcademico>("/periodos");
 export const periodoAcademicoService = new CrudService<PeriodoAcademico>(
-  "/periodos"
+  "/periodos",
 );
 export const asignacionService = new CrudService<AsignacionDocenteMateria>(
-  "/asignaciones"
+  "/asignaciones",
 );
 export const horarioService = new CrudService<Horario>("/horarios");
 export const asistenciaService = new CrudService<Asistencia>("/asistencias");
@@ -159,13 +159,13 @@ class CalificacionServiceExtended extends CrudService<Calificacion> {
     const params = periodo_id ? `?periodo_academico_id=${periodo_id}` : "";
     return await apiClient.get(
       `/calificaciones/estadisticas-avanzadas${params}`,
-      { timeout: 120000 } // 120 segundos para estadísticas complejas
+      { timeout: 120000 }, // 120 segundos para estadísticas complejas
     );
   }
 }
 
 export const calificacionService = new CalificacionServiceExtended(
-  "/calificaciones"
+  "/calificaciones",
 );
 
 // Biblioteca Services
@@ -207,7 +207,7 @@ export const userManagementService = {
   },
   updateEstadoEstudiante: async (
     id: number,
-    estado: "activo" | "suspendido" | "egresado"
+    estado: "activo" | "suspendido" | "egresado",
   ) => {
     return await apiClient.put(`/estudiantes/${id}/estado`, { estado });
   },
@@ -301,6 +301,9 @@ export const padrePortalService = {
   boletinHijo: async (hijo_id: number, periodo_id: number) => {
     return await apiClient.get(`/padre/boletin-hijo/${hijo_id}/${periodo_id}`);
   },
+  docentesHijo: async (hijo_id: number) => {
+    return await apiClient.get(`/padre/docentes-hijo/${hijo_id}`);
+  },
 };
 
 // Dashboard Service
@@ -330,5 +333,73 @@ export const configuracionService = {
   },
   modulosActivos: async () => {
     return await apiClient.get("/sistema/modulos-activos");
+  },
+};
+
+// Notificaciones
+export const notificacionService = {
+  getAll: async (params?: any) => {
+    return await apiClient.get("/notificaciones", { params });
+  },
+  marcarLeida: async (id: number) => {
+    return await apiClient.post(`/notificaciones/${id}/leer`, {});
+  },
+  marcarTodasLeidas: async () => {
+    return await apiClient.post("/notificaciones/leer-todas", {});
+  },
+};
+
+// Chat
+export const chatService = {
+  getConversaciones: async (params?: any) => {
+    return await apiClient.get("/chat/conversaciones", { params });
+  },
+  conversaciones: async (params?: any) => {
+    return await apiClient.get("/chat/conversaciones", { params });
+  },
+  crearConversacion: async (data: any) => {
+    return await apiClient.post("/chat/conversaciones", data);
+  },
+  getMensajes: async (conversacionId: number) => {
+    return await apiClient.get(
+      `/chat/conversaciones/${conversacionId}/mensajes`,
+    );
+  },
+  mensajes: async (conversacionId: number) => {
+    return await apiClient.get(
+      `/chat/conversaciones/${conversacionId}/mensajes`,
+    );
+  },
+  enviarMensaje: async (conversacionId: number, data: { mensaje: string }) => {
+    return await apiClient.post(
+      `/chat/conversaciones/${conversacionId}/mensajes`,
+      data,
+    );
+  },
+};
+
+// Reportes
+export const reporteService = {
+  estudiantesExcel: async () => {
+    return await apiClient.get("/reportes/estudiantes/excel", {
+      responseType: "blob",
+    });
+  },
+  estudiantesPdf: async () => {
+    return await apiClient.get("/reportes/estudiantes/pdf", {
+      responseType: "blob",
+    });
+  },
+  calificacionesExcel: async (periodo_academico_id?: number) => {
+    return await apiClient.get("/reportes/calificaciones/excel", {
+      responseType: "blob",
+      params: { periodo_academico_id },
+    });
+  },
+  calificacionesPdf: async (periodo_academico_id?: number) => {
+    return await apiClient.get("/reportes/calificaciones/pdf", {
+      responseType: "blob",
+      params: { periodo_academico_id },
+    });
   },
 };

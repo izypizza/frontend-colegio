@@ -2,20 +2,16 @@
 
 import { Card } from "@/src/components/ui";
 import { useEffect, useState } from "react";
-import { dashboardService, calificacionService } from "@/src/lib/services";
+import { dashboardService } from "@/src/lib/services";
 import { useAuth } from "@/src/features/auth";
 import { UserRole } from "@/src/types";
 import Link from "next/link";
-import EstadisticasAvanzadas from "./calificaciones/components/EstadisticasAvanzadas";
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const [stats, setStats] = useState<any>(null);
-  const [estadisticasAvanzadas, setEstadisticasAvanzadas] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [loadingEstadisticas, setLoadingEstadisticas] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [mostrarEstadisticas, setMostrarEstadisticas] = useState(false);
 
   useEffect(() => {
     const loadStats = async () => {
@@ -27,7 +23,7 @@ export default function DashboardPage() {
       } catch (error: any) {
         console.error("Error al cargar estadísticas:", error);
         setError(
-          error.message || "Error al cargar las estadísticas del sistema"
+          error.message || "Error al cargar las estadísticas del sistema",
         );
       } finally {
         setLoading(false);
@@ -36,28 +32,6 @@ export default function DashboardPage() {
 
     loadStats();
   }, []);
-
-  useEffect(() => {
-    if (
-      (user?.role === UserRole.ADMIN || user?.role === UserRole.AUXILIAR) &&
-      mostrarEstadisticas &&
-      !estadisticasAvanzadas
-    ) {
-      loadEstadisticasAvanzadas();
-    }
-  }, [mostrarEstadisticas, user?.role]);
-
-  const loadEstadisticasAvanzadas = async () => {
-    try {
-      setLoadingEstadisticas(true);
-      const response = await calificacionService.estadisticasAvanzadas();
-      setEstadisticasAvanzadas(response);
-    } catch (err) {
-      console.error("[Dashboard] Error al cargar estadísticas avanzadas:", err);
-    } finally {
-      setLoadingEstadisticas(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -106,7 +80,10 @@ export default function DashboardPage() {
       <div className="space-y-6">
         <div className="bg-gradient-to-r from-blue-600 to-blue-400 rounded-lg p-6 shadow-md text-white">
           <h1 className="text-3xl font-bold">Portal del Docente</h1>
-          <p className="mt-2 text-blue-50">Bienvenido, {user.name}</p>
+          <p className="mt-2 text-blue-50">Bienvenido(a), {user.name}</p>
+          <p className="mt-1 text-sm text-blue-100">
+            Gestiona tus clases, estudiantes y evaluaciones desde aqui
+          </p>
         </div>
 
         {/* Estadísticas rápidas */}
@@ -301,7 +278,10 @@ export default function DashboardPage() {
       <div className="space-y-6">
         <div className="bg-gradient-to-r from-green-600 to-green-400 rounded-lg p-6 shadow-md text-white">
           <h1 className="text-3xl font-bold">Portal del Estudiante</h1>
-          <p className="mt-2 text-green-50">Bienvenido, {user.name}</p>
+          <p className="mt-2 text-green-50">Bienvenido(a), {user.name}</p>
+          <p className="mt-1 text-sm text-green-100">
+            Consulta tus calificaciones, asistencias y tareas
+          </p>
           {stats?.info_personal && (
             <div className="mt-4 bg-white/20 rounded-lg p-3 backdrop-blur-sm">
               <p className="text-sm">
@@ -380,8 +360,8 @@ export default function DashboardPage() {
                     recordatorio.tipo === "success"
                       ? "bg-green-50 border border-green-200"
                       : recordatorio.tipo === "warning"
-                      ? "bg-yellow-50 border border-yellow-200"
-                      : "bg-blue-50 border border-blue-200"
+                        ? "bg-yellow-50 border border-yellow-200"
+                        : "bg-blue-50 border border-blue-200"
                   }`}
                 >
                   <p className="font-semibold text-gray-900">
@@ -405,7 +385,10 @@ export default function DashboardPage() {
       <div className="space-y-6">
         <div className="bg-gradient-to-r from-purple-600 to-purple-400 rounded-lg p-6 shadow-md text-white">
           <h1 className="text-3xl font-bold">Portal del Padre de Familia</h1>
-          <p className="mt-2 text-purple-50">Bienvenido, {user.name}</p>
+          <p className="mt-2 text-purple-50">Bienvenido(a), {user.name}</p>
+          <p className="mt-1 text-sm text-purple-100">
+            Monitorea el progreso academico de tus hijos
+          </p>
           {stats?.mis_hijos && (
             <p className="mt-2 text-purple-100">
               Tienes {stats.mis_hijos}{" "}
@@ -482,8 +465,8 @@ export default function DashboardPage() {
                         hijo.promedio >= 14
                           ? "text-green-600"
                           : hijo.promedio >= 11
-                          ? "text-blue-600"
-                          : "text-red-600"
+                            ? "text-blue-600"
+                            : "text-red-600"
                       }`}
                     >
                       {hijo.promedio}
@@ -533,31 +516,41 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="bg-gradient-to-r from-[#04ADBF] to-blue-500 rounded-lg p-6 shadow-md text-white">
         <h1 className="text-3xl lg:text-4xl font-bold">
-          Dashboard Administrativo
+          Bienvenido(a), {user?.name}
         </h1>
-        <p className="mt-2 text-blue-50">
+        <p className="mt-2 text-lg text-blue-50">
+          {user?.role === "admin" &&
+            "Gestiona todo el sistema educativo y supervisa las operaciones"}
+          {user?.role === "auxiliar" &&
+            "Apoya la administracion y gestion de la institucion educativa"}
+          {user?.role === "bibliotecario" &&
+            "Administra la biblioteca y controla los prestamos de libros"}
+        </p>
+        <p className="text-sm text-blue-100 mt-1">
           Institución Educativa N° 51006 Túpac Amaru
         </p>
-        <p className="text-sm text-blue-100 mt-1">Bienvenido, {user?.name}</p>
       </div>
 
       {stats ? (
         <>
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+          {/* Stats Grid - Mejorado */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="hover:shadow-lg transition-shadow">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-blue-600 font-medium">
+                  <p className="text-sm text-gray-500 font-medium uppercase tracking-wider">
                     Estudiantes
                   </p>
-                  <p className="text-3xl font-bold text-blue-900">
+                  <p className="text-4xl font-bold text-gray-900 mt-2">
                     {stats.estudiantes}
                   </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Total matriculados
+                  </p>
                 </div>
-                <div className="p-3 bg-blue-200 rounded-full">
+                <div className="p-4 bg-blue-100 rounded-2xl">
                   <svg
-                    className="w-8 h-8 text-blue-600"
+                    className="w-10 h-10 text-blue-600"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -573,17 +566,20 @@ export default function DashboardPage() {
               </div>
             </Card>
 
-            <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+            <Card className="hover:shadow-lg transition-shadow">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-green-600 font-medium">Docentes</p>
-                  <p className="text-3xl font-bold text-green-900">
+                  <p className="text-sm text-gray-500 font-medium uppercase tracking-wider">
+                    Docentes
+                  </p>
+                  <p className="text-4xl font-bold text-gray-900 mt-2">
                     {stats.docentes}
                   </p>
+                  <p className="text-xs text-gray-400 mt-1">Personal activo</p>
                 </div>
-                <div className="p-3 bg-green-200 rounded-full">
+                <div className="p-4 bg-green-100 rounded-2xl">
                   <svg
-                    className="w-8 h-8 text-green-600"
+                    className="w-10 h-10 text-green-600"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -599,17 +595,22 @@ export default function DashboardPage() {
               </div>
             </Card>
 
-            <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+            <Card className="hover:shadow-lg transition-shadow">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-purple-600 font-medium">Padres</p>
-                  <p className="text-3xl font-bold text-purple-900">
+                  <p className="text-sm text-gray-500 font-medium uppercase tracking-wider">
+                    Padres
+                  </p>
+                  <p className="text-4xl font-bold text-gray-900 mt-2">
                     {stats.padres}
                   </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Familias registradas
+                  </p>
                 </div>
-                <div className="p-3 bg-purple-200 rounded-full">
+                <div className="p-4 bg-purple-100 rounded-2xl">
                   <svg
-                    className="w-8 h-8 text-purple-600"
+                    className="w-10 h-10 text-purple-600"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -625,19 +626,54 @@ export default function DashboardPage() {
               </div>
             </Card>
 
-            <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+            <Card className="hover:shadow-lg transition-shadow">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-orange-600 font-medium">
-                    Materias
+                  <p className="text-sm text-gray-500 font-medium uppercase tracking-wider">
+                    Secciones
                   </p>
-                  <p className="text-3xl font-bold text-orange-900">
-                    {stats.materias}
+                  <p className="text-4xl font-bold text-gray-900 mt-2">
+                    {stats.secciones}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    {stats.grados} grados activos
                   </p>
                 </div>
-                <div className="p-3 bg-orange-200 rounded-full">
+                <div className="p-4 bg-yellow-100 rounded-2xl">
                   <svg
-                    className="w-8 h-8 text-orange-600"
+                    className="w-10 h-10 text-yellow-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Segunda fila de stats */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="hover:shadow-lg transition-shadow">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500 font-medium uppercase tracking-wider">
+                    Materias
+                  </p>
+                  <p className="text-4xl font-bold text-gray-900 mt-2">
+                    {stats.materias}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">Asignaturas</p>
+                </div>
+                <div className="p-4 bg-orange-100 rounded-2xl">
+                  <svg
+                    className="w-10 h-10 text-orange-600"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -653,45 +689,88 @@ export default function DashboardPage() {
               </div>
             </Card>
 
-            <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-yellow-600 font-medium">
-                    Secciones
-                  </p>
-                  <p className="text-3xl font-bold text-yellow-900">
-                    {stats.secciones}
-                  </p>
+            {stats.asistencias_hoy && (
+              <Card className="hover:shadow-lg transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-500 font-medium uppercase tracking-wider">
+                      Asistencia Hoy
+                    </p>
+                    <p className="text-4xl font-bold text-gray-900 mt-2">
+                      {stats.asistencias_hoy.porcentaje_asistencia}%
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {stats.asistencias_hoy.presentes} presentes
+                    </p>
+                  </div>
+                  <div className="p-4 bg-teal-100 rounded-2xl">
+                    <svg
+                      className="w-10 h-10 text-teal-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </div>
                 </div>
-                <div className="p-3 bg-yellow-200 rounded-full">
-                  <svg
-                    className="w-8 h-8 text-yellow-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </Card>
+              </Card>
+            )}
 
-            <Card className="bg-gradient-to-br from-indigo-50 to-indigo-100 border-indigo-200">
+            {stats.calificaciones && (
+              <Card className="hover:shadow-lg transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-500 font-medium uppercase tracking-wider">
+                      Promedio General
+                    </p>
+                    <p className="text-4xl font-bold text-gray-900 mt-2">
+                      {stats.calificaciones.promedio_general}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {stats.calificaciones.aprobados} aprobados
+                    </p>
+                  </div>
+                  <div className="p-4 bg-indigo-100 rounded-2xl">
+                    <svg
+                      className="w-10 h-10 text-indigo-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            <Card className="hover:shadow-lg transition-shadow">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-indigo-600 font-medium">Grados</p>
-                  <p className="text-3xl font-bold text-indigo-900">
-                    {stats.grados}
+                  <p className="text-sm text-gray-500 font-medium uppercase tracking-wider">
+                    Calificaciones
+                  </p>
+                  <p className="text-4xl font-bold text-gray-900 mt-2">
+                    {stats.calificaciones?.total_calificaciones || 0}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Total registradas
                   </p>
                 </div>
-                <div className="p-3 bg-indigo-200 rounded-full">
+                <div className="p-4 bg-pink-100 rounded-2xl">
                   <svg
-                    className="w-8 h-8 text-indigo-600"
+                    className="w-10 h-10 text-pink-600"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -700,7 +779,7 @@ export default function DashboardPage() {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
                     />
                   </svg>
                 </div>
@@ -708,37 +787,42 @@ export default function DashboardPage() {
             </Card>
           </div>
 
-          {/* Asistencias y Calificaciones Hoy */}
+          {/* Detalles de Asistencias y Calificaciones */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {stats.asistencias_hoy && (
-              <Card>
-                <h2 className="text-xl font-bold text-gray-900 mb-4">
-                  Asistencias de Hoy
+              <Card className="hover:shadow-lg transition-shadow">
+                <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                  <div className="w-1 h-6 bg-teal-500 rounded mr-3"></div>
+                  Resumen de Asistencias Hoy
                 </h2>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Total Registradas:</span>
-                    <span className="text-2xl font-bold text-blue-600">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <span className="text-gray-700 font-medium">
+                      Total Registradas
+                    </span>
+                    <span className="text-2xl font-bold text-gray-900">
                       {stats.asistencias_hoy.total}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Presentes:</span>
-                    <span className="text-2xl font-bold text-green-600">
+                  <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                    <span className="text-green-700 font-medium">
+                      Presentes
+                    </span>
+                    <span className="text-2xl font-bold text-green-700">
                       {stats.asistencias_hoy.presentes}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Ausentes:</span>
-                    <span className="text-2xl font-bold text-red-600">
+                  <div className="flex justify-between items-center p-3 bg-red-50 rounded-lg">
+                    <span className="text-red-700 font-medium">Ausentes</span>
+                    <span className="text-2xl font-bold text-red-700">
                       {stats.asistencias_hoy.ausentes}
                     </span>
                   </div>
-                  <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-blue-600">
+                  <div className="mt-4 p-4 bg-gradient-to-r from-teal-500 to-blue-500 rounded-lg text-white">
+                    <p className="text-sm font-medium opacity-90">
                       Porcentaje de Asistencia
                     </p>
-                    <p className="text-4xl font-bold text-blue-900">
+                    <p className="text-5xl font-bold mt-1">
                       {stats.asistencias_hoy.porcentaje_asistencia}%
                     </p>
                   </div>
@@ -747,41 +831,42 @@ export default function DashboardPage() {
             )}
 
             {stats.calificaciones && (
-              <Card>
-                <div className="flex justify-between items-start mb-4">
-                  <h2 className="text-xl font-bold text-gray-900">
-                    Calificaciones
-                  </h2>
-                  <button
-                    onClick={() => setMostrarEstadisticas(!mostrarEstadisticas)}
-                    className="text-sm px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-md transition-colors"
-                  >
-                    {mostrarEstadisticas ? "Ocultar" : "Ver"} Análisis Detallado
-                  </button>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Promedio General:</span>
-                    <span className="text-2xl font-bold text-blue-600">
+              <Card className="hover:shadow-lg transition-shadow">
+                <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                  <div className="w-1 h-6 bg-indigo-500 rounded mr-3"></div>
+                  Resumen de Calificaciones
+                </h2>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <span className="text-gray-700 font-medium">
+                      Promedio General
+                    </span>
+                    <span className="text-2xl font-bold text-gray-900">
                       {stats.calificaciones.promedio_general}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Total Registradas:</span>
-                    <span className="text-2xl font-bold">
+                  <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                    <span className="text-blue-700 font-medium">
+                      Total Registradas
+                    </span>
+                    <span className="text-2xl font-bold text-blue-700">
                       {stats.calificaciones.total_calificaciones}
                     </span>
                   </div>
-                  <div className="grid grid-cols-2 gap-4 mt-4">
-                    <div className="p-4 bg-green-50 rounded-lg text-center">
-                      <p className="text-sm text-green-600">Aprobados</p>
-                      <p className="text-3xl font-bold text-green-900">
+                  <div className="grid grid-cols-2 gap-3 mt-4">
+                    <div className="p-4 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg text-white text-center">
+                      <p className="text-sm font-medium opacity-90">
+                        Aprobados
+                      </p>
+                      <p className="text-4xl font-bold mt-2">
                         {stats.calificaciones.aprobados}
                       </p>
                     </div>
-                    <div className="p-4 bg-red-50 rounded-lg text-center">
-                      <p className="text-sm text-red-600">Desaprobados</p>
-                      <p className="text-3xl font-bold text-red-900">
+                    <div className="p-4 bg-gradient-to-br from-red-500 to-rose-600 rounded-lg text-white text-center">
+                      <p className="text-sm font-medium opacity-90">
+                        Desaprobados
+                      </p>
+                      <p className="text-4xl font-bold mt-2">
                         {stats.calificaciones.desaprobados}
                       </p>
                     </div>
@@ -790,24 +875,6 @@ export default function DashboardPage() {
               </Card>
             )}
           </div>
-
-          {/* Estadísticas Avanzadas de Calificaciones */}
-          {mostrarEstadisticas && (
-            <>
-              {loadingEstadisticas ? (
-                <Card>
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">
-                      Cargando análisis detallado...
-                    </p>
-                  </div>
-                </Card>
-              ) : estadisticasAvanzadas ? (
-                <EstadisticasAvanzadas estadisticas={estadisticasAvanzadas} />
-              ) : null}
-            </>
-          )}
 
           {/* Biblioteca y Elecciones */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -901,7 +968,7 @@ export default function DashboardPage() {
                               {grado.estudiantes}
                             </td>
                           </tr>
-                        )
+                        ),
                       )}
                     </tbody>
                   </table>

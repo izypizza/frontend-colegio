@@ -103,7 +103,7 @@ export default function MisCalificacionesPage() {
       // Filtrar por periodo seleccionado
       const calificacionesFiltradas = selectedPeriodo
         ? allCalificaciones.filter(
-            (c: Calificacion) => c.periodo.id === selectedPeriodo
+            (c: Calificacion) => c.periodo.id === selectedPeriodo,
           )
         : allCalificaciones;
 
@@ -112,7 +112,7 @@ export default function MisCalificacionesPage() {
         calificacionesFiltradas.length > 0
           ? calificacionesFiltradas.reduce(
               (sum: number, c: Calificacion) => sum + c.nota,
-              0
+              0,
             ) / calificacionesFiltradas.length
           : 0;
 
@@ -138,16 +138,16 @@ export default function MisCalificacionesPage() {
     return "Reprobado";
   };
 
-  // Función para obtener emoji/carita según nota (solo para primaria)
-  const getEmojiNota = (nota: number) => {
+  // Función para obtener indicador visual según nota
+  const getIndicadorNota = (nota: number) => {
     if (nivelEstudiante !== "primaria") return null;
 
-    if (nota >= 18) return "😄"; // Muy feliz - notas excelentes
-    if (nota >= 16) return "😊"; // Feliz - notas muy buenas
-    if (nota >= 14) return "🙂"; // Contento - notas buenas
-    if (nota >= 11) return "😐"; // Neutral - apenas aprobado
-    if (nota >= 8) return "😕"; // Preocupado - nota baja
-    return "😢"; // Triste - reprobado
+    if (nota >= 18) return "Excelente";
+    if (nota >= 16) return "Muy Bueno";
+    if (nota >= 14) return "Bueno";
+    if (nota >= 11) return "Aprobado";
+    if (nota >= 8) return "Bajo";
+    return "Reprobado";
   };
 
   // Preparar datos para gráficas
@@ -206,7 +206,7 @@ export default function MisCalificacionesPage() {
     // Datos para evolución por periodo (si hay múltiples periodos)
     const evolucionData = periodos.map((periodo) => {
       const calificacionesPeriodo = allData.filter(
-        (c) => c.periodo.id === periodo.id
+        (c) => c.periodo.id === periodo.id,
       );
       const promedioPeriodo =
         calificacionesPeriodo.length > 0
@@ -272,7 +272,7 @@ export default function MisCalificacionesPage() {
             )}
             <div
               className={`text-5xl font-bold ${getNotaColor(
-                data?.promedio || 0
+                data?.promedio || 0,
               )}`}
             >
               {data?.promedio
@@ -317,7 +317,7 @@ export default function MisCalificacionesPage() {
               {/* Gráfico de barras - Notas por materia */}
               <Card>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  📊 Notas por Materia
+                  Notas por Materia
                 </h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={graficasData.barData}>
@@ -341,7 +341,7 @@ export default function MisCalificacionesPage() {
                               </p>
                               <p
                                 className={`text-lg font-bold ${getNotaColor(
-                                  data.nota
+                                  data.nota,
                                 )}`}
                               >
                                 Nota:{" "}
@@ -363,7 +363,7 @@ export default function MisCalificacionesPage() {
               {/* Gráfico de radar - Vista comparativa */}
               <Card>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  🎯 Vista Comparativa
+                  Vista Comparativa
                 </h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <RadarChart data={graficasData.radarData}>
@@ -393,7 +393,7 @@ export default function MisCalificacionesPage() {
               {/* Gráfico de dona - Distribución */}
               <Card>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  🥧 Distribución de Calificaciones
+                  Distribución de Calificaciones
                 </h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
@@ -420,7 +420,7 @@ export default function MisCalificacionesPage() {
               {/* Gráfico de línea - Evolución por periodo */}
               <Card>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  📈 Evolución por Periodo
+                  Evolución por Periodo
                 </h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={graficasData.evolucionData}>
@@ -490,7 +490,7 @@ export default function MisCalificacionesPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <span
                         className={`text-2xl ${getNotaColor(
-                          calificacion.nota
+                          calificacion.nota,
                         )}`}
                       >
                         {typeof calificacion.nota === "number"

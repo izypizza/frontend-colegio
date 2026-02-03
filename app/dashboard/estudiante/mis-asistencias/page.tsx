@@ -353,7 +353,7 @@ export default function MisAsistenciasPage() {
             {/* Gráfico de dona - Distribución */}
             <Card>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                📊 Distribución de Asistencias
+                Distribución de Asistencias
               </h3>
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
@@ -382,7 +382,7 @@ export default function MisAsistenciasPage() {
             {/* Gráfico de barras - Por materia */}
             <Card className="lg:col-span-2">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                📚 Asistencia por Materia
+                Asistencia por Materia
               </h3>
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={graficasData.barData}>
@@ -408,7 +408,7 @@ export default function MisAsistenciasPage() {
           {/* Gráfico de línea - Tendencia */}
           <Card>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              📈 Tendencia de Asistencia
+              Tendencia de Asistencia
             </h3>
             <ResponsiveContainer width="100%" height={250}>
               <LineChart data={graficasData.lineData}>
