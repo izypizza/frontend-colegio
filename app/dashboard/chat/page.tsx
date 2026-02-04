@@ -19,13 +19,6 @@ export default function ChatPage() {
   const [selectedDocente, setSelectedDocente] = useState<number | null>(null);
   const [creating, setCreating] = useState(false);
 
-  useEffect(() => {
-    fetchConversaciones();
-    if (user?.role === "padre") {
-      fetchHijos();
-    }
-  }, [user?.role, fetchConversaciones, fetchHijos]);
-
   const fetchConversaciones = useCallback(async () => {
     try {
       setLoading(true);
@@ -105,6 +98,13 @@ export default function ChatPage() {
       setCreating(false);
     }
   };
+
+  useEffect(() => {
+    fetchConversaciones();
+    if (user?.role === "padre") {
+      fetchHijos();
+    }
+  }, [user?.role, fetchConversaciones, fetchHijos]);
 
   if (loading) {
     return (
