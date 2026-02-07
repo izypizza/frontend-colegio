@@ -12,19 +12,15 @@ import {
 import { padreService } from "@/src/lib/services";
 import { Padre } from "@/src/types/models";
 import { useEffect, useState } from "react";
+import { useErrorHandler } from "@/src/hooks/useErrorHandler";
+import { useModalState } from "@/src/hooks/useModalState";
+import { usePagination } from "@/src/hooks/usePagination";
+import { useFilteredData } from "@/src/hooks/useFilteredData";
 
 export default function PadresPage() {
   const [padres, setPadres] = useState<Padre[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(50);
-  const [paginationData, setPaginationData] = useState({
-    total: 0,
-    lastPage: 1,
-  });
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<Padre | null>(null);
   const [viewingItem, setViewingItem] = useState<Padre | null>(null);
   const [formData, setFormData] = useState({
     nombres: "",
@@ -36,20 +32,40 @@ export default function PadresPage() {
     direccion: "",
     ocupacion: "",
   });
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
+
+  // Hooks personalizados
+  const { error, success, handleError, handleSuccess } = useErrorHandler();
+  const { isOpen, editingItem, openCreate, openEdit, close } =
+    useModalState<Padre>();
+  const pagination = usePagination();
+  const {
+    filteredData: padresFiltrados,
+    searchTerm,
+    setSearchTerm,
+  } = useFilteredData(padres, (padre, term) => {
+    const nombreCompleto =
+      `${padre.nombres} ${padre.apellido_paterno} ${padre.apellido_materno}`.toLowerCase();
+    const email = padre.email?.toLowerCase() || "";
+    const telefono = padre.telefono?.toLowerCase() || "";
+    const dni = padre.dni?.toLowerCase() || "";
+    return (
+      nombreCompleto.includes(term.toLowerCase()) ||
+      email.includes(term.toLowerCase()) ||
+      telefono.includes(term.toLowerCase()) ||
+      dni.includes(term.toLowerCase())
+    );
+  });
 
   useEffect(() => {
     fetchData();
-  }, [currentPage, perPage]);
+  }, [pagination.currentPage, pagination.perPage]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
       const data = await padreService.getAll({
-        page: currentPage,
-        per_page: perPage,
+        page: pagination.currentPage,
+        per_page: pagination.perPage,
       });
 
       if (
@@ -59,23 +75,23 @@ export default function PadresPage() {
         "current_page" in data
       ) {
         setPadres(data.data);
-        setPaginationData({
-          total: data.total || 0,
-          lastPage: data.last_page || 1,
+        pagination.updatePagination({
+          currentPage: data.current_page,
+          totalPages: data.last_page || 1,
+          totalItems: data.total || 0,
         });
       } else {
         const padresArray = Array.isArray(data) ? data : [];
         setPadres(padresArray);
       }
-    } catch {
-      setError("Error al cargar los padres");
+    } catch (err) {
+      handleError(err, "Error al cargar los padres");
     } finally {
       setLoading(false);
     }
   };
 
   const handleCreate = () => {
-    setEditingItem(null);
     setFormData({
       nombres: "",
       apellido_paterno: "",
@@ -86,7 +102,7 @@ export default function PadresPage() {
       direccion: "",
       ocupacion: "",
     });
-    setIsModalOpen(true);
+    openCreate();
   };
 
   const handleView = (item: Padre) => {
@@ -95,7 +111,6 @@ export default function PadresPage() {
   };
 
   const handleEdit = (item: Padre) => {
-    setEditingItem(item);
     setFormData({
       nombres: item.nombres,
       apellido_paterno: item.apellido_paterno,
@@ -106,7 +121,7 @@ export default function PadresPage() {
       direccion: item.direccion || "",
       ocupacion: item.ocupacion || "",
     });
-    setIsModalOpen(true);
+    openEdit(item);
   };
 
   const handleDelete = async (item: Padre) => {
@@ -114,19 +129,17 @@ export default function PadresPage() {
 
     try {
       await padreService.delete(item.id);
-      setSuccess("Padre eliminado correctamente");
+      handleSuccess("Padre eliminado correctamente");
       fetchData();
-    } catch {
-      setError("Error al eliminar el padre");
+    } catch (err) {
+      handleError(err, "Error al eliminar el padre");
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
 
     try {
-      // Limpiar datos antes de enviar
       const cleanData = {
         nombres: formData.nombres.trim(),
         apellido_paterno: formData.apellido_paterno.trim(),
@@ -140,53 +153,18 @@ export default function PadresPage() {
 
       if (editingItem) {
         await padreService.update(editingItem.id, cleanData);
-        setSuccess("Padre actualizado correctamente");
+        handleSuccess("Padre actualizado correctamente");
       } else {
         await padreService.create(cleanData);
-        setSuccess("Padre creado correctamente");
+        handleSuccess("Padre creado correctamente");
       }
 
-      setIsModalOpen(false);
+      close();
       fetchData();
-    } catch (err: unknown) {
-      // Manejo mejorado de errores del backend
-      if (err && typeof err === "object" && "response" in err) {
-        const response = (
-          err as {
-            response?: {
-              data?: { errors?: Record<string, string[]>; message?: string };
-            };
-          }
-        ).response;
-        if (response?.data?.errors) {
-          const firstError = Object.values(response.data.errors)[0];
-          setError(Array.isArray(firstError) ? firstError[0] : firstError);
-        } else if (response?.data?.message) {
-          setError(response.data.message);
-        } else {
-          setError("Error al guardar el padre");
-        }
-      } else {
-        setError("Error al guardar el padre");
-      }
+    } catch (err) {
+      handleError(err, "Error al guardar el padre");
     }
   };
-
-  // Filtrado de padres
-  const padresFiltrados = padres.filter((padre) => {
-    const nombreCompleto =
-      `${padre.nombres} ${padre.apellido_paterno} ${padre.apellido_materno}`.toLowerCase();
-    const email = padre.email?.toLowerCase() || "";
-    const telefono = padre.telefono?.toLowerCase() || "";
-    const dni = padre.dni?.toLowerCase() || "";
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      nombreCompleto.includes(searchLower) ||
-      email.includes(searchLower) ||
-      telefono.includes(searchLower) ||
-      dni.includes(searchLower)
-    );
-  });
 
   const columns = [
     { key: "id", label: "ID" },
@@ -248,27 +226,25 @@ export default function PadresPage() {
         />
       </Card>
 
-      <Pagination
-        currentPage={currentPage}
-        lastPage={paginationData.lastPage}
-        total={paginationData.total}
-        perPage={perPage}
-        onPageChange={(page) => {
-          setCurrentPage(page);
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        }}
-        onPerPageChange={(newPerPage) => {
-          setPerPage(newPerPage);
-          setCurrentPage(1);
-        }}
-      />
+      {pagination.totalItems > 0 && (
+        <Pagination
+          currentPage={pagination.currentPage}
+          lastPage={pagination.totalPages}
+          total={pagination.totalItems}
+          perPage={pagination.perPage}
+          onPageChange={(page) => {
+            pagination.goToPage(page);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          onPerPageChange={(newPerPage) => {
+            pagination.updatePagination({ perPage: newPerPage });
+          }}
+        />
+      )}
 
       <Modal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setError(null);
-        }}
+        isOpen={isOpen}
+        onClose={close}
         title={editingItem ? "Editar Padre" : "Nuevo Padre"}
         size="lg"
       >
@@ -362,11 +338,7 @@ export default function PadresPage() {
             placeholder="Ingeniero, Doctor, etc."
           />
           <div className="flex justify-end gap-3 pt-4">
-            <Button
-              variant="secondary"
-              type="button"
-              onClick={() => setIsModalOpen(false)}
-            >
+            <Button variant="secondary" type="button" onClick={close}>
               Cancelar
             </Button>
             <Button variant="primary" type="submit">

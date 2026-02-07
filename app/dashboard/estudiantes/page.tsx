@@ -12,14 +12,16 @@ import {
 import { estudianteService, seccionService } from "@/src/lib/services";
 import { Estudiante, Seccion } from "@/src/types/models";
 import { useEffect, useState } from "react";
+import { useErrorHandler } from "@/src/hooks/useErrorHandler";
+import { useModalState } from "@/src/hooks/useModalState";
+import { usePagination } from "@/src/hooks/usePagination";
+import { useFilteredData } from "@/src/hooks/useFilteredData";
 
 export default function EstudiantesPage() {
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [secciones, setSecciones] = useState<Seccion[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<Estudiante | null>(null);
   const [viewingItem, setViewingItem] = useState<Estudiante | null>(null);
   const [formData, setFormData] = useState({
     nombres: "",
@@ -31,38 +33,44 @@ export default function EstudiantesPage() {
     telefono: "",
     direccion: "",
   });
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
   const [filterSeccion, setFilterSeccion] = useState("");
 
-  // Paginación
-  const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(50);
-  const [paginationData, setPaginationData] = useState({
-    total: 0,
-    lastPage: 1,
+  // Hooks personalizados
+  const { error, success, handleError, handleSuccess, setError, setSuccess } =
+    useErrorHandler();
+  const { isOpen, editingItem, openCreate, openEdit, close } =
+    useModalState<Estudiante>();
+  const pagination = usePagination();
+  const {
+    filteredData: estudiantesFiltrados,
+    searchTerm,
+    setSearchTerm,
+  } = useFilteredData(estudiantes, (estudiante, term) => {
+    const nombreCompleto =
+      `${estudiante.nombres} ${estudiante.apellido_paterno} ${estudiante.apellido_materno}`.toLowerCase();
+    const dni = estudiante.dni?.toLowerCase() || "";
+    return (
+      nombreCompleto.includes(term.toLowerCase()) ||
+      dni.includes(term.toLowerCase())
+    );
   });
 
   useEffect(() => {
     fetchData();
-  }, [currentPage, perPage]);
+  }, [pagination.currentPage, pagination.perPage]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      console.log("[Estudiantes] Iniciando carga...");
       const startTime = performance.now();
 
       const [estudiantesData, seccionesData] = await Promise.all([
-        estudianteService.getAll({ page: currentPage, per_page: perPage }),
+        estudianteService.getAll({
+          page: pagination.currentPage,
+          per_page: pagination.perPage,
+        }),
         seccionService.getAll({ all: true }),
       ]);
-
-      const endTime = performance.now();
-      console.log(
-        `[Estudiantes] Cargados en ${(endTime - startTime).toFixed(0)}ms`
-      );
 
       // Manejar respuesta paginada
       if (
@@ -72,44 +80,30 @@ export default function EstudiantesPage() {
         "current_page" in estudiantesData
       ) {
         setEstudiantes(estudiantesData.data);
-        setPaginationData({
-          total: estudiantesData.total || 0,
-          lastPage: estudiantesData.last_page || 1,
+        pagination.updatePagination({
+          currentPage: estudiantesData.current_page,
+          totalPages: estudiantesData.last_page || 1,
+          totalItems: estudiantesData.total || 0,
         });
-        console.log(
-          "[Estudiantes] Total:",
-          estudiantesData.total,
-          "| Página:",
-          currentPage,
-          "de",
-          estudiantesData.last_page
-        );
       } else {
         const estudiantesArray = Array.isArray(estudiantesData)
           ? estudiantesData
           : estudiantesData?.data || [];
         setEstudiantes(estudiantesArray);
-        console.log(
-          "[Estudiantes] Total sin paginar:",
-          estudiantesArray.length
-        );
       }
 
       const seccionesArray = Array.isArray(seccionesData)
         ? seccionesData
         : seccionesData?.data || [];
       setSecciones(seccionesArray);
-      console.log("[Estudiantes] Secciones:", seccionesArray.length);
-    } catch (err: any) {
-      console.error("[Estudiantes] Error:", err);
-      setError(err?.message || "Error al cargar los datos");
+    } catch (err) {
+      handleError(err, "Error al cargar los datos");
     } finally {
       setLoading(false);
     }
   };
 
   const handleCreate = () => {
-    setEditingItem(null);
     setFormData({
       nombres: "",
       apellido_paterno: "",
@@ -120,7 +114,7 @@ export default function EstudiantesPage() {
       telefono: "",
       direccion: "",
     });
-    setIsModalOpen(true);
+    openCreate();
   };
 
   const handleView = (item: Estudiante) => {
@@ -129,18 +123,17 @@ export default function EstudiantesPage() {
   };
 
   const handleEdit = (item: Estudiante) => {
-    setEditingItem(item);
     setFormData({
       nombres: item.nombres,
       apellido_paterno: item.apellido_paterno,
       apellido_materno: item.apellido_materno,
-      fecha_nacimiento: item.fecha_nacimiento.split("T")[0], // Convertir a yyyy-MM-dd
+      fecha_nacimiento: item.fecha_nacimiento.split("T")[0],
       seccion_id: item.seccion_id.toString(),
       dni: item.dni || "",
       telefono: item.telefono || "",
       direccion: item.direccion || "",
     });
-    setIsModalOpen(true);
+    openEdit(item);
   };
 
   const handleDelete = async (item: Estudiante) => {
@@ -148,17 +141,15 @@ export default function EstudiantesPage() {
 
     try {
       await estudianteService.delete(item.id);
-      setSuccess("Estudiante eliminado correctamente");
+      handleSuccess("Estudiante eliminado correctamente");
       fetchData();
-    } catch {
-      setError("Error al eliminar el estudiante");
+    } catch (err) {
+      handleError(err, "Error al eliminar el estudiante");
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
 
     try {
       const data = {
@@ -174,38 +165,29 @@ export default function EstudiantesPage() {
 
       if (editingItem) {
         const response = await estudianteService.update(editingItem.id, data);
-        setSuccess(response.message || "Estudiante actualizado correctamente");
+        handleSuccess(
+          response.message || "Estudiante actualizado correctamente",
+        );
       } else {
         const response = await estudianteService.create(data);
-        setSuccess(response.message || "Estudiante creado correctamente");
+        handleSuccess(response.message || "Estudiante creado correctamente");
       }
 
-      setIsModalOpen(false);
+      close();
       fetchData();
-    } catch (err: any) {
-      if (err.response?.data?.errors) {
-        const firstError = Object.values(err.response.data.errors)[0];
-        setError(Array.isArray(firstError) ? firstError[0] : firstError);
-      } else if (err.response?.data?.message) {
-        setError(err.response.data.message);
-      } else {
-        setError("Error al guardar el estudiante");
-      }
+    } catch (err) {
+      handleError(err, "Error al guardar el estudiante");
     }
   };
 
-  // Filtrado de estudiantes
-  const estudiantesFiltrados = estudiantes.filter((estudiante) => {
-    const nombreCompleto =
-      `${estudiante.nombres} ${estudiante.apellido_paterno} ${estudiante.apellido_materno}`.toLowerCase();
-    const dni = estudiante.dni?.toLowerCase() || "";
-    const matchesSearch =
-      nombreCompleto.includes(searchTerm.toLowerCase()) ||
-      dni.includes(searchTerm.toLowerCase());
-    const matchesSeccion =
-      !filterSeccion || estudiante.seccion_id?.toString() === filterSeccion;
-    return matchesSearch && matchesSeccion;
-  });
+  // Filtrado adicional por sección
+  const estudiantesFiltradosCompletos = estudiantesFiltrados.filter(
+    (estudiante) => {
+      const matchesSeccion =
+        !filterSeccion || estudiante.seccion_id?.toString() === filterSeccion;
+      return matchesSeccion;
+    },
+  );
 
   const columns = [
     { key: "id", label: "ID" },
@@ -274,15 +256,15 @@ export default function EstudiantesPage() {
           </select>
         </div>
         <div className="text-sm text-gray-600">
-          Mostrando {estudiantesFiltrados.length} de {estudiantes.length}{" "}
-          estudiantes
+          Mostrando {estudiantesFiltradosCompletos.length} de{" "}
+          {estudiantes.length} estudiantes
         </div>
       </Card>
 
       <Card>
         <Table
           columns={columns}
-          data={estudiantesFiltrados}
+          data={estudiantesFiltradosCompletos}
           loading={loading}
           onView={handleView}
           onEdit={handleEdit}
@@ -290,30 +272,26 @@ export default function EstudiantesPage() {
         />
 
         {/* Paginación */}
-        {paginationData.total > 0 && (
+        {pagination.totalItems > 0 && (
           <Pagination
-            currentPage={currentPage}
-            lastPage={paginationData.lastPage}
-            total={paginationData.total}
-            perPage={perPage}
+            currentPage={pagination.currentPage}
+            lastPage={pagination.totalPages}
+            total={pagination.totalItems}
+            perPage={pagination.perPage}
             onPageChange={(page) => {
-              setCurrentPage(page);
+              pagination.goToPage(page);
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
             onPerPageChange={(newPerPage) => {
-              setPerPage(newPerPage);
-              setCurrentPage(1);
+              pagination.updatePagination({ perPage: newPerPage });
             }}
           />
         )}
       </Card>
 
       <Modal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setError(null);
-        }}
+        isOpen={isOpen}
+        onClose={close}
         title={editingItem ? "Editar Estudiante" : "Nuevo Estudiante"}
         size="lg"
       >
@@ -421,11 +399,7 @@ export default function EstudiantesPage() {
           </div>
 
           <div className="flex justify-end gap-3 pt-4">
-            <Button
-              variant="secondary"
-              type="button"
-              onClick={() => setIsModalOpen(false)}
-            >
+            <Button variant="secondary" type="button" onClick={close}>
               Cancelar
             </Button>
             <Button variant="primary" type="submit">
@@ -474,7 +448,7 @@ export default function EstudiantesPage() {
                         year: "numeric",
                         month: "long",
                         day: "numeric",
-                      }
+                      },
                     )}
                   </p>
                 </div>
@@ -484,7 +458,7 @@ export default function EstudiantesPage() {
                     {Math.floor(
                       (new Date().getTime() -
                         new Date(viewingItem.fecha_nacimiento).getTime()) /
-                        (1000 * 60 * 60 * 24 * 365)
+                        (1000 * 60 * 60 * 24 * 365),
                     )}
                     {" años"}
                   </p>
@@ -544,8 +518,8 @@ export default function EstudiantesPage() {
                           viewingItem.estado === "activo"
                             ? "bg-green-100 text-green-800"
                             : viewingItem.estado === "suspendido"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-gray-100 text-gray-800"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-gray-100 text-gray-800"
                         }`}
                       >
                         {viewingItem.estado.charAt(0).toUpperCase() +

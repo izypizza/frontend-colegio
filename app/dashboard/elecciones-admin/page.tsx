@@ -7,6 +7,8 @@ import {
   ELECCION_ESTADOS,
   ELECCION_ESTADO_LABELS,
 } from "@/src/config/constants";
+import { useErrorHandler } from "@/src/hooks/useErrorHandler";
+import { useModalState } from "@/src/hooks/useModalState";
 
 interface Candidato {
   id: number;
@@ -31,9 +33,16 @@ interface Eleccion {
 }
 
 export default function EleccionesAdminPage() {
+  const { error, success, setError, setSuccess, handleError } =
+    useErrorHandler();
+  const {
+    isOpen: isModalOpen,
+    open: openModal,
+    close: closeModal,
+  } = useModalState();
+
   const [elecciones, setElecciones] = useState<Eleccion[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Eleccion | null>(null);
   const [formData, setFormData] = useState({
     titulo: "",
@@ -41,8 +50,6 @@ export default function EleccionesAdminPage() {
     fecha_inicio: "",
     fecha_cierre: "",
   });
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -53,8 +60,8 @@ export default function EleccionesAdminPage() {
       setLoading(true);
       const data = await apiClient.get("/elecciones");
       setElecciones(Array.isArray(data) ? data : []);
-    } catch (err) {
-      setError("Error al cargar las elecciones");
+    } catch (err: any) {
+      handleError(err, "Error al cargar las elecciones");
     } finally {
       setLoading(false);
     }
@@ -74,7 +81,7 @@ export default function EleccionesAdminPage() {
       fecha_inicio: tomorrow.toISOString().slice(0, 16),
       fecha_cierre: weekLater.toISOString().slice(0, 16),
     });
-    setIsModalOpen(true);
+    openModal();
   };
 
   const handleEdit = (item: Eleccion) => {
@@ -85,7 +92,7 @@ export default function EleccionesAdminPage() {
       fecha_inicio: new Date(item.fecha_inicio).toISOString().slice(0, 16),
       fecha_cierre: new Date(item.fecha_cierre).toISOString().slice(0, 16),
     });
-    setIsModalOpen(true);
+    openModal();
   };
 
   const handleDelete = async (item: Eleccion) => {
@@ -95,8 +102,8 @@ export default function EleccionesAdminPage() {
       await apiClient.delete(`/elecciones/${item.id}`);
       setSuccess("Elección eliminada correctamente");
       fetchData();
-    } catch (err) {
-      setError("Error al eliminar la elección");
+    } catch (err: any) {
+      handleError(err, "Error al eliminar la elección");
     }
   };
 
@@ -108,14 +115,8 @@ export default function EleccionesAdminPage() {
       await apiClient.post(`/elecciones/${id}/activar`);
       setSuccess("Elección activada exitosamente");
       fetchData();
-    } catch (err: unknown) {
-      if (err && typeof err === "object" && "response" in err) {
-        const response = (err as { response?: { data?: { message?: string } } })
-          .response;
-        setError(response?.data?.message || "Error al activar la elección");
-      } else {
-        setError("Error al activar la elección");
-      }
+    } catch (err: any) {
+      handleError(err, "Error al activar la elección");
     }
   };
 
@@ -127,8 +128,8 @@ export default function EleccionesAdminPage() {
       await apiClient.post(`/elecciones/${id}/cerrar`);
       setSuccess("Elección cerrada exitosamente");
       fetchData();
-    } catch (err) {
-      setError("Error al cerrar la elección");
+    } catch (err: any) {
+      handleError(err, "Error al cerrar la elección");
     }
   };
 
@@ -140,20 +141,13 @@ export default function EleccionesAdminPage() {
       await apiClient.post(`/elecciones/${id}/publicar-resultados`);
       setSuccess("Resultados publicados exitosamente");
       fetchData();
-    } catch (err: unknown) {
-      if (err && typeof err === "object" && "response" in err) {
-        const response = (err as { response?: { data?: { message?: string } } })
-          .response;
-        setError(response?.data?.message || "Error al publicar resultados");
-      } else {
-        setError("Error al publicar resultados");
-      }
+    } catch (err: any) {
+      handleError(err, "Error al publicar resultados");
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
 
     try {
       const cleanData = {
@@ -169,28 +163,10 @@ export default function EleccionesAdminPage() {
         setSuccess("Elección creada correctamente");
       }
 
-      setIsModalOpen(false);
+      closeModal();
       fetchData();
-    } catch (err: unknown) {
-      if (err && typeof err === "object" && "response" in err) {
-        const response = (
-          err as {
-            response?: {
-              data?: { errors?: Record<string, string[]>; message?: string };
-            };
-          }
-        ).response;
-        if (response?.data?.errors) {
-          const firstError = Object.values(response.data.errors)[0];
-          setError(Array.isArray(firstError) ? firstError[0] : firstError);
-        } else if (response?.data?.message) {
-          setError(response.data.message);
-        } else {
-          setError("Error al guardar la elección");
-        }
-      } else {
-        setError("Error al guardar la elección");
-      }
+    } catch (err: any) {
+      handleError(err, "Error al guardar la elección");
     }
   };
 
@@ -346,7 +322,7 @@ export default function EleccionesAdminPage() {
 
       <Modal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={closeModal}
         title={editingItem ? "Editar Elección" : "Nueva Elección"}
         size="lg"
       >
@@ -415,11 +391,7 @@ export default function EleccionesAdminPage() {
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button
-              variant="secondary"
-              type="button"
-              onClick={() => setIsModalOpen(false)}
-            >
+            <Button variant="secondary" type="button" onClick={closeModal}>
               Cancelar
             </Button>
             <Button variant="primary" type="submit">

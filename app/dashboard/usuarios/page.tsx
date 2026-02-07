@@ -13,24 +13,48 @@ import { userManagementService } from "@/src/lib/services";
 import { User, PersonaSinUsuario, CreateUserPayload } from "@/src/types/models";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/src/features/auth";
+import { useErrorHandler } from "@/src/hooks/useErrorHandler";
+import { useModalState } from "@/src/hooks/useModalState";
+import { usePagination } from "@/src/hooks/usePagination";
 
 export default function UsuariosPage() {
   const { user } = useAuth();
+  const { error, success, setError, setSuccess, handleError } =
+    useErrorHandler();
+  const {
+    isOpen: isCreateModalOpen,
+    open: openCreateModal,
+    close: closeCreateModal,
+  } = useModalState();
+  const {
+    isOpen: isEditModalOpen,
+    open: openEditModal,
+    close: closeEditModal,
+  } = useModalState();
+  const {
+    isOpen: isEstadoModalOpen,
+    open: openEstadoModal,
+    close: closeEstadoModal,
+  } = useModalState();
+  const {
+    isOpen: isViewModalOpen,
+    open: openViewModal,
+    close: closeViewModal,
+  } = useModalState();
+  const {
+    currentPage,
+    perPage,
+    setCurrentPage,
+    setPerPage,
+    setPaginationData,
+    paginationData,
+  } = usePagination(50);
+
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(50);
-  const [paginationData, setPaginationData] = useState({
-    total: 0,
-    lastPage: 1,
-  });
   const [activeTab, setActiveTab] = useState<"usuarios" | "sin-usuario">(
-    "usuarios"
+    "usuarios",
   );
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isEstadoModalOpen, setIsEstadoModalOpen] = useState(false);
-  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [viewingUser, setViewingUser] = useState<User | null>(null);
   const [personasSinUsuario, setPersonasSinUsuario] = useState<
@@ -60,8 +84,6 @@ export default function UsuariosPage() {
   const [estudianteEstado, setEstudianteEstado] = useState<
     "activo" | "suspendido" | "egresado"
   >("activo");
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
@@ -86,7 +108,6 @@ export default function UsuariosPage() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      setError(null);
       const data = await userManagementService.getAll({
         page: currentPage,
         per_page: perPage,
@@ -108,28 +129,26 @@ export default function UsuariosPage() {
         setUsers(usersArray);
       }
     } catch (err: any) {
-      console.error("Error al cargar usuarios:", err);
-      setError(err.message || "Error al cargar usuarios");
+      handleError(err, "Error al cargar usuarios");
     } finally {
       setLoading(false);
     }
   };
 
   const fetchPersonasSinUsuario = async (
-    tipo: "estudiante" | "docente" | "padre"
+    tipo: "estudiante" | "docente" | "padre",
   ) => {
     try {
       const data = await userManagementService.getPersonasSinUsuario(tipo);
       setPersonasSinUsuario(data);
     } catch (err: any) {
-      setError(err.message || "Error al cargar personas");
+      handleError(err, "Error al cargar personas");
     }
   };
 
   const fetchTodasPersonasSinUsuario = async () => {
     try {
       setLoading(true);
-      setError(null);
       const [estudiantes, docentes, padres] = await Promise.all([
         userManagementService.getPersonasSinUsuario("estudiante"),
         userManagementService.getPersonasSinUsuario("docente"),
@@ -137,8 +156,7 @@ export default function UsuariosPage() {
       ]);
       setTodasPersonasSinUsuario({ estudiantes, docentes, padres });
     } catch (err: any) {
-      console.error("Error al cargar personas sin usuario:", err);
-      setError(err.message || "Error al cargar personas sin usuario");
+      handleError(err, "Error al cargar personas sin usuario");
     } finally {
       setLoading(false);
     }
@@ -149,7 +167,7 @@ export default function UsuariosPage() {
     await fetchPersonasSinUsuario("estudiante");
     setFormData({ email: "", password: "", is_active: true });
     setSelectedPersona(null);
-    setIsCreateModalOpen(true);
+    openCreateModal();
   };
 
   const handleTipoChange = async (tipo: "estudiante" | "docente" | "padre") => {
@@ -170,14 +188,14 @@ export default function UsuariosPage() {
 
   const handleAsignarUsuarioRapido = async (
     persona: PersonaSinUsuario,
-    tipo: "estudiante" | "docente" | "padre"
+    tipo: "estudiante" | "docente" | "padre",
   ) => {
     const email = persona.email || `${persona.dni}@colegio.pe`;
     const password = usarDniComoPassword ? persona.dni : `${persona.dni}123`;
 
     if (
       !confirm(
-        `¿Asignar usuario a ${persona.nombre_completo}?\nEmail: ${email}\nContraseña: ${password}`
+        `¿Asignar usuario a ${persona.nombre_completo}?\nEmail: ${email}\nContraseña: ${password}`,
       )
     ) {
       return;
@@ -196,7 +214,7 @@ export default function UsuariosPage() {
       setSuccess(`Usuario creado para ${persona.nombre_completo}`);
       await fetchTodasPersonasSinUsuario();
     } catch (err: any) {
-      setError(err.message || "Error al crear usuario");
+      handleError(err, "Error al crear usuario");
     }
   };
 
@@ -222,13 +240,13 @@ export default function UsuariosPage() {
 
       await userManagementService.create(payload);
       setSuccess("Usuario creado exitosamente");
-      setIsCreateModalOpen(false);
+      closeCreateModal();
       await fetchUsers();
       await fetchTodasPersonasSinUsuario();
       setFormData({ email: "", password: "", is_active: true });
       setSelectedPersona(null);
     } catch (err: any) {
-      setError(err.message || "Error al crear usuario");
+      handleError(err, "Error al crear usuario");
     }
   };
 
@@ -239,7 +257,7 @@ export default function UsuariosPage() {
       email: user.email,
       password: "",
     });
-    setIsEditModalOpen(true);
+    openEditModal();
   };
 
   const handleUpdateUser = async () => {
@@ -257,11 +275,11 @@ export default function UsuariosPage() {
 
       await userManagementService.update(editingUser.id, payload);
       setSuccess("Usuario actualizado exitosamente");
-      setIsEditModalOpen(false);
+      closeEditModal();
       await fetchUsers();
       setEditingUser(null);
     } catch (err: any) {
-      setError(err.message || "Error al actualizar usuario");
+      handleError(err, "Error al actualizar usuario");
     }
   };
 
@@ -274,7 +292,7 @@ export default function UsuariosPage() {
       setSuccess(`Usuario ${action}do exitosamente`);
       await fetchUsers();
     } catch (err: any) {
-      setError(err.message || "Error al cambiar estado del usuario");
+      handleError(err, "Error al cambiar estado del usuario");
     }
   };
 
@@ -285,12 +303,12 @@ export default function UsuariosPage() {
     }
     setEditingUser(user);
     setEstudianteEstado(user.persona.estado || "activo");
-    setIsEstadoModalOpen(true);
+    openEstadoModal();
   };
 
   const handleViewUser = (user: User) => {
     setViewingUser(user);
-    setIsViewModalOpen(true);
+    openViewModal();
   };
 
   const handleUpdateEstado = async () => {
@@ -299,14 +317,14 @@ export default function UsuariosPage() {
     try {
       await userManagementService.updateEstadoEstudiante(
         editingUser.persona.id,
-        estudianteEstado
+        estudianteEstado,
       );
       setSuccess("Estado actualizado exitosamente");
-      setIsEstadoModalOpen(false);
+      closeEstadoModal();
       await fetchUsers();
       setEditingUser(null);
     } catch (err: any) {
-      setError(err.message || "Error al actualizar estado");
+      handleError(err, "Error al actualizar estado");
     }
   };
 
@@ -764,7 +782,7 @@ export default function UsuariosPage() {
       {/* Modal Crear Usuario */}
       <Modal
         isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
+        onClose={closeCreateModal}
         title="Crear Usuario"
         size="lg"
       >
@@ -853,10 +871,7 @@ export default function UsuariosPage() {
           </div>
 
           <div className="flex justify-end gap-2 mt-6">
-            <Button
-              variant="secondary"
-              onClick={() => setIsCreateModalOpen(false)}
-            >
+            <Button variant="secondary" onClick={closeCreateModal}>
               Cancelar
             </Button>
             <Button onClick={handleCreateUser} disabled={!selectedPersona}>
@@ -869,7 +884,7 @@ export default function UsuariosPage() {
       {/* Modal Editar Usuario */}
       <Modal
         isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
+        onClose={closeEditModal}
         title="Editar Usuario"
       >
         <div className="space-y-4">
@@ -903,10 +918,7 @@ export default function UsuariosPage() {
           />
 
           <div className="flex justify-end gap-2 mt-6">
-            <Button
-              variant="secondary"
-              onClick={() => setIsEditModalOpen(false)}
-            >
+            <Button variant="secondary" onClick={closeEditModal}>
               Cancelar
             </Button>
             <Button onClick={handleUpdateUser}>Actualizar</Button>
@@ -917,7 +929,7 @@ export default function UsuariosPage() {
       {/* Modal Cambiar Estado Estudiante */}
       <Modal
         isOpen={isEstadoModalOpen}
-        onClose={() => setIsEstadoModalOpen(false)}
+        onClose={closeEstadoModal}
         title="Cambiar Estado del Estudiante"
       >
         <div className="space-y-4">
@@ -956,10 +968,7 @@ export default function UsuariosPage() {
           </div>
 
           <div className="flex justify-end gap-2 mt-6">
-            <Button
-              variant="secondary"
-              onClick={() => setIsEstadoModalOpen(false)}
-            >
+            <Button variant="secondary" onClick={closeEstadoModal}>
               Cancelar
             </Button>
             <Button onClick={handleUpdateEstado}>Actualizar Estado</Button>
@@ -970,7 +979,7 @@ export default function UsuariosPage() {
       {/* Modal Ver Detalles Usuario */}
       <Modal
         isOpen={isViewModalOpen}
-        onClose={() => setIsViewModalOpen(false)}
+        onClose={closeViewModal}
         title="Detalles del Usuario"
         size="lg"
       >
@@ -1023,7 +1032,7 @@ export default function UsuariosPage() {
                         year: "numeric",
                         month: "long",
                         day: "numeric",
-                      }
+                      },
                     )}
                   </p>
                 </div>
@@ -1038,10 +1047,10 @@ export default function UsuariosPage() {
                   {viewingUser.role === "estudiante"
                     ? "Estudiante"
                     : viewingUser.role === "docente"
-                    ? "Docente"
-                    : viewingUser.role === "padre"
-                    ? "Padre"
-                    : "Persona"}
+                      ? "Docente"
+                      : viewingUser.role === "padre"
+                        ? "Padre"
+                        : "Persona"}
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
                   {viewingUser.persona.nombre_completo && (
@@ -1101,10 +1110,7 @@ export default function UsuariosPage() {
             )}
 
             <div className="flex justify-end">
-              <Button
-                variant="secondary"
-                onClick={() => setIsViewModalOpen(false)}
-              >
+              <Button variant="secondary" onClick={closeViewModal}>
                 Cerrar
               </Button>
             </div>

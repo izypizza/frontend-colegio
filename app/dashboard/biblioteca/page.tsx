@@ -10,6 +10,9 @@ import { Table } from "@/src/components/ui/Table";
 import { Alert } from "@/src/components/ui/Alert";
 import { useAuth } from "@/src/features/auth";
 import { Pagination } from "@/src/components/ui/Pagination";
+import { useErrorHandler } from "@/src/hooks/useErrorHandler";
+import { useModalState } from "@/src/hooks/useModalState";
+import { usePagination } from "@/src/hooks/usePagination";
 
 interface Libro {
   id: number;
@@ -35,25 +38,32 @@ interface Categoria {
 
 export default function LibrosPage() {
   const { user } = useAuth();
+  const { error, success, setError, setSuccess, handleError } =
+    useErrorHandler();
+  const {
+    isOpen: showModal,
+    open: openModal,
+    close: closeModal,
+  } = useModalState();
+  const {
+    isOpen: showCategoriaModal,
+    open: openCategoriaModal,
+    close: closeCategoriaModal,
+  } = useModalState();
+  const {
+    currentPage,
+    perPage,
+    setCurrentPage,
+    setPerPage,
+    setPaginationData,
+    paginationData,
+  } = usePagination(50);
+
   const [libros, setLibros] = useState<Libro[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
-
-  // Estados para el modal
-  const [showModal, setShowModal] = useState(false);
-  const [showCategoriaModal, setShowCategoriaModal] = useState(false);
   const [editingLibro, setEditingLibro] = useState<Libro | null>(null);
-
-  // Estados para paginación
-  const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(50);
-  const [paginationData, setPaginationData] = useState({
-    total: 0,
-    lastPage: 1,
-  });
 
   // Estados para el formulario
   const [formData, setFormData] = useState({
@@ -117,9 +127,8 @@ export default function LibrosPage() {
           ? categoriasData
           : categoriasData?.data || [],
       );
-      setError(null);
     } catch (err: any) {
-      setError(err.message || "Error al cargar los datos");
+      handleError(err, "Error al cargar los datos");
     } finally {
       setLoading(false);
     }
@@ -130,12 +139,11 @@ export default function LibrosPage() {
     try {
       await categoriaLibroService.create(categoriaForm);
       setSuccess("Categoría creada exitosamente");
-      setShowCategoriaModal(false);
+      closeCategoriaModal();
       setCategoriaForm({ nombre: "" });
       loadData();
-      setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
-      setError(err.message || "Error al crear categoría");
+      handleError(err, "Error al crear categoría");
     }
   };
 
@@ -170,12 +178,11 @@ export default function LibrosPage() {
         setSuccess("Libro creado exitosamente");
       }
 
-      setShowModal(false);
+      closeModal();
       resetForm();
       loadData();
-      setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
-      setError(err.message || "Error al guardar el libro");
+      handleError(err, "Error al guardar el libro");
     }
   };
 
@@ -194,7 +201,7 @@ export default function LibrosPage() {
       url_digital: libro.url_digital || "",
       formato_digital: libro.formato_digital || "",
     });
-    setShowModal(true);
+    openModal();
   };
 
   const handleDelete = async (id: number) => {
@@ -204,9 +211,8 @@ export default function LibrosPage() {
       await libroService.delete(id);
       setSuccess("Libro eliminado exitosamente");
       loadData();
-      setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
-      setError(err.message || "Error al eliminar el libro");
+      handleError(err, "Error al eliminar el libro");
     }
   };
 
@@ -228,7 +234,7 @@ export default function LibrosPage() {
   };
 
   const handleCloseModal = () => {
-    setShowModal(false);
+    closeModal();
     resetForm();
   };
 
@@ -316,13 +322,13 @@ export default function LibrosPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setShowCategoriaModal(true)}>
+          <Button variant="outline" onClick={openCategoriaModal}>
             Categorías
           </Button>
           <Button
             onClick={() => {
               resetForm();
-              setShowModal(true);
+              openModal();
             }}
           >
             + Nuevo Libro
@@ -572,7 +578,7 @@ export default function LibrosPage() {
       <Modal
         isOpen={showCategoriaModal}
         onClose={() => {
-          setShowCategoriaModal(false);
+          closeCategoriaModal();
           setCategoriaForm({ nombre: "" });
         }}
         title="Nueva Categoría"
@@ -589,7 +595,7 @@ export default function LibrosPage() {
               type="button"
               variant="outline"
               onClick={() => {
-                setShowCategoriaModal(false);
+                closeCategoriaModal();
                 setCategoriaForm({ nombre: "" });
               }}
             >

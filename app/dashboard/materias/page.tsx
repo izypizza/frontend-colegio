@@ -1,19 +1,28 @@
-'use client';
+"use client";
 
-import { Alert, Button, Card, Input, Modal, Table } from '@/src/components/ui';
-import { materiaService } from '@/src/lib/services';
-import { Materia } from '@/src/types/models';
-import { useEffect, useState } from 'react';
+import { Alert, Button, Card, Input, Modal, Table } from "@/src/components/ui";
+import { materiaService } from "@/src/lib/services";
+import { Materia } from "@/src/types/models";
+import { useEffect, useState } from "react";
+import { useErrorHandler } from "@/src/hooks/useErrorHandler";
+import { useModalState } from "@/src/hooks/useModalState";
+import { useFilteredData } from "@/src/hooks/useFilteredData";
 
 export default function MateriasPage() {
   const [materias, setMaterias] = useState<Materia[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<Materia | null>(null);
-  const [formData, setFormData] = useState({ nombre: '' });
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [formData, setFormData] = useState({ nombre: "" });
+
+  // Hooks centralizados
+  const { error, success, handleError, handleSuccess, setError } =
+    useErrorHandler();
+  const { isOpen, editingItem, openCreate, openEdit, close } =
+    useModalState<Materia>();
+  const {
+    filteredData: materiasFiltradas,
+    searchTerm,
+    setSearchTerm,
+  } = useFilteredData(materias, ["nombre"]);
 
   useEffect(() => {
     fetchData();
@@ -24,65 +33,56 @@ export default function MateriasPage() {
       setLoading(true);
       const data = await materiaService.getAll();
       setMaterias(data);
-    } catch {
-      setError('Error al cargar las materias');
+    } catch (err) {
+      handleError(err, "Error al cargar las materias");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreate = () => {
-    setEditingItem(null);
-    setFormData({ nombre: '' });
-    setIsModalOpen(true);
+  const handleCreateClick = () => {
+    openCreate();
+    setFormData({ nombre: "" });
   };
 
-  const handleEdit = (item: Materia) => {
-    setEditingItem(item);
+  const handleEditClick = (item: Materia) => {
+    openEdit(item);
     setFormData({ nombre: item.nombre });
-    setIsModalOpen(true);
   };
 
   const handleDelete = async (item: Materia) => {
-    if (!confirm('¿Estás seguro de eliminar esta materia?')) return;
+    if (!confirm("¿Estás seguro de eliminar esta materia?")) return;
 
     try {
       await materiaService.delete(item.id);
-      setSuccess('Materia eliminada correctamente');
-      fetchData();
-    } catch {
-      setError('Error al eliminar la materia');
+      handleSuccess("Materia eliminada correctamente", fetchData);
+    } catch (err) {
+      handleError(err, "Error al eliminar la materia");
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
 
     try {
       if (editingItem) {
         await materiaService.update(editingItem.id, formData);
-        setSuccess('Materia actualizada correctamente');
+        handleSuccess("Materia actualizada correctamente");
       } else {
         await materiaService.create(formData);
-        setSuccess('Materia creada correctamente');
+        handleSuccess("Materia creada correctamente");
       }
 
-      setIsModalOpen(false);
+      close();
       fetchData();
-    } catch {
-      setError('Error al guardar la materia');
+    } catch (err) {
+      handleError(err, "Error al guardar la materia");
     }
   };
 
-  // Filtrado de materias
-  const materiasFiltradas = materias.filter((materia) => {
-    return materia.nombre.toLowerCase().includes(searchTerm.toLowerCase());
-  });
-
   const columns = [
-    { key: 'id', label: 'ID' },
-    { key: 'nombre', label: 'Nombre de la Materia' },
+    { key: "id", label: "ID" },
+    { key: "nombre", label: "Nombre de la Materia" },
   ];
 
   return (
@@ -90,14 +90,22 @@ export default function MateriasPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Materias</h1>
-          <p className="text-gray-600 mt-2">Gestión de materias del currículo</p>
+          <p className="text-gray-600 mt-2">
+            Gestión de materias del currículo
+          </p>
         </div>
-        <Button variant="primary" onClick={handleCreate}>
+        <Button variant="primary" onClick={handleCreateClick}>
           + Nueva Materia
         </Button>
       </div>
 
-      {success && <Alert type="success" message={success} onClose={() => setSuccess(null)} />}
+      {success && (
+        <Alert
+          type="success"
+          message={success}
+          onClose={() => setSuccess(null)}
+        />
+      )}
 
       {/* Filtro de búsqueda */}
       <Card>
@@ -118,38 +126,44 @@ export default function MateriasPage() {
           columns={columns}
           data={materiasFiltradas}
           loading={loading}
-          onEdit={handleEdit}
+          onEdit={handleEditClick}
           onDelete={handleDelete}
         />
       </Card>
 
       <Modal
-        isOpen={isModalOpen}
+        isOpen={isOpen}
         onClose={() => {
-          setIsModalOpen(false);
+          close();
           setError(null);
         }}
-        title={editingItem ? 'Editar Materia' : 'Nueva Materia'}
+        title={editingItem ? "Editar Materia" : "Nueva Materia"}
         size="md"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <Alert type="error" message={error} onClose={() => setError(null)} />
+            <Alert
+              type="error"
+              message={error}
+              onClose={() => setError(null)}
+            />
           )}
           <Input
             label="Nombre de la Materia"
             value={formData.nombre}
-            onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, nombre: e.target.value })
+            }
             required
             placeholder="Ej: Matemática, Comunicación..."
           />
 
           <div className="flex justify-end gap-3 pt-4">
-            <Button variant="secondary" type="button" onClick={() => setIsModalOpen(false)}>
+            <Button variant="secondary" type="button" onClick={close}>
               Cancelar
             </Button>
             <Button variant="primary" type="submit">
-              {editingItem ? 'Actualizar' : 'Guardar'}
+              {editingItem ? "Actualizar" : "Guardar"}
             </Button>
           </div>
         </form>

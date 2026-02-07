@@ -6,6 +6,7 @@ import { Button } from "@/src/components/ui/Button";
 import { Card } from "@/src/components/ui/Card";
 import { Alert } from "@/src/components/ui/Alert";
 import { useAuth } from "@/src/features/auth/hooks/useAuth";
+import { useErrorHandler } from "@/src/hooks/useErrorHandler";
 
 interface Candidato {
   id: number;
@@ -26,13 +27,14 @@ interface Eleccion {
 
 export default function EleccionesPage() {
   const { user } = useAuth();
+  const { error, success, setError, setSuccess, handleError } =
+    useErrorHandler();
+
   const [elecciones, setElecciones] = useState<Eleccion[]>([]);
   const [eleccionSeleccionada, setEleccionSeleccionada] =
     useState<Eleccion | null>(null);
   const [yaVote, setYaVote] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     loadElecciones();
@@ -43,9 +45,8 @@ export default function EleccionesPage() {
       setLoading(true);
       const data = await eleccionService.getAll();
       setElecciones(Array.isArray(data) ? data : []);
-      setError(null);
     } catch (err: any) {
-      setError(err.message || "Error al cargar las elecciones");
+      handleError(err, "Error al cargar las elecciones");
     } finally {
       setLoading(false);
     }
@@ -61,7 +62,7 @@ export default function EleccionesPage() {
       setEleccionSeleccionada(detalleEleccion);
       setYaVote(voteStatus?.ya_voto || false);
     } catch (err: any) {
-      setError(err.message || "Error al cargar la elección");
+      handleError(err, "Error al cargar la elección");
     }
   };
 
@@ -74,13 +75,14 @@ export default function EleccionesPage() {
       await votoService.votar(eleccionSeleccionada.id, candidato_id);
       setSuccess("¡Voto registrado exitosamente!");
       setYaVote(true);
+
+      // Pequeño delay para mostrar mensaje antes de recargar
       setTimeout(() => {
-        setSuccess(null);
         setEleccionSeleccionada(null);
         loadElecciones();
       }, 2000);
     } catch (err: any) {
-      setError(err.message || "Error al registrar el voto");
+      handleError(err, "Error al registrar el voto");
     }
   };
 
@@ -95,7 +97,7 @@ export default function EleccionesPage() {
         });
       }
     } catch (err: any) {
-      setError(err.message || "Error al cargar los resultados");
+      handleError(err, "Error al cargar los resultados");
     }
   };
 
@@ -236,15 +238,15 @@ export default function EleccionesPage() {
                         esActiva
                           ? "bg-green-100 text-green-800"
                           : esPendiente
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-gray-100 text-gray-800"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-gray-100 text-gray-800"
                       }`}
                     >
                       {esActiva
                         ? "Activa"
                         : esPendiente
-                        ? "Próximamente"
-                        : "Cerrada"}
+                          ? "Próximamente"
+                          : "Cerrada"}
                     </span>
                   )}
                 </div>
@@ -260,7 +262,7 @@ export default function EleccionesPage() {
                             day: "2-digit",
                             month: "short",
                             year: "numeric",
-                          }
+                          },
                         )}
                       </div>
                       <div>
@@ -271,7 +273,7 @@ export default function EleccionesPage() {
                             day: "2-digit",
                             month: "short",
                             year: "numeric",
-                          }
+                          },
                         )}
                       </div>
                     </>
@@ -300,8 +302,8 @@ export default function EleccionesPage() {
                       {esActiva
                         ? "Votar"
                         : esPendiente
-                        ? "Próximamente"
-                        : "Cerrada"}
+                          ? "Próximamente"
+                          : "Cerrada"}
                     </Button>
                   ) : (
                     <Button
