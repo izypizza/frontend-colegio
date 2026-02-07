@@ -13,6 +13,10 @@ import { docenteService } from "@/src/lib/services";
 import { Docente } from "@/src/types/models";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/src/features/auth";
+import { useErrorHandler } from "@/src/hooks/useErrorHandler";
+import { useModalState } from "@/src/hooks/useModalState";
+import { usePagination } from "@/src/hooks/usePagination";
+import { useFilteredData } from "@/src/hooks/useFilteredData";
 
 export default function DocentesPage() {
   const { user } = useAuth();
@@ -32,9 +36,7 @@ export default function DocentesPage() {
 
   const [docentes, setDocentes] = useState<Docente[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<Docente | null>(null);
   const [viewingItem, setViewingItem] = useState<Docente | null>(null);
   const [formData, setFormData] = useState({
     nombres: "",
@@ -46,29 +48,39 @@ export default function DocentesPage() {
     telefono: "",
     direccion: "",
   });
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
   const [filterEspecialidad, setFilterEspecialidad] = useState("");
 
-  // Paginación
-  const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(50);
-  const [paginationData, setPaginationData] = useState({
-    total: 0,
-    lastPage: 1,
+  // Hooks personalizados
+  const { error, success, handleError, handleSuccess } = useErrorHandler();
+  const { isOpen, editingItem, openCreate, openEdit, close } =
+    useModalState<Docente>();
+  const pagination = usePagination();
+  const {
+    filteredData: docentesFiltrados,
+    searchTerm,
+    setSearchTerm,
+  } = useFilteredData(docentes, (docente, term) => {
+    const nombreCompleto =
+      `${docente.nombres} ${docente.apellido_paterno} ${docente.apellido_materno}`.toLowerCase();
+    const dni = docente.dni?.toLowerCase() || "";
+    const email = docente.email?.toLowerCase() || "";
+    return (
+      nombreCompleto.includes(term.toLowerCase()) ||
+      dni.includes(term.toLowerCase()) ||
+      email.includes(term.toLowerCase())
+    );
   });
 
   useEffect(() => {
     fetchData();
-  }, [currentPage, perPage]);
+  }, [pagination.currentPage, pagination.perPage]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
       const data = await docenteService.getAll({
-        page: currentPage,
-        per_page: perPage,
+        page: pagination.currentPage,
+        per_page: pagination.perPage,
       });
 
       // Manejar respuesta paginada
@@ -79,23 +91,23 @@ export default function DocentesPage() {
         "current_page" in data
       ) {
         setDocentes(data.data);
-        setPaginationData({
-          total: data.total || 0,
-          lastPage: data.last_page || 1,
+        pagination.updatePagination({
+          currentPage: data.current_page,
+          totalPages: data.last_page || 1,
+          totalItems: data.total || 0,
         });
       } else {
         const docentesArray = Array.isArray(data) ? data : data?.data || [];
         setDocentes(docentesArray);
       }
-    } catch {
-      setError("Error al cargar los docentes");
+    } catch (err) {
+      handleError(err, "Error al cargar los docentes");
     } finally {
       setLoading(false);
     }
   };
 
   const handleCreate = () => {
-    setEditingItem(null);
     setFormData({
       nombres: "",
       apellido_paterno: "",
@@ -106,7 +118,7 @@ export default function DocentesPage() {
       telefono: "",
       direccion: "",
     });
-    setIsModalOpen(true);
+    openCreate();
   };
 
   const handleView = (item: Docente) => {
@@ -115,7 +127,6 @@ export default function DocentesPage() {
   };
 
   const handleEdit = (item: Docente) => {
-    setEditingItem(item);
     setFormData({
       nombres: item.nombres,
       apellido_paterno: item.apellido_paterno,
@@ -126,7 +137,7 @@ export default function DocentesPage() {
       telefono: item.telefono || "",
       direccion: item.direccion || "",
     });
-    setIsModalOpen(true);
+    openEdit(item);
   };
 
   const handleDelete = async (item: Docente) => {
@@ -134,17 +145,15 @@ export default function DocentesPage() {
 
     try {
       await docenteService.delete(item.id);
-      setSuccess("Docente eliminado correctamente");
+      handleSuccess("Docente eliminado correctamente");
       fetchData();
-    } catch {
-      setError("Error al eliminar el docente");
+    } catch (err) {
+      handleError(err, "Error al eliminar el docente");
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
 
     try {
       const data = {
@@ -159,37 +168,24 @@ export default function DocentesPage() {
 
       if (editingItem) {
         const response = await docenteService.update(editingItem.id, data);
-        setSuccess(response.message || "Docente actualizado correctamente");
+        handleSuccess(response.message || "Docente actualizado correctamente");
       } else {
         const response = await docenteService.create(data);
-        setSuccess(response.message || "Docente creado correctamente");
+        handleSuccess(response.message || "Docente creado correctamente");
       }
 
-      setIsModalOpen(false);
+      close();
       fetchData();
-    } catch (err: any) {
-      if (err.response?.data?.errors) {
-        const firstError = Object.values(err.response.data.errors)[0];
-        setError(Array.isArray(firstError) ? firstError[0] : firstError);
-      } else if (err.response?.data?.message) {
-        setError(err.response.data.message);
-      } else {
-        setError("Error al guardar el docente");
-      }
+    } catch (err) {
+      handleError(err, "Error al guardar el docente");
     }
   };
 
-  // Filtrado de docentes
-  const docentesFiltrados = docentes.filter((docente) => {
-    const nombreCompleto =
-      `${docente.nombres} ${docente.apellido_paterno} ${docente.apellido_materno}`.toLowerCase();
-    const email = docente.email?.toLowerCase() || "";
-    const matchesSearch =
-      nombreCompleto.includes(searchTerm.toLowerCase()) ||
-      email.includes(searchTerm.toLowerCase());
+  // Filtrado adicional por especialidad
+  const docentesFiltradosCompletos = docentesFiltrados.filter((docente) => {
     const matchesEspecialidad =
       !filterEspecialidad || docente.especialidad === filterEspecialidad;
-    return matchesSearch && matchesEspecialidad;
+    return matchesEspecialidad;
   });
 
   const columns = [
@@ -247,14 +243,15 @@ export default function DocentesPage() {
           </select>
         </div>
         <div className="text-sm text-gray-600">
-          Mostrando {docentesFiltrados.length} de {docentes.length} docentes
+          Mostrando {docentesFiltradosCompletos.length} de {docentes.length}{" "}
+          docentes
         </div>
       </Card>
 
       <Card>
         <Table
           columns={columns}
-          data={docentesFiltrados}
+          data={docentesFiltradosCompletos}
           loading={loading}
           onView={handleView}
           onEdit={handleEdit}
@@ -262,29 +259,26 @@ export default function DocentesPage() {
         />
       </Card>
 
-      {(user?.role === "admin" || user?.role === "auxiliar") && (
-        <Pagination
-          currentPage={currentPage}
-          lastPage={paginationData.lastPage}
-          total={paginationData.total}
-          perPage={perPage}
-          onPageChange={(page) => {
-            setCurrentPage(page);
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          }}
-          onPerPageChange={(newPerPage) => {
-            setPerPage(newPerPage);
-            setCurrentPage(1);
-          }}
-        />
-      )}
+      {(user?.role === "admin" || user?.role === "auxiliar") &&
+        pagination.totalItems > 0 && (
+          <Pagination
+            currentPage={pagination.currentPage}
+            lastPage={pagination.totalPages}
+            total={pagination.totalItems}
+            perPage={pagination.perPage}
+            onPageChange={(page) => {
+              pagination.goToPage(page);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            onPerPageChange={(newPerPage) => {
+              pagination.updatePagination({ perPage: newPerPage });
+            }}
+          />
+        )}
 
       <Modal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setError(null);
-        }}
+        isOpen={isOpen}
+        onClose={close}
         title={editingItem ? "Editar Docente" : "Nuevo Docente"}
         size="lg"
       >
@@ -392,11 +386,7 @@ export default function DocentesPage() {
           />
 
           <div className="flex justify-end gap-3 pt-4">
-            <Button
-              variant="secondary"
-              type="button"
-              onClick={() => setIsModalOpen(false)}
-            >
+            <Button variant="secondary" type="button" onClick={close}>
               Cancelar
             </Button>
             <Button variant="primary" type="submit">

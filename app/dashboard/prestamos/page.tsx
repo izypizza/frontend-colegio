@@ -8,6 +8,9 @@ import { Modal } from "@/src/components/ui/Modal";
 import { Table } from "@/src/components/ui/Table";
 import { Alert } from "@/src/components/ui/Alert";
 import { Pagination } from "@/src/components/ui/Pagination";
+import { useErrorHandler } from "@/src/hooks/useErrorHandler";
+import { useModalState } from "@/src/hooks/useModalState";
+import { usePagination } from "@/src/hooks/usePagination";
 
 interface Prestamo {
   id: number;
@@ -36,19 +39,25 @@ interface Libro {
 }
 
 export default function PrestamosPage() {
+  const { error, success, setError, setSuccess, handleError } =
+    useErrorHandler();
+  const {
+    isOpen: showModal,
+    open: openModal,
+    close: closeModal,
+  } = useModalState();
+  const {
+    currentPage,
+    perPage,
+    setCurrentPage,
+    setPerPage,
+    setPaginationData,
+    paginationData,
+  } = usePagination(50);
+
   const [prestamos, setPrestamos] = useState<Prestamo[]>([]);
   const [librosDisponibles, setLibrosDisponibles] = useState<Libro[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(50);
-  const [paginationData, setPaginationData] = useState({
-    total: 0,
-    lastPage: 1,
-  });
-
-  const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
     libro_id: "",
     user_id: "",
@@ -85,13 +94,11 @@ export default function PrestamosPage() {
       const disponibles = Array.isArray(librosData)
         ? librosData.filter((libro: Libro) => libro.disponible)
         : librosData?.data
-        ? librosData.data.filter((libro: Libro) => libro.disponible)
-        : [];
+          ? librosData.data.filter((libro: Libro) => libro.disponible)
+          : [];
       setLibrosDisponibles(disponibles);
-
-      setError(null);
     } catch (err: any) {
-      setError(err.message || "Error al cargar los datos");
+      handleError(err, "Error al cargar los datos");
     } finally {
       setLoading(false);
     }
@@ -108,12 +115,11 @@ export default function PrestamosPage() {
 
       await prestamoLibroService.create(data);
       setSuccess("Préstamo registrado exitosamente");
-      setShowModal(false);
+      closeModal();
       resetForm();
       loadData();
-      setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
-      setError(err.message || "Error al registrar el préstamo");
+      handleError(err, "Error al registrar el préstamo");
     }
   };
 
@@ -124,9 +130,8 @@ export default function PrestamosPage() {
       await prestamoLibroService.devolver(id);
       setSuccess("Libro devuelto exitosamente");
       loadData();
-      setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
-      setError(err.message || "Error al devolver el libro");
+      handleError(err, "Error al devolver el libro");
     }
   };
 
@@ -139,7 +144,7 @@ export default function PrestamosPage() {
   };
 
   const handleCloseModal = () => {
-    setShowModal(false);
+    closeModal();
     resetForm();
   };
 
@@ -190,8 +195,8 @@ export default function PrestamosPage() {
               prestamo.devuelto
                 ? "bg-green-100 text-green-800"
                 : atrasado
-                ? "bg-red-100 text-red-800"
-                : "bg-yellow-100 text-yellow-800"
+                  ? "bg-red-100 text-red-800"
+                  : "bg-yellow-100 text-yellow-800"
             }`}
           >
             {prestamo.devuelto ? "Devuelto" : atrasado ? "Atrasado" : "Activo"}
@@ -230,7 +235,7 @@ export default function PrestamosPage() {
         <h1 className="text-3xl font-bold text-gray-800">
           Gestión de Préstamos
         </h1>
-        <Button onClick={() => setShowModal(true)}>+ Nuevo Préstamo</Button>
+        <Button onClick={openModal}>+ Nuevo Préstamo</Button>
       </div>
 
       {error && (

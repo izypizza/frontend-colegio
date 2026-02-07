@@ -83,23 +83,21 @@ class CrudService<T> {
       : (response as T);
   }
 
-  async create(data: Partial<T>): Promise<any> {
-    const response = await apiClient.post<any>(this.endpoint, data);
-    // Handle multiple formats
+  /**
+   * Normaliza respuestas que pueden venir en múltiples formatos
+   * Extraído para evitar duplicación entre create() y update()
+   */
+  private normalizeResponse(response: any): any {
     if (response && typeof response === "object") {
       // Format: { data: {...} }
       if ("data" in response && typeof response.data === "object") {
         return response.data;
       }
-      // Format: { estudiante: {...} }
-      if ("estudiante" in response) {
+      // Format: { estudiante: {...} }, { docente: {...} }, etc.
+      if ("estudiante" in response || "docente" in response || "padre" in response) {
         return response;
       }
-      // Format: { docente: {...} }
-      if ("docente" in response) {
-        return response;
-      }
-      // Format: { message: '...', [key]: {...} } - Return whole response for error handling
+      // Format: { message: '...', [key]: {...} }
       if ("message" in response) {
         return response;
       }
@@ -107,28 +105,14 @@ class CrudService<T> {
     return response as T;
   }
 
+  async create(data: Partial<T>): Promise<any> {
+    const response = await apiClient.post<any>(this.endpoint, data);
+    return this.normalizeResponse(response);
+  }
+
   async update(id: number, data: Partial<T>): Promise<any> {
     const response = await apiClient.put<any>(`${this.endpoint}/${id}`, data);
-    // Handle multiple formats
-    if (response && typeof response === "object") {
-      // Format: { data: {...} }
-      if ("data" in response && typeof response.data === "object") {
-        return response.data;
-      }
-      // Format: { estudiante: {...} }
-      if ("estudiante" in response) {
-        return response;
-      }
-      // Format: { docente: {...} }
-      if ("docente" in response) {
-        return response;
-      }
-      // Format: { message: '...', [key]: {...} } - Return whole response for error handling
-      if ("message" in response) {
-        return response;
-      }
-    }
-    return response as T;
+    return this.normalizeResponse(response);
   }
 
   async delete(id: number): Promise<void> {

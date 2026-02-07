@@ -9,6 +9,9 @@ import {
 } from "@/src/lib/services";
 import { Seccion, Grado, Estudiante } from "@/src/types/models";
 import { useAuth } from "@/src/features/auth/hooks/useAuth";
+import { useErrorHandler } from "@/src/hooks/useErrorHandler";
+import { useModalState } from "@/src/hooks/useModalState";
+import { useFilteredData } from "@/src/hooks/useFilteredData";
 
 type ViewMode = "grid" | "list";
 
@@ -19,25 +22,32 @@ export default function SeccionesPage() {
   const [secciones, setSecciones] = useState<Seccion[]>([]);
   const [grados, setGrados] = useState<Grado[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<Seccion | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
-  const [searchTerm, setSearchTerm] = useState("");
   const [selectedGrado, setSelectedGrado] = useState<string>("");
   const [selectedSeccion, setSelectedSeccion] = useState<Seccion | null>(null);
   const [estudiantesSeccion, setEstudiantesSeccion] = useState<Estudiante[]>(
-    []
+    [],
   );
   const [showEstudiantes, setShowEstudiantes] = useState(false);
-
   const [formData, setFormData] = useState({
     nombre: "",
     grado_id: "",
     capacidad: "",
     turno: "",
   });
+
+  // Hooks personalizados
+  const { error, success, handleError, handleSuccess, setError } =
+    useErrorHandler();
+  const { isOpen, editingItem, openCreate, openEdit, close } =
+    useModalState<Seccion>();
+  const {
+    filteredData: seccionesFiltradas,
+    searchTerm,
+    setSearchTerm,
+  } = useFilteredData(secciones, (seccion, term) =>
+    seccion.nombre.toLowerCase().includes(term.toLowerCase()),
+  );
 
   useEffect(() => {
     fetchData();
@@ -51,35 +61,28 @@ export default function SeccionesPage() {
         gradoService.getAll({ all: true }),
       ]);
 
-      // Los servicios ya manejan la conversión a array
       setSecciones(Array.isArray(seccionesData) ? seccionesData : []);
       setGrados(Array.isArray(gradosData) ? gradosData : []);
-
-      console.log("Secciones cargadas:", seccionesData);
-      console.log("Grados cargados:", gradosData);
     } catch (err) {
-      console.error("Error al cargar datos:", err);
-      setError("Error al cargar los datos");
+      handleError(err, "Error al cargar los datos");
     } finally {
       setLoading(false);
     }
   };
 
   const handleCreate = () => {
-    setEditingItem(null);
     setFormData({ nombre: "", grado_id: "", capacidad: "", turno: "Mañana" });
-    setIsModalOpen(true);
+    openCreate();
   };
 
   const handleEdit = (item: Seccion) => {
-    setEditingItem(item);
     setFormData({
       nombre: item.nombre,
       grado_id: item.grado_id?.toString() || "",
       capacidad: item.capacidad?.toString() || "",
       turno: item.turno || "Mañana",
     });
-    setIsModalOpen(true);
+    openEdit(item);
   };
 
   const handleDelete = async (item: Seccion) => {
@@ -87,16 +90,15 @@ export default function SeccionesPage() {
 
     try {
       await seccionService.delete(item.id);
-      setSuccess("Sección eliminada correctamente");
+      handleSuccess("Sección eliminada correctamente");
       fetchData();
-    } catch {
-      setError("Error al eliminar la sección");
+    } catch (err) {
+      handleError(err, "Error al eliminar la sección");
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
 
     try {
       const data = {
@@ -110,16 +112,16 @@ export default function SeccionesPage() {
 
       if (editingItem) {
         await seccionService.update(editingItem.id, data);
-        setSuccess("Sección actualizada correctamente");
+        handleSuccess("Sección actualizada correctamente");
       } else {
         await seccionService.create(data);
-        setSuccess("Sección creada correctamente");
+        handleSuccess("Sección creada correctamente");
       }
 
-      setIsModalOpen(false);
+      close();
       fetchData();
-    } catch {
-      setError("Error al guardar la sección");
+    } catch (err) {
+      handleError(err, "Error al guardar la sección");
     }
   };
 
@@ -129,22 +131,19 @@ export default function SeccionesPage() {
       setShowEstudiantes(true);
       const estudiantes = await estudianteService.getAll();
       const estudiantesFiltrados = estudiantes.filter(
-        (e: Estudiante) => e.seccion_id === seccion.id
+        (e: Estudiante) => e.seccion_id === seccion.id,
       );
       setEstudiantesSeccion(estudiantesFiltrados);
-    } catch {
-      setError("Error al cargar estudiantes");
+    } catch (err) {
+      handleError(err, "Error al cargar estudiantes");
     }
   };
 
-  // Filtrado de secciones
-  const seccionesFiltradas = secciones.filter((seccion) => {
-    const matchesSearch = seccion.nombre
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
+  // Filtrado adicional por grado
+  const seccionesFiltradosCompletos = seccionesFiltradas.filter((seccion) => {
     const matchesGrado =
       !selectedGrado || seccion.grado_id?.toString() === selectedGrado;
-    return matchesSearch && matchesGrado;
+    return matchesGrado;
   });
 
   // Estadísticas
@@ -274,7 +273,7 @@ export default function SeccionesPage() {
       {/* Vista Grid */}
       {viewMode === "grid" && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {seccionesFiltradas.map((seccion) => (
+          {seccionesFiltradosCompletos.map((seccion) => (
             <Card
               key={seccion.id}
               className="hover:shadow-lg transition-shadow"
@@ -408,7 +407,7 @@ export default function SeccionesPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {seccionesFiltradas.map((seccion) => (
+                {seccionesFiltradosCompletos.map((seccion) => (
                   <tr key={seccion.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="font-semibold text-gray-900">
@@ -475,16 +474,13 @@ export default function SeccionesPage() {
 
       {/* Modal Formulario */}
       <Modal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setError(null);
-        }}
+        isOpen={isOpen}
+        onClose={close}
         title={editingItem ? "Editar Sección" : "Nueva Sección"}
         size="lg"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
+            <Button variant="secondary" onClick={close}>
               Cancelar
             </Button>
             <Button variant="primary" onClick={handleSubmit}>

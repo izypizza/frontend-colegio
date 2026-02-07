@@ -27,10 +27,28 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/src/features/auth";
 import EstadisticasAvanzadas from "./components/EstadisticasAvanzadas";
 import { useRouter } from "next/navigation";
+import { useErrorHandler } from "@/src/hooks/useErrorHandler";
+import { useModalState } from "@/src/hooks/useModalState";
+import { usePagination } from "@/src/hooks/usePagination";
 
 export default function CalificacionesPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const { error, success, setError, setSuccess, handleError } =
+    useErrorHandler();
+  const {
+    isOpen: isModalOpen,
+    open: openModal,
+    close: closeModal,
+  } = useModalState();
+  const {
+    currentPage,
+    perPage,
+    setCurrentPage,
+    setPerPage,
+    setPaginationData,
+    paginationData,
+  } = usePagination();
 
   // Redirigir a padres a su página específica
   useEffect(() => {
@@ -38,6 +56,7 @@ export default function CalificacionesPage() {
       router.push("/dashboard/padre/calificaciones");
     }
   }, [user, router]);
+
   const [calificaciones, setCalificaciones] = useState<Calificacion[]>([]);
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [materias, setMaterias] = useState<Materia[]>([]);
@@ -45,7 +64,6 @@ export default function CalificacionesPage() {
   const [estadisticas, setEstadisticas] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [loadingEstadisticas, setLoadingEstadisticas] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Calificacion | null>(null);
   const [formData, setFormData] = useState({
     estudiante_id: "",
@@ -53,20 +71,10 @@ export default function CalificacionesPage() {
     periodo_academico_id: "",
     nota: "",
   });
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterMateria, setFilterMateria] = useState("");
   const [filterPeriodo, setFilterPeriodo] = useState("");
   const [mostrarEstadisticas, setMostrarEstadisticas] = useState(true);
-
-  // Paginación
-  const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(100);
-  const [paginationData, setPaginationData] = useState({
-    total: 0,
-    lastPage: 1,
-  });
 
   useEffect(() => {
     fetchData();
@@ -84,12 +92,11 @@ export default function CalificacionesPage() {
     try {
       setLoadingEstadisticas(true);
       const periodo_id = filterPeriodo ? parseInt(filterPeriodo) : undefined;
-      const response = await calificacionService.estadisticasAvanzadas(
-        periodo_id
-      );
+      const response =
+        await calificacionService.estadisticasAvanzadas(periodo_id);
       setEstadisticas(response);
     } catch (err) {
-      console.error("[Estadísticas] Error:", err);
+      handleError(err, "Error al cargar estadísticas");
     } finally {
       setLoadingEstadisticas(false);
     }
@@ -98,9 +105,6 @@ export default function CalificacionesPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      setError(null);
-      console.log("[Calificaciones] Iniciando carga de datos...");
-      const startTime = performance.now();
 
       if (user?.role === "docente") {
         // Docentes usan endpoints del portal
@@ -116,27 +120,9 @@ export default function CalificacionesPage() {
           periodoService.getAll(),
         ]);
 
-        const endTime = performance.now();
-        console.log(
-          `[Calificaciones] Datos cargados en ${(endTime - startTime).toFixed(
-            0
-          )}ms`
-        );
-        console.log(
-          "[Calificaciones] Total:",
-          calificacionesData.calificaciones?.length || 0
-        );
-        console.log(
-          "[Calificaciones] Estudiantes:",
-          estudiantesData.estudiantes?.length || 0
-        );
-        console.log(
-          "[Calificaciones] Asignaciones:",
-          asignacionesData.asignaciones?.length || 0
-        );
-
         setCalificaciones(calificacionesData.calificaciones || []);
         setEstudiantes(estudiantesData.estudiantes || []);
+
         // Extraer materias únicas usando Map
         const materiasMap = new Map();
         asignacionesData.asignaciones?.forEach((a: any) => {
@@ -145,7 +131,6 @@ export default function CalificacionesPage() {
           }
         });
         const materiasUnicas = Array.from(materiasMap.values());
-        console.log("[Calificaciones] Materias únicas:", materiasUnicas.length);
         setMaterias(materiasUnicas);
         setPeriodos(periodosData.data || periodosData);
       } else if (user?.role === "estudiante") {
@@ -154,17 +139,6 @@ export default function CalificacionesPage() {
           estudiantePortalService.misCalificaciones(),
           periodoService.getAll(),
         ]);
-
-        const endTime = performance.now();
-        console.log(
-          `[Calificaciones] Datos estudiante cargados en ${(
-            endTime - startTime
-          ).toFixed(0)}ms`
-        );
-        console.log(
-          "[Calificaciones] Total estudiante:",
-          calificacionesData.calificaciones?.length || 0
-        );
 
         setCalificaciones(calificacionesData.calificaciones || []);
         setEstudiantes([]);
@@ -184,13 +158,6 @@ export default function CalificacionesPage() {
           periodoService.getAll({ all: true }),
         ]);
 
-        const endTime = performance.now();
-        console.log(
-          `[Calificaciones] Datos cargados en ${(endTime - startTime).toFixed(
-            0
-          )}ms`
-        );
-
         // Manejar respuesta paginada
         if (
           calificacionesData &&
@@ -203,41 +170,28 @@ export default function CalificacionesPage() {
             total: calificacionesData.total || 0,
             lastPage: calificacionesData.last_page || 1,
           });
-          console.log(
-            "[Calificaciones] Paginación:",
-            calificacionesData.total,
-            "registros"
-          );
         } else {
           const calificacionesArray =
             calificacionesData?.data || calificacionesData || [];
           setCalificaciones(calificacionesArray);
-          console.log(
-            "[Calificaciones] Total admin:",
-            calificacionesArray.length
-          );
         }
 
         setEstudiantes(
           Array.isArray(estudiantesData)
             ? estudiantesData
-            : estudiantesData?.data || []
+            : estudiantesData?.data || [],
         );
         setMaterias(
-          Array.isArray(materiasData) ? materiasData : materiasData?.data || []
+          Array.isArray(materiasData) ? materiasData : materiasData?.data || [],
         );
         setPeriodos(
-          Array.isArray(periodosData) ? periodosData : periodosData?.data || []
+          Array.isArray(periodosData) ? periodosData : periodosData?.data || [],
         );
       } else {
-        setError("No tiene permisos para ver calificaciones");
+        handleError(null, "No tiene permisos para ver calificaciones");
       }
     } catch (err) {
-      console.error("[Calificaciones] Error completo:", err);
-      setError(
-        "Error al cargar los datos: " +
-          (err instanceof Error ? err.message : "Error desconocido")
-      );
+      handleError(err, "Error al cargar los datos");
     } finally {
       setLoading(false);
     }
@@ -251,7 +205,7 @@ export default function CalificacionesPage() {
       periodo_academico_id: "",
       nota: "",
     });
-    setIsModalOpen(true);
+    openModal();
   };
 
   const handleEdit = (item: Calificacion) => {
@@ -262,7 +216,7 @@ export default function CalificacionesPage() {
       periodo_academico_id: item.periodo_academico_id.toString(),
       nota: item.nota.toString(),
     });
-    setIsModalOpen(true);
+    openModal();
   };
 
   const handleDelete = async (item: Calificacion) => {
@@ -272,14 +226,13 @@ export default function CalificacionesPage() {
       await calificacionService.delete(item.id);
       setSuccess("Calificación eliminada correctamente");
       fetchData();
-    } catch {
-      setError("Error al eliminar la calificación");
+    } catch (err) {
+      handleError(err, "Error al eliminar la calificación");
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
 
     try {
       const data = {
@@ -295,7 +248,7 @@ export default function CalificacionesPage() {
         setSuccess(
           editingItem
             ? "Calificación actualizada correctamente"
-            : "Calificación registrada correctamente"
+            : "Calificación registrada correctamente",
         );
       } else {
         // Admin/Auxiliar usan endpoints generales
@@ -308,10 +261,10 @@ export default function CalificacionesPage() {
         }
       }
 
-      setIsModalOpen(false);
+      closeModal();
       fetchData();
-    } catch {
-      setError("Error al guardar la calificación");
+    } catch (err) {
+      handleError(err, "Error al guardar la calificación");
     }
   };
 
@@ -360,8 +313,8 @@ export default function CalificacionesPage() {
               nota >= 14
                 ? "text-green-600"
                 : nota >= 11
-                ? "text-yellow-600"
-                : "text-red-600"
+                  ? "text-yellow-600"
+                  : "text-red-600"
             }`}
           >
             {nota}
@@ -494,14 +447,14 @@ export default function CalificacionesPage() {
       <Modal
         isOpen={isModalOpen}
         onClose={() => {
-          setIsModalOpen(false);
+          closeModal();
           setError(null);
         }}
         title={editingItem ? "Editar Calificación" : "Nueva Calificación"}
         size="lg"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
+            <Button variant="secondary" onClick={closeModal}>
               Cancelar
             </Button>
             <Button variant="primary" onClick={handleSubmit}>

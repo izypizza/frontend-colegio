@@ -37,3 +37,6 @@ export const validateLoginForm = (
 export const cn = (...classes: (string | boolean | undefined)[]): string => {
   return classes.filter(Boolean).join(' ');
 };
+
+// Re-exportar funciones de api-helpers para mantener compatibilidad
+export { normalizePaginatedResponse, isPaginatedResponse, extractData } from './api-helpers';

@@ -20,6 +20,9 @@ import {
 import { Horario, Materia, Seccion } from "@/src/types/models";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/src/features/auth";
+import { useErrorHandler } from "@/src/hooks/useErrorHandler";
+import { useModalState } from "@/src/hooks/useModalState";
+import { usePagination } from "@/src/hooks/usePagination";
 
 export default function HorariosPage() {
   const { user } = useAuth();
@@ -27,18 +30,10 @@ export default function HorariosPage() {
   const [secciones, setSecciones] = useState<Seccion[]>([]);
   const [materias, setMaterias] = useState<Materia[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(100);
-  const [paginationData, setPaginationData] = useState({
-    total: 0,
-    lastPage: 1,
-  });
   const [viewMode, setViewMode] = useState<"calendario" | "lista">(
     "calendario",
   );
   const [selectedSeccion, setSelectedSeccion] = useState<string>("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<Horario | null>(null);
   const [formData, setFormData] = useState({
     seccion_id: "",
     materia_id: "",
@@ -46,8 +41,13 @@ export default function HorariosPage() {
     hora_inicio: "",
     hora_fin: "",
   });
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+
+  // Hooks personalizados
+  const { error, success, handleError, handleSuccess, setError } =
+    useErrorHandler();
+  const { isOpen, editingItem, openCreate, openEdit, close } =
+    useModalState<Horario>();
+  const pagination = usePagination();
 
   const dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
   const horas = [
@@ -73,13 +73,16 @@ export default function HorariosPage() {
     if (user?.role === "admin" || user?.role === "auxiliar") {
       fetchDataPaginated();
     }
-  }, [currentPage, perPage, user]);
+  }, [pagination.currentPage, pagination.perPage, user]);
 
   const fetchDataPaginated = async () => {
     try {
       setLoading(true);
       const [horariosData, seccionesData, materiasData] = await Promise.all([
-        horarioService.getAll({ page: currentPage, per_page: perPage }),
+        horarioService.getAll({
+          page: pagination.currentPage,
+          per_page: pagination.perPage,
+        }),
         seccionService.getAll({ all: true }),
         materiaService.getAll({ all: true }),
       ]);
@@ -91,9 +94,10 @@ export default function HorariosPage() {
         "current_page" in horariosData
       ) {
         setHorarios(horariosData.data);
-        setPaginationData({
-          total: horariosData.total || 0,
-          lastPage: horariosData.last_page || 1,
+        pagination.updatePagination({
+          currentPage: horariosData.current_page,
+          totalPages: horariosData.last_page || 1,
+          totalItems: horariosData.total || 0,
         });
       } else {
         const horariosArray = horariosData?.data || horariosData || [];
@@ -109,8 +113,7 @@ export default function HorariosPage() {
         Array.isArray(materiasData) ? materiasData : materiasData?.data || [],
       );
     } catch (err) {
-      console.error("Error al cargar horarios:", err);
-      setError("Error al cargar los datos");
+      handleError(err, "Error al cargar los datos");
     } finally {
       setLoading(false);
     }
@@ -193,7 +196,10 @@ export default function HorariosPage() {
       } else {
         // Admin/Auxiliar usan endpoints generales con paginación
         const [horariosData, seccionesData, materiasData] = await Promise.all([
-          horarioService.getAll({ page: currentPage, per_page: perPage }),
+          horarioService.getAll({
+            page: pagination.currentPage,
+            per_page: pagination.perPage,
+          }),
           seccionService.getAll({ all: true }),
           materiaService.getAll({ all: true }),
         ]);
@@ -205,9 +211,10 @@ export default function HorariosPage() {
           "current_page" in horariosData
         ) {
           setHorarios(horariosData.data);
-          setPaginationData({
-            total: horariosData.total || 0,
-            lastPage: horariosData.last_page || 1,
+          pagination.updatePagination({
+            currentPage: horariosData.current_page,
+            totalPages: horariosData.last_page || 1,
+            totalItems: horariosData.total || 0,
           });
         } else {
           const horariosArray = horariosData?.data || horariosData || [];
@@ -224,15 +231,13 @@ export default function HorariosPage() {
         );
       }
     } catch (err) {
-      console.error("Error al cargar horarios:", err);
-      setError("Error al cargar los datos");
+      handleError(err, "Error al cargar los datos");
     } finally {
       setLoading(false);
     }
   };
 
   const handleCreate = () => {
-    setEditingItem(null);
     setFormData({
       seccion_id: "",
       materia_id: "",
@@ -240,11 +245,10 @@ export default function HorariosPage() {
       hora_inicio: "",
       hora_fin: "",
     });
-    setIsModalOpen(true);
+    openCreate();
   };
 
   const handleEdit = (item: Horario) => {
-    setEditingItem(item);
     setFormData({
       seccion_id: item.seccion_id.toString(),
       materia_id: item.materia_id.toString(),
@@ -252,7 +256,7 @@ export default function HorariosPage() {
       hora_inicio: item.hora_inicio,
       hora_fin: item.hora_fin,
     });
-    setIsModalOpen(true);
+    openEdit(item);
   };
 
   const handleDelete = async (item: Horario) => {
@@ -260,16 +264,15 @@ export default function HorariosPage() {
 
     try {
       await horarioService.delete(item.id);
-      setSuccess("Horario eliminado correctamente");
+      handleSuccess("Horario eliminado correctamente");
       fetchData();
-    } catch {
-      setError("Error al eliminar el horario");
+    } catch (err) {
+      handleError(err, "Error al eliminar el horario");
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
 
     try {
       const data = {
@@ -282,16 +285,16 @@ export default function HorariosPage() {
 
       if (editingItem) {
         await horarioService.update(editingItem.id, data);
-        setSuccess("Horario actualizado correctamente");
+        handleSuccess("Horario actualizado correctamente");
       } else {
         await horarioService.create(data);
-        setSuccess("Horario creado correctamente");
+        handleSuccess("Horario creado correctamente");
       }
 
-      setIsModalOpen(false);
+      close();
       fetchData();
-    } catch {
-      setError("Error al guardar el horario");
+    } catch (err) {
+      handleError(err, "Error al guardar el horario");
     }
   };
 
@@ -518,33 +521,33 @@ export default function HorariosPage() {
             />
           </Card>
 
-          {(user?.role === "admin" || user?.role === "auxiliar") && (
-            <Pagination
-              currentPage={currentPage}
-              lastPage={paginationData.lastPage}
-              total={paginationData.total}
-              perPage={perPage}
-              onPageChange={(page) => {
-                setCurrentPage(page);
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-              onPerPageChange={(newPerPage) => {
-                setPerPage(newPerPage);
-                setCurrentPage(1);
-              }}
-            />
-          )}
+          {(user?.role === "admin" || user?.role === "auxiliar") &&
+            pagination.totalItems > 0 && (
+              <Pagination
+                currentPage={pagination.currentPage}
+                lastPage={pagination.totalPages}
+                total={pagination.totalItems}
+                perPage={pagination.perPage}
+                onPageChange={(page) => {
+                  pagination.goToPage(page);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                onPerPageChange={(newPerPage) => {
+                  pagination.updatePagination({ perPage: newPerPage });
+                }}
+              />
+            )}
         </>
       )}
 
       <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isOpen}
+        onClose={close}
         title={editingItem ? "Editar Horario" : "Nuevo Horario"}
         size="lg"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
+            <Button variant="secondary" onClick={close}>
               Cancelar
             </Button>
             <Button variant="primary" onClick={handleSubmit}>

@@ -9,24 +9,36 @@ import {
 } from "@/src/lib/services";
 import { Grado, Seccion, Estudiante } from "@/src/types/models";
 import { useAuth } from "@/src/features/auth/hooks/useAuth";
+import { useErrorHandler } from "@/src/hooks/useErrorHandler";
+import { useModalState } from "@/src/hooks/useModalState";
 
 type ViewMode = "grados" | "secciones";
 
 export default function GradosYSeccionesPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
+  const { error, success, setError, setSuccess, handleError } =
+    useErrorHandler();
+  const {
+    isOpen: isGradoModalOpen,
+    open: openGradoModal,
+    close: closeGradoModal,
+  } = useModalState();
+  const {
+    isOpen: isSeccionModalOpen,
+    open: openSeccionModal,
+    close: closeSeccionModal,
+  } = useModalState();
+  const {
+    isOpen: isEstudiantesModalOpen,
+    open: openEstudiantesModal,
+    close: closeEstudiantesModal,
+  } = useModalState();
 
   const [grados, setGrados] = useState<Grado[]>([]);
   const [secciones, setSecciones] = useState<Seccion[]>([]);
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-
-  // Modales
-  const [isGradoModalOpen, setIsGradoModalOpen] = useState(false);
-  const [isSeccionModalOpen, setIsSeccionModalOpen] = useState(false);
-  const [isEstudiantesModalOpen, setIsEstudiantesModalOpen] = useState(false);
 
   const [editingGrado, setEditingGrado] = useState<Grado | null>(null);
   const [editingSeccion, setEditingSeccion] = useState<Seccion | null>(null);
@@ -64,8 +76,7 @@ export default function GradosYSeccionesPage() {
       setSecciones(Array.isArray(seccionesData) ? seccionesData : []);
       setEstudiantes(Array.isArray(estudiantesData) ? estudiantesData : []);
     } catch (err) {
-      console.error("Error al cargar datos:", err);
-      setError("Error al cargar los datos");
+      handleError(err, "Error al cargar los datos");
     } finally {
       setLoading(false);
     }
@@ -75,7 +86,7 @@ export default function GradosYSeccionesPage() {
   const handleCreateGrado = () => {
     setEditingGrado(null);
     setGradoFormData({ nombre: "", nivel: "primaria" });
-    setIsGradoModalOpen(true);
+    openGradoModal();
   };
 
   const handleEditGrado = (grado: Grado) => {
@@ -84,7 +95,7 @@ export default function GradosYSeccionesPage() {
       nombre: grado.nombre,
       nivel: grado.nivel || "primaria",
     });
-    setIsGradoModalOpen(true);
+    openGradoModal();
   };
 
   const handleDeleteGrado = async (grado: Grado) => {
@@ -103,14 +114,13 @@ export default function GradosYSeccionesPage() {
       await gradoService.delete(grado.id);
       setSuccess("Grado eliminado correctamente");
       fetchData();
-    } catch {
-      setError("Error al eliminar el grado");
+    } catch (err) {
+      handleError(err, "Error al eliminar el grado");
     }
   };
 
   const handleSubmitGrado = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
 
     try {
       const data = {
@@ -126,10 +136,10 @@ export default function GradosYSeccionesPage() {
         setSuccess("Grado creado correctamente");
       }
 
-      setIsGradoModalOpen(false);
+      closeGradoModal();
       fetchData();
-    } catch {
-      setError("Error al guardar el grado");
+    } catch (err) {
+      handleError(err, "Error al guardar el grado");
     }
   };
 
@@ -142,7 +152,7 @@ export default function GradosYSeccionesPage() {
       capacidad_maxima: "40",
       turno: "Mañana",
     });
-    setIsSeccionModalOpen(true);
+    openSeccionModal();
   };
 
   const handleEditSeccion = (seccion: Seccion) => {
@@ -153,7 +163,7 @@ export default function GradosYSeccionesPage() {
       capacidad_maxima: seccion.capacidad_maxima?.toString() || "40",
       turno: seccion.turno || "Mañana",
     });
-    setIsSeccionModalOpen(true);
+    openSeccionModal();
   };
 
   const handleDeleteSeccion = async (seccion: Seccion) => {
@@ -174,14 +184,13 @@ export default function GradosYSeccionesPage() {
       await seccionService.delete(seccion.id);
       setSuccess("Sección eliminada correctamente");
       fetchData();
-    } catch {
-      setError("Error al eliminar la sección");
+    } catch (err) {
+      handleError(err, "Error al eliminar la sección");
     }
   };
 
   const handleSubmitSeccion = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
 
     try {
       const data = {
@@ -199,10 +208,10 @@ export default function GradosYSeccionesPage() {
         setSuccess("Sección creada correctamente");
       }
 
-      setIsSeccionModalOpen(false);
+      closeSeccionModal();
       fetchData();
-    } catch {
-      setError("Error al guardar la sección");
+    } catch (err) {
+      handleError(err, "Error al guardar la sección");
     }
   };
 
@@ -213,7 +222,7 @@ export default function GradosYSeccionesPage() {
 
   const verEstudiantes = (seccion: Seccion) => {
     setSelectedSeccion(seccion);
-    setIsEstudiantesModalOpen(true);
+    openEstudiantesModal();
   };
 
   const seccionesDelGrado = selectedGrado
@@ -677,15 +686,12 @@ export default function GradosYSeccionesPage() {
       {/* Modal Grado */}
       <Modal
         isOpen={isGradoModalOpen}
-        onClose={() => setIsGradoModalOpen(false)}
+        onClose={closeGradoModal}
         title={editingGrado ? "Editar Grado" : "Nuevo Grado"}
         size="lg"
         footer={
           <>
-            <Button
-              variant="secondary"
-              onClick={() => setIsGradoModalOpen(false)}
-            >
+            <Button variant="secondary" onClick={closeGradoModal}>
               Cancelar
             </Button>
             <Button variant="primary" onClick={handleSubmitGrado}>
@@ -726,15 +732,12 @@ export default function GradosYSeccionesPage() {
       {/* Modal Sección */}
       <Modal
         isOpen={isSeccionModalOpen}
-        onClose={() => setIsSeccionModalOpen(false)}
+        onClose={closeSeccionModal}
         title={editingSeccion ? "Editar Sección" : "Nueva Sección"}
         size="lg"
         footer={
           <>
-            <Button
-              variant="secondary"
-              onClick={() => setIsSeccionModalOpen(false)}
-            >
+            <Button variant="secondary" onClick={closeSeccionModal}>
               Cancelar
             </Button>
             <Button variant="primary" onClick={handleSubmitSeccion}>
@@ -816,7 +819,7 @@ export default function GradosYSeccionesPage() {
       {/* Modal Estudiantes */}
       <Modal
         isOpen={isEstudiantesModalOpen}
-        onClose={() => setIsEstudiantesModalOpen(false)}
+        onClose={closeEstudiantesModal}
         title={`Estudiantes de ${selectedSeccion?.nombre}`}
         size="xl"
       >

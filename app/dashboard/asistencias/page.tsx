@@ -18,9 +18,27 @@ import {
 import { Asistencia, Estudiante, Materia } from "@/src/types/models";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/src/features/auth";
+import { useErrorHandler } from "@/src/hooks/useErrorHandler";
+import { useModalState } from "@/src/hooks/useModalState";
+import { usePagination } from "@/src/hooks/usePagination";
 
 export default function AsistenciasPage() {
   const { user } = useAuth();
+  const { error, success, setError, setSuccess, handleError } =
+    useErrorHandler();
+  const {
+    isOpen: isModalOpen,
+    open: openModal,
+    close: closeModal,
+  } = useModalState();
+  const {
+    currentPage,
+    perPage,
+    setCurrentPage,
+    setPerPage,
+    setPaginationData,
+    paginationData,
+  } = usePagination(100);
 
   // Verificar que el usuario tenga un rol autorizado
   const rolesAutorizados = ["admin", "auxiliar", "docente"];
@@ -30,7 +48,6 @@ export default function AsistenciasPage() {
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [materias, setMaterias] = useState<Materia[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Asistencia | null>(null);
   const [formData, setFormData] = useState({
     estudiante_id: "",
@@ -39,8 +56,6 @@ export default function AsistenciasPage() {
     estado: "presente" as "presente" | "tarde" | "ausente",
     observaciones: "",
   });
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterMateria, setFilterMateria] = useState("");
   const [filterEstado, setFilterEstado] = useState("");
@@ -50,14 +65,6 @@ export default function AsistenciasPage() {
   const [filterMes, setFilterMes] = useState("");
   const [filterDia, setFilterDia] = useState("");
   const [filterAnio, setFilterAnio] = useState(currentYear.toString());
-
-  // Paginación
-  const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(100);
-  const [paginationData, setPaginationData] = useState({
-    total: 0,
-    lastPage: 1,
-  });
 
   const handleExportExcel = () => {
     try {
@@ -81,8 +88,8 @@ export default function AsistenciasPage() {
           asist.estado === "presente"
             ? "Presente"
             : asist.estado === "tarde"
-            ? "Llegó Tarde"
-            : "Ausente",
+              ? "Llegó Tarde"
+              : "Ausente",
       }));
 
       // Crear CSV con formato UTF-8 BOM para Excel
@@ -96,7 +103,7 @@ export default function AsistenciasPage() {
               // Escapar comillas y envolver en comillas si contiene coma
               return `"${String(value).replace(/"/g, '""')}"`;
             })
-            .join(",")
+            .join(","),
         ),
       ];
       const csvContent = csvRows.join("\r\n"); // Usar CRLF para mejor compatibilidad con Excel
@@ -117,11 +124,10 @@ export default function AsistenciasPage() {
       URL.revokeObjectURL(url);
 
       setSuccess(
-        `Archivo exportado correctamente (${asistenciasFiltradas.length} registros)`
+        `Archivo exportado correctamente (${asistenciasFiltradas.length} registros)`,
       );
     } catch (err) {
-      console.error("Error al exportar:", err);
-      setError("Error al exportar el archivo");
+      handleError(err, "Error al exportar el archivo");
     }
   };
 
@@ -165,13 +171,13 @@ export default function AsistenciasPage() {
       setEstudiantes(
         Array.isArray(estudiantesData)
           ? estudiantesData
-          : estudiantesData?.data || []
+          : estudiantesData?.data || [],
       );
       setMaterias(
-        Array.isArray(materiasData) ? materiasData : materiasData?.data || []
+        Array.isArray(materiasData) ? materiasData : materiasData?.data || [],
       );
     } catch (err: any) {
-      setError(err?.message || "Error al cargar los datos");
+      handleError(err, "Error al cargar los datos");
     } finally {
       setLoading(false);
     }
@@ -180,12 +186,11 @@ export default function AsistenciasPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      setError(null);
 
       // Verificar que el usuario esté autenticado
       if (!user) {
         setError(
-          "Usuario no autenticado. Por favor, inicia sesión nuevamente."
+          "Usuario no autenticado. Por favor, inicia sesión nuevamente.",
         );
         setLoading(false);
         return;
@@ -195,13 +200,11 @@ export default function AsistenciasPage() {
       const rolesPermitidos = ["admin", "auxiliar", "docente"];
       if (!rolesPermitidos.includes(user.role)) {
         setError(
-          `No tienes permisos para acceder a esta sección. Tu rol actual es: ${user.role}`
+          `No tienes permisos para acceder a esta sección. Tu rol actual es: ${user.role}`,
         );
         setLoading(false);
         return;
       }
-
-      console.log("Cargando datos para usuario con rol:", user.role);
 
       // Si es docente, usar los endpoints del portal de docente
       if (user.role === "docente") {
@@ -211,20 +214,18 @@ export default function AsistenciasPage() {
             docentePortalService.misEstudiantes(),
             docentePortalService.misAsignaciones(),
           ]);
-        console.log(
-          "Asistencias cargadas (docente):",
-          asistenciasData.asistencias?.length || 0
-        );
+
         setAsistencias(
           Array.isArray(asistenciasData.asistencias)
             ? asistenciasData.asistencias
-            : []
+            : [],
         );
         setEstudiantes(
           Array.isArray(estudiantesData.estudiantes)
             ? estudiantesData.estudiantes
-            : []
+            : [],
         );
+
         // Extraer materias únicas de las asignaciones usando Map
         const materiasMap = new Map();
         asignacionesData.asignaciones?.forEach((a: any) => {
@@ -233,7 +234,6 @@ export default function AsistenciasPage() {
           }
         });
         const materiasUnicas = Array.from(materiasMap.values());
-        console.log("Materias únicas:", materiasUnicas.length);
         setMaterias(materiasUnicas);
       } else if (user.role === "admin" || user.role === "auxiliar") {
         // Admin/Auxiliar usan endpoints generales
@@ -243,12 +243,6 @@ export default function AsistenciasPage() {
             estudianteService.getAll(),
             materiaService.getAll(),
           ]);
-        console.log(
-          "Asistencias cargadas:",
-          asistenciasData?.data?.length || asistenciasData?.length || 0
-        );
-        console.log("Estudiantes cargados:", estudiantesData?.length || 0);
-        console.log("Materias cargadas:", materiasData?.length || 0);
 
         // Manejar respuesta paginada o sin paginar
         const asistenciasArray = asistenciasData?.data || asistenciasData || [];
@@ -260,9 +254,6 @@ export default function AsistenciasPage() {
         setMaterias(Array.isArray(materiasArray) ? materiasArray : []);
       }
     } catch (error: any) {
-      console.error("Error al cargar datos:", error);
-
-      // Mejorar el mensaje de error para el usuario
       let errorMessage = "Error al cargar los datos";
 
       if (error?.response?.status === 403) {
@@ -271,7 +262,7 @@ export default function AsistenciasPage() {
         }`;
         if (error?.response?.data?.required_roles) {
           errorMessage += `. Roles requeridos: ${error.response.data.required_roles.join(
-            ", "
+            ", ",
           )}`;
         }
       } else if (error?.response?.status === 401) {
@@ -295,7 +286,7 @@ export default function AsistenciasPage() {
       estado: "presente",
       observaciones: "",
     });
-    setIsModalOpen(true);
+    openModal();
   };
 
   const handleEdit = (item: Asistencia) => {
@@ -307,7 +298,7 @@ export default function AsistenciasPage() {
       estado: item.estado || "presente",
       observaciones: item.observaciones || "",
     });
-    setIsModalOpen(true);
+    openModal();
   };
 
   const handleDelete = async (item: Asistencia) => {
@@ -318,14 +309,13 @@ export default function AsistenciasPage() {
       await asistenciaService.delete(item.id);
       setSuccess("Asistencia eliminada correctamente");
       fetchData();
-    } catch {
-      setError("Error al eliminar la asistencia");
+    } catch (err) {
+      handleError(err, "Error al eliminar la asistencia");
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
 
     try {
       const data = {
@@ -342,7 +332,7 @@ export default function AsistenciasPage() {
         setSuccess(
           editingItem
             ? "Asistencia actualizada correctamente"
-            : "Asistencia registrada correctamente"
+            : "Asistencia registrada correctamente",
         );
       } else {
         // Admin/Auxiliar usan endpoints generales
@@ -355,7 +345,7 @@ export default function AsistenciasPage() {
         }
       }
 
-      setIsModalOpen(false);
+      closeModal();
       setFormData({
         estudiante_id: "",
         materia_id: "",
@@ -366,7 +356,7 @@ export default function AsistenciasPage() {
       setEditingItem(null);
       fetchData();
     } catch (err: any) {
-      setError(err?.message || "Error al guardar la asistencia");
+      handleError(err, "Error al guardar la asistencia");
     }
   };
 
@@ -733,13 +723,13 @@ export default function AsistenciasPage() {
       <Modal
         isOpen={isModalOpen}
         onClose={() => {
-          setIsModalOpen(false);
+          closeModal();
           setError(null);
         }}
         title={editingItem ? "Editar Asistencia" : "Nueva Asistencia"}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
+            <Button variant="secondary" onClick={closeModal}>
               Cancelar
             </Button>
             <Button variant="primary" onClick={handleSubmit}>
