@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 
 interface PaginationInfo {
   total: number;
@@ -48,6 +48,16 @@ export function usePagination(initialPerPage: number = 50) {
     setTotalItems(0);
   };
 
+  // Alias para compatibilidad con código existente
+  const setPaginationData = (data: { total: number; lastPage: number }) => {
+    updatePagination(data);
+  };
+
+  const paginationData = {
+    total: totalItems,
+    lastPage: totalPages,
+  };
+
   return {
     currentPage,
     perPage,
@@ -59,6 +69,8 @@ export function usePagination(initialPerPage: number = 50) {
     nextPage,
     prevPage,
     updatePagination,
-    reset
+    setPaginationData,
+    paginationData,
+    reset,
   };
 }
