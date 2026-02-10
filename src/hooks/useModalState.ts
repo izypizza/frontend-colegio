@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 
 /**
  * Hook para manejo de estado de modales
@@ -33,15 +33,22 @@ export function useModalState<T = any>() {
     setIsViewMode(false);
   };
 
-  return { 
-    isOpen, 
-    editingItem, 
-    isViewMode, 
-    openCreate, 
-    openEdit, 
-    openView, 
+  // Alias genérico para compatibilidad
+  const open = () => {
+    setIsViewMode(false);
+    setIsOpen(true);
+  };
+
+  return {
+    isOpen,
+    editingItem,
+    isViewMode,
+    open,
+    openCreate,
+    openEdit,
+    openView,
     close,
     setIsOpen,
-    setEditingItem
+    setEditingItem,
   };
 }
