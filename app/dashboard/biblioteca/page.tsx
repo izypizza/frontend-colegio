@@ -120,6 +120,7 @@ export default function LibrosPage() {
           ? librosData
           : librosData?.data || [];
         setLibros(librosArray);
+        setPaginationData({ total: librosArray.length, lastPage: 1 });
       }
 
       setCategorias(
@@ -191,7 +192,7 @@ export default function LibrosPage() {
     setFormData({
       titulo: libro.titulo,
       tipo: libro.tipo || "fisico",
-      autor: libro.autor,
+      autor: libro.autor || "",
       isbn: libro.isbn || "",
       editorial: libro.editorial || "",
       anio_publicacion: libro.anio_publicacion?.toString() || "",
@@ -204,7 +205,9 @@ export default function LibrosPage() {
     openModal();
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (libro: Libro | number) => {
+    const id = typeof libro === "number" ? libro : libro.id;
+
     if (!confirm("¿Está seguro de eliminar este libro?")) return;
 
     try {
@@ -258,12 +261,15 @@ export default function LibrosPage() {
     return matchSearch && matchCategoria && matchTipo && matchDisponible;
   });
 
+  const totalRegistros =
+    paginationData.total > 0 ? paginationData.total : libros.length;
+
   const columns = [
     { key: "titulo", label: "Título" },
     {
       key: "tipo",
       label: "Tipo",
-      render: (libro: Libro) => (
+      render: (_: unknown, libro: Libro) => (
         <span
           className={`px-2 py-1 rounded-full text-xs font-medium ${
             libro.tipo === "fisico"
@@ -279,12 +285,13 @@ export default function LibrosPage() {
     {
       key: "categoria",
       label: "Categoría",
-      render: (libro: Libro) => libro.categoria?.nombre || "-",
+      render: (_: unknown, libro: Libro) =>
+        libro.categoria?.nombre || "Sin categoría",
     },
     {
       key: "disponible",
-      label: "Estado",
-      render: (libro: Libro) =>
+      label: "Disponibilidad",
+      render: (_: unknown, libro: Libro) =>
         libro.tipo === "digital" ? (
           <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
             Ilimitado
@@ -572,6 +579,23 @@ export default function LibrosPage() {
             No se encontraron libros con los filtros seleccionados
           </div>
         </Card>
+      )}
+
+      {totalRegistros > perPage && (
+        <Pagination
+          currentPage={currentPage}
+          lastPage={paginationData.lastPage || 1}
+          total={totalRegistros}
+          perPage={perPage}
+          onPageChange={(page) => {
+            setCurrentPage(page);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          onPerPageChange={(newPerPage) => {
+            setPerPage(newPerPage);
+            setCurrentPage(1);
+          }}
+        />
       )}
 
       {/* Modal de Categoría */}

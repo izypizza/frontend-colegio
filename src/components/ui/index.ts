@@ -6,3 +6,4 @@ export { Modal } from "./Modal";
 export { Table } from "./Table";
 export { Toast, ToastContainer } from "./Toast";
 export { Pagination } from "./Pagination";
+export { DataSummary } from "./DataSummary";

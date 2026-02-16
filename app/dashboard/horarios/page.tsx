@@ -146,7 +146,10 @@ export default function HorariosPage() {
         // Obtener horarios de esas secciones
         const seccionIds = seccionesUnicas.map((s: any) => s.id);
         const horariosData = await horarioService.getAll();
-        const horariosFiltrados = horariosData.filter((h: Horario) =>
+        const horariosArray = Array.isArray(horariosData)
+          ? horariosData
+          : horariosData?.data || [];
+        const horariosFiltrados = horariosArray.filter((h: Horario) =>
           seccionIds.includes(h.seccion_id),
         );
         setHorarios(horariosFiltrados);

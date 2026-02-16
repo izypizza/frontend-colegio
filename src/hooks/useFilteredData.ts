@@ -4,9 +4,11 @@ import { useState, useMemo } from "react";
  * Hook para filtrado de datos con búsqueda por texto
  * Reemplaza el código duplicado en 15+ páginas
  */
+type SearchFields<T> = (keyof T)[] | ((item: T, term: string) => boolean);
+
 export function useFilteredData<T>(
   data: T[],
-  searchFields: (keyof T)[],
+  searchFields: SearchFields<T>,
   additionalFilters?: Record<string, any>,
 ) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -18,11 +20,15 @@ export function useFilteredData<T>(
       // Búsqueda por texto en los campos especificados
       const matchesSearch =
         searchTerm === "" ||
-        searchFields.some((field) => {
-          const value = item[field];
-          if (value == null) return false;
-          return String(value).toLowerCase().includes(searchTerm.toLowerCase());
-        });
+        (typeof searchFields === "function"
+          ? searchFields(item, searchTerm)
+          : searchFields.some((field) => {
+              const value = item[field];
+              if (value == null) return false;
+              return String(value)
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase());
+            }));
 
       // Filtros adicionales (exactos)
       const matchesFilters =

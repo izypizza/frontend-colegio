@@ -22,11 +22,6 @@ export default function UsuariosPage() {
   const { error, success, setError, setSuccess, handleError } =
     useErrorHandler();
   const {
-    isOpen: isCreateModalOpen,
-    open: openCreateModal,
-    close: closeCreateModal,
-  } = useModalState();
-  const {
     isOpen: isEditModalOpen,
     open: openEditModal,
     close: closeEditModal,
@@ -57,25 +52,12 @@ export default function UsuariosPage() {
   );
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [viewingUser, setViewingUser] = useState<User | null>(null);
-  const [personasSinUsuario, setPersonasSinUsuario] = useState<
-    PersonaSinUsuario[]
-  >([]);
   const [todasPersonasSinUsuario, setTodasPersonasSinUsuario] = useState<{
     estudiantes: PersonaSinUsuario[];
     docentes: PersonaSinUsuario[];
     padres: PersonaSinUsuario[];
   }>({ estudiantes: [], docentes: [], padres: [] });
-  const [selectedTipo, setSelectedTipo] = useState<
-    "estudiante" | "docente" | "padre"
-  >("estudiante");
-  const [selectedPersona, setSelectedPersona] =
-    useState<PersonaSinUsuario | null>(null);
   const [usarDniComoPassword, setUsarDniComoPassword] = useState(false);
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    is_active: true,
-  });
   const [editFormData, setEditFormData] = useState({
     name: "",
     email: "",
@@ -135,17 +117,6 @@ export default function UsuariosPage() {
     }
   };
 
-  const fetchPersonasSinUsuario = async (
-    tipo: "estudiante" | "docente" | "padre",
-  ) => {
-    try {
-      const data = await userManagementService.getPersonasSinUsuario(tipo);
-      setPersonasSinUsuario(data);
-    } catch (err: any) {
-      handleError(err, "Error al cargar personas");
-    }
-  };
-
   const fetchTodasPersonasSinUsuario = async () => {
     try {
       setLoading(true);
@@ -159,30 +130,6 @@ export default function UsuariosPage() {
       handleError(err, "Error al cargar personas sin usuario");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleOpenCreateModal = async () => {
-    setSelectedTipo("estudiante");
-    await fetchPersonasSinUsuario("estudiante");
-    setFormData({ email: "", password: "", is_active: true });
-    setSelectedPersona(null);
-    openCreateModal();
-  };
-
-  const handleTipoChange = async (tipo: "estudiante" | "docente" | "padre") => {
-    setSelectedTipo(tipo);
-    setSelectedPersona(null);
-    await fetchPersonasSinUsuario(tipo);
-  };
-
-  const handlePersonaSelect = (persona: PersonaSinUsuario) => {
-    setSelectedPersona(persona);
-    if (persona.email) {
-      setFormData((prev) => ({ ...prev, email: persona.email || "" }));
-    }
-    if (usarDniComoPassword && persona.dni) {
-      setFormData((prev) => ({ ...prev, password: persona.dni }));
     }
   };
 
@@ -213,38 +160,6 @@ export default function UsuariosPage() {
       await userManagementService.create(payload);
       setSuccess(`Usuario creado para ${persona.nombre_completo}`);
       await fetchTodasPersonasSinUsuario();
-    } catch (err: any) {
-      handleError(err, "Error al crear usuario");
-    }
-  };
-
-  const handleCreateUser = async () => {
-    if (!selectedPersona) {
-      setError("Debe seleccionar una persona");
-      return;
-    }
-
-    if (!formData.email || !formData.password) {
-      setError("Email y contraseña son requeridos");
-      return;
-    }
-
-    try {
-      const payload: CreateUserPayload = {
-        persona_id: selectedPersona.id,
-        persona_tipo: selectedTipo,
-        email: formData.email,
-        password: formData.password,
-        is_active: formData.is_active,
-      };
-
-      await userManagementService.create(payload);
-      setSuccess("Usuario creado exitosamente");
-      closeCreateModal();
-      await fetchUsers();
-      await fetchTodasPersonasSinUsuario();
-      setFormData({ email: "", password: "", is_active: true });
-      setSelectedPersona(null);
     } catch (err: any) {
       handleError(err, "Error al crear usuario");
     }
@@ -600,7 +515,6 @@ export default function UsuariosPage() {
             Administra los usuarios del sistema y sus accesos
           </p>
         </div>
-        <Button onClick={handleOpenCreateModal}>Crear Usuario</Button>
       </div>
 
       {error && (
@@ -778,108 +692,6 @@ export default function UsuariosPage() {
           </Card>
         </>
       )}
-
-      {/* Modal Crear Usuario */}
-      <Modal
-        isOpen={isCreateModalOpen}
-        onClose={closeCreateModal}
-        title="Crear Usuario"
-        size="lg"
-      >
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tipo de Persona
-            </label>
-            <select
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
-              value={selectedTipo}
-              onChange={(e) => handleTipoChange(e.target.value as any)}
-            >
-              <option value="estudiante">Estudiante</option>
-              <option value="docente">Docente</option>
-              <option value="padre">Padre</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Seleccionar Persona
-            </label>
-            <div className="max-h-60 overflow-y-auto border border-gray-300 rounded-md">
-              {personasSinUsuario.length === 0 ? (
-                <div className="p-4 text-center text-gray-500">
-                  No hay personas sin usuario de este tipo
-                </div>
-              ) : (
-                personasSinUsuario.map((persona) => (
-                  <div
-                    key={persona.id}
-                    onClick={() => handlePersonaSelect(persona)}
-                    className={`p-3 cursor-pointer hover:bg-gray-50 border-b ${
-                      selectedPersona?.id === persona.id ? "bg-blue-50" : ""
-                    }`}
-                  >
-                    <div className="font-medium">{persona.nombre_completo}</div>
-                    <div className="text-sm text-gray-600">
-                      DNI: {persona.dni}
-                      {persona.email && ` • Email: ${persona.email}`}
-                      {persona.seccion &&
-                        ` • ${persona.grado} - ${persona.seccion}`}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          <Input
-            label="Email"
-            type="email"
-            value={formData.email}
-            onChange={(e) =>
-              setFormData({ ...formData, email: e.target.value })
-            }
-            placeholder="usuario@correo.com"
-            required
-          />
-
-          <Input
-            label="Contraseña"
-            type="password"
-            value={formData.password}
-            onChange={(e) =>
-              setFormData({ ...formData, password: e.target.value })
-            }
-            placeholder="Mínimo 6 caracteres"
-            required
-          />
-
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="is_active"
-              checked={formData.is_active}
-              onChange={(e) =>
-                setFormData({ ...formData, is_active: e.target.checked })
-              }
-              className="mr-2"
-            />
-            <label htmlFor="is_active" className="text-sm text-gray-700">
-              Usuario activo
-            </label>
-          </div>
-
-          <div className="flex justify-end gap-2 mt-6">
-            <Button variant="secondary" onClick={closeCreateModal}>
-              Cancelar
-            </Button>
-            <Button onClick={handleCreateUser} disabled={!selectedPersona}>
-              Crear Usuario
-            </Button>
-          </div>
-        </div>
-      </Modal>
 
       {/* Modal Editar Usuario */}
       <Modal

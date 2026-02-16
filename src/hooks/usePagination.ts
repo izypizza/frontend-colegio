@@ -1,9 +1,12 @@
 import { useState } from "react";
 
 interface PaginationInfo {
-  total: number;
-  lastPage: number;
+  total?: number;
+  totalItems?: number;
+  lastPage?: number;
+  totalPages?: number;
   currentPage?: number;
+  perPage?: number;
 }
 
 /**
@@ -35,8 +38,18 @@ export function usePagination(initialPerPage: number = 50) {
   };
 
   const updatePagination = (pagination: PaginationInfo) => {
-    setTotalItems(pagination.total || 0);
-    setTotalPages(pagination.lastPage || 1);
+    const nextTotal =
+      pagination.totalItems ?? pagination.total ?? totalItems ?? 0;
+    const nextLastPage =
+      pagination.totalPages ?? pagination.lastPage ?? totalPages ?? 1;
+
+    setTotalItems(nextTotal);
+    setTotalPages(nextLastPage);
+
+    if (pagination.perPage) {
+      setPerPage(pagination.perPage);
+    }
+
     if (pagination.currentPage) {
       setCurrentPage(pagination.currentPage);
     }
@@ -50,7 +63,7 @@ export function usePagination(initialPerPage: number = 50) {
 
   // Alias para compatibilidad con código existente
   const setPaginationData = (data: { total: number; lastPage: number }) => {
-    updatePagination(data);
+    updatePagination({ total: data.total, lastPage: data.lastPage });
   };
 
   const paginationData = {

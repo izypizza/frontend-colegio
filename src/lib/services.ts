@@ -94,7 +94,11 @@ class CrudService<T> {
         return response.data;
       }
       // Format: { estudiante: {...} }, { docente: {...} }, etc.
-      if ("estudiante" in response || "docente" in response || "padre" in response) {
+      if (
+        "estudiante" in response ||
+        "docente" in response ||
+        "padre" in response
+      ) {
         return response;
       }
       // Format: { message: '...', [key]: {...} }
@@ -172,9 +176,9 @@ export const prestamoLibroService = {
 
 // User Management Services
 export const userManagementService = {
-  getAll: async () => {
-    const response = await apiClient.get<any>("/users");
-    return response.users || [];
+  getAll: async (params?: { page?: number; per_page?: number }) => {
+    const response = await apiClient.get<any>("/users", { params });
+    return response.users || response;
   },
   create: async (data: any) => {
     return await apiClient.post("/users", data);
