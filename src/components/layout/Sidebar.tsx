@@ -36,6 +36,7 @@ const menuItems: MenuItem[] = [
       UserRole.DOCENTE,
       UserRole.PADRE,
       UserRole.ESTUDIANTE,
+      UserRole.BIBLIOTECARIO,
     ],
     icon: (
       <svg
@@ -245,7 +246,7 @@ const menuItems: MenuItem[] = [
   {
     label: "Biblioteca",
     href: "/dashboard/biblioteca",
-    roles: [UserRole.ADMIN, UserRole.BIBLIOTECARIO],
+    roles: [UserRole.ADMIN, UserRole.AUXILIAR, UserRole.BIBLIOTECARIO],
     modulo: "biblioteca",
     icon: (
       <svg
@@ -266,7 +267,7 @@ const menuItems: MenuItem[] = [
   {
     label: "Préstamos",
     href: "/dashboard/prestamos",
-    roles: [UserRole.ADMIN, UserRole.BIBLIOTECARIO],
+    roles: [UserRole.ADMIN, UserRole.AUXILIAR, UserRole.BIBLIOTECARIO],
     modulo: "biblioteca",
     icon: (
       <svg
@@ -280,6 +281,46 @@ const menuItems: MenuItem[] = [
           strokeLinejoin="round"
           strokeWidth={2}
           d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+        />
+      </svg>
+    ),
+  },
+  {
+    label: "Bibliotecario",
+    href: "/dashboard/bibliotecarios",
+    roles: [UserRole.ADMIN],
+    icon: (
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422A12.083 12.083 0 0119.5 15.5 11.953 11.953 0 0112 19c-2.45 0-4.717-.74-6.61-2.007A12.083 12.083 0 014.34 15.58L12 14z"
+        />
+      </svg>
+    ),
+  },
+  {
+    label: "Auxiliar",
+    href: "/dashboard/auxiliares",
+    roles: [UserRole.ADMIN],
+    icon: (
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M5 13l4 4L19 7M9 5a4 4 0 11-8 0 4 4 0 018 0zm0 14a7 7 0 01-7-7h7v7z"
         />
       </svg>
     ),

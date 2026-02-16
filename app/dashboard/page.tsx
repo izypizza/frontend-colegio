@@ -88,35 +88,7 @@ export default function DashboardPage() {
 
         {/* Estadísticas rápidas */}
         {stats && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-blue-600 font-medium">
-                    Mis Clases
-                  </p>
-                  <p className="text-3xl font-bold text-blue-900">
-                    {stats.mis_clases || 0}
-                  </p>
-                </div>
-                <div className="p-3 bg-blue-200 rounded-full">
-                  <svg
-                    className="w-8 h-8 text-blue-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </Card>
-
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
               <div className="flex items-center justify-between">
                 <div>
@@ -247,27 +219,7 @@ export default function DashboardPage() {
           </Card>
         )}
 
-        {/* Mis Clases Detalle */}
-        {stats?.clases_detalle && stats.clases_detalle.length > 0 && (
-          <Card>
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
-              Mis Clases Asignadas
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {stats.clases_detalle.map((clase: any, idx: number) => (
-                <div key={idx} className="p-4 bg-gray-50 rounded-lg border">
-                  <h3 className="font-bold text-blue-600">{clase.materia}</h3>
-                  <p className="text-sm text-gray-600">
-                    {clase.grado} - {clase.seccion}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {clase.estudiantes} estudiantes
-                  </p>
-                </div>
-              ))}
-            </div>
-          </Card>
-        )}
+        {/* Sin bloque de clases asignadas para vista simplificada */}
       </div>
     );
   }

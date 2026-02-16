@@ -179,6 +179,13 @@ export default function PadresPage() {
     { key: "email", label: "Email" },
   ];
 
+  const hasSearch = searchTerm.trim() !== "";
+  const effectiveTotal = hasSearch
+    ? padresFiltrados.length
+    : pagination.totalItems || padres.length;
+  const effectiveLastPage = hasSearch ? 1 : pagination.totalPages;
+  const effectiveCurrentPage = hasSearch ? 1 : pagination.currentPage;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -226,11 +233,11 @@ export default function PadresPage() {
         />
       </Card>
 
-      {pagination.totalItems > 0 && (
+      {effectiveTotal > 0 && (
         <Pagination
-          currentPage={pagination.currentPage}
-          lastPage={pagination.totalPages}
-          total={pagination.totalItems}
+          currentPage={effectiveCurrentPage}
+          lastPage={effectiveLastPage}
+          total={effectiveTotal}
           perPage={pagination.perPage}
           onPageChange={(page) => {
             pagination.goToPage(page);

@@ -12,14 +12,13 @@ import {
 import { docenteService } from "@/src/lib/services";
 import { Docente } from "@/src/types/models";
 import { useEffect, useState } from "react";
-import { useAuth } from "@/src/features/auth";
 import { useErrorHandler } from "@/src/hooks/useErrorHandler";
 import { useModalState } from "@/src/hooks/useModalState";
 import { usePagination } from "@/src/hooks/usePagination";
 import { useFilteredData } from "@/src/hooks/useFilteredData";
+import { useAuth } from "@/src/features/auth";
 
 export default function DocentesPage() {
-  const { user } = useAuth();
   const ESPECIALIDADES = [
     "Matemáticas",
     "Comunicación",
@@ -50,11 +49,13 @@ export default function DocentesPage() {
   });
   const [filterEspecialidad, setFilterEspecialidad] = useState("");
 
-  // Hooks personalizados
-  const { error, success, handleError, handleSuccess } = useErrorHandler();
+  const { user } = useAuth();
+  const { error, success, handleError, handleSuccess, setError, setSuccess } =
+    useErrorHandler();
   const { isOpen, editingItem, openCreate, openEdit, close } =
     useModalState<Docente>();
   const pagination = usePagination();
+
   const {
     filteredData: docentesFiltrados,
     searchTerm,
@@ -83,7 +84,6 @@ export default function DocentesPage() {
         per_page: pagination.perPage,
       });
 
-      // Manejar respuesta paginada
       if (
         data &&
         typeof data === "object" &&
@@ -93,12 +93,19 @@ export default function DocentesPage() {
         setDocentes(data.data);
         pagination.updatePagination({
           currentPage: data.current_page,
-          totalPages: data.last_page || 1,
-          totalItems: data.total || 0,
+          lastPage: data.last_page || 1,
+          total: data.total || 0,
+          perPage: data.per_page,
         });
       } else {
         const docentesArray = Array.isArray(data) ? data : data?.data || [];
         setDocentes(docentesArray);
+        pagination.updatePagination({
+          currentPage: 1,
+          lastPage: 1,
+          total: docentesArray.length,
+          perPage: docentesArray.length || pagination.perPage,
+        });
       }
     } catch (err) {
       handleError(err, "Error al cargar los docentes");
@@ -181,7 +188,6 @@ export default function DocentesPage() {
     }
   };
 
-  // Filtrado adicional por especialidad
   const docentesFiltradosCompletos = docentesFiltrados.filter((docente) => {
     const matchesEspecialidad =
       !filterEspecialidad || docente.especialidad === filterEspecialidad;
@@ -396,16 +402,14 @@ export default function DocentesPage() {
         </form>
       </Modal>
 
-      {/* Modal Ver Detalles */}
       <Modal
         isOpen={isViewModalOpen}
         onClose={() => setIsViewModalOpen(false)}
-        title="Detalles del Docente"
-        size="lg"
+        title="Detalle del Docente"
+        size="md"
       >
         {viewingItem && (
           <div className="space-y-6">
-            {/* Información Personal */}
             <div className="border-b pb-4">
               <h3 className="text-lg font-semibold text-gray-900 mb-3">
                 Información Personal
@@ -424,14 +428,12 @@ export default function DocentesPage() {
                 <div className="col-span-2">
                   <p className="text-sm text-gray-500">Nombre Completo</p>
                   <p className="font-medium">
-                    {viewingItem.nombres} {viewingItem.apellido_paterno}{" "}
-                    {viewingItem.apellido_materno}
+                    {`${viewingItem.nombres} ${viewingItem.apellido_paterno} ${viewingItem.apellido_materno}`}
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Información de Contacto */}
             <div className="border-b pb-4">
               <h3 className="text-lg font-semibold text-gray-900 mb-3">
                 Información de Contacto
@@ -458,7 +460,6 @@ export default function DocentesPage() {
               </div>
             </div>
 
-            {/* Información Profesional */}
             <div className="border-b pb-4">
               <h3 className="text-lg font-semibold text-gray-900 mb-3">
                 Información Profesional

@@ -1,13 +1,21 @@
-'use client';
+"use client";
 
-import { REFRESH_TOKEN_KEY, TOKEN_KEY, USER_KEY } from '@/src/config/constants';
-import { AuthContextType, LoginCredentials, User } from '@/src/types';
-import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { authService } from '../services/auth.service';
+import { REFRESH_TOKEN_KEY, TOKEN_KEY, USER_KEY } from "@/src/config/constants";
+import { AuthContextType, LoginCredentials, User } from "@/src/types";
+import React, {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { authService } from "../services/auth.service";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +39,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setUser(JSON.parse(storedUser));
         }
       } catch (err) {
-        console.error('Error initializing auth:', err);
+        console.error("Error initializing auth:", err);
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(USER_KEY);
       } finally {
@@ -50,7 +58,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const response = await authService.login(credentials);
 
       if (!response.success || !response.data) {
-        throw new Error(response.message || 'Error en el inicio de sesión');
+        throw new Error(response.message || "Error en el inicio de sesión");
       }
 
       const { user: userData, token, refreshToken } = response.data;
@@ -62,7 +70,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       setUser(userData);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+      const errorMessage =
+        err instanceof Error ? err.message : "Error desconocido";
       setError(errorMessage);
       throw err;
     } finally {
@@ -70,11 +79,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const logout = () => {
-    authService.logout();
-    localStorage.removeItem(USER_KEY);
-    setUser(null);
-    setError(null);
+  const logout = async () => {
+    try {
+      await authService.logout();
+    } finally {
+      localStorage.removeItem(USER_KEY);
+      setUser(null);
+      setError(null);
+    }
   };
 
   const value: AuthContextType = {
@@ -92,7 +104,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth debe ser usado dentro de AuthProvider');
+    throw new Error("useAuth debe ser usado dentro de AuthProvider");
   }
   return context;
 };

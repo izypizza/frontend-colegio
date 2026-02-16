@@ -82,8 +82,9 @@ export default function EstudiantesPage() {
         setEstudiantes(estudiantesData.data);
         pagination.updatePagination({
           currentPage: estudiantesData.current_page,
-          totalPages: estudiantesData.last_page || 1,
-          totalItems: estudiantesData.total || 0,
+          lastPage: estudiantesData.last_page || 1,
+          total: estudiantesData.total || 0,
+          perPage: estudiantesData.per_page,
         });
       } else {
         const estudiantesArray = Array.isArray(estudiantesData)
@@ -211,6 +212,13 @@ export default function EstudiantesPage() {
     },
   ];
 
+  const hasFilters = searchTerm.trim() !== "" || filterSeccion !== "";
+  const effectiveTotal = hasFilters
+    ? estudiantesFiltradosCompletos.length
+    : pagination.totalItems || estudiantes.length;
+  const effectiveLastPage = hasFilters ? 1 : pagination.totalPages;
+  const effectiveCurrentPage = hasFilters ? 1 : pagination.currentPage;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -255,10 +263,6 @@ export default function EstudiantesPage() {
             ))}
           </select>
         </div>
-        <div className="text-sm text-gray-600">
-          Mostrando {estudiantesFiltradosCompletos.length} de{" "}
-          {estudiantes.length} estudiantes
-        </div>
       </Card>
 
       <Card>
@@ -272,11 +276,11 @@ export default function EstudiantesPage() {
         />
 
         {/* Paginación */}
-        {pagination.totalItems > 0 && (
+        {effectiveTotal > 0 && (
           <Pagination
-            currentPage={pagination.currentPage}
-            lastPage={pagination.totalPages}
-            total={pagination.totalItems}
+            currentPage={effectiveCurrentPage}
+            lastPage={effectiveLastPage}
+            total={effectiveTotal}
             perPage={pagination.perPage}
             onPageChange={(page) => {
               pagination.goToPage(page);

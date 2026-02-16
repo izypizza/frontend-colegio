@@ -66,6 +66,9 @@ export default function AsistenciasPage() {
   const [filterDia, setFilterDia] = useState("");
   const [filterAnio, setFilterAnio] = useState(currentYear.toString());
 
+  const totalRegistros =
+    paginationData.total > 0 ? paginationData.total : asistencias.length;
+
   const handleExportExcel = () => {
     try {
       if (asistenciasFiltradas.length === 0) {
@@ -130,18 +133,47 @@ export default function AsistenciasPage() {
       handleError(err, "Error al exportar el archivo");
     }
   };
+  const loadDocenteData = async () => {
+    try {
+      setLoading(true);
+      const [asistenciasData, estudiantesData, asignacionesData] =
+        await Promise.all([
+          docentePortalService.misAsistencias(),
+          docentePortalService.misEstudiantes(),
+          docentePortalService.misAsignaciones(),
+        ]);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+      setAsistencias(
+        Array.isArray(asistenciasData.asistencias)
+          ? asistenciasData.asistencias
+          : [],
+      );
+      setEstudiantes(
+        Array.isArray(estudiantesData.estudiantes)
+          ? estudiantesData.estudiantes
+          : [],
+      );
 
-  useEffect(() => {
-    if (user?.role === "admin" || user?.role === "auxiliar") {
-      fetchDataPaginated();
+      const materiasMap = new Map();
+      asignacionesData.asignaciones?.forEach((a: any) => {
+        if (a.materia && !materiasMap.has(a.materia.id)) {
+          materiasMap.set(a.materia.id, a.materia);
+        }
+      });
+      setMaterias(Array.from(materiasMap.values()));
+
+      setPaginationData({
+        total: asistenciasData.asistencias?.length || 0,
+        lastPage: 1,
+      });
+    } catch (err: any) {
+      handleError(err, "Error al cargar los datos del docente");
+    } finally {
+      setLoading(false);
     }
-  }, [currentPage, perPage, user]);
+  };
 
-  const fetchDataPaginated = async () => {
+  const loadAdminData = async () => {
     try {
       setLoading(true);
       const [asistenciasData, estudiantesData, materiasData] =
@@ -151,7 +183,6 @@ export default function AsistenciasPage() {
           materiaService.getAll({ all: true }),
         ]);
 
-      // Manejar respuesta paginada
       if (
         asistenciasData &&
         typeof asistenciasData === "object" &&
@@ -166,6 +197,10 @@ export default function AsistenciasPage() {
       } else {
         const asistenciasArray = asistenciasData?.data || asistenciasData || [];
         setAsistencias(asistenciasArray);
+        setPaginationData({
+          total: Array.isArray(asistenciasArray) ? asistenciasArray.length : 0,
+          lastPage: 1,
+        });
       }
 
       setEstudiantes(
@@ -183,99 +218,33 @@ export default function AsistenciasPage() {
     }
   };
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-
-      // Verificar que el usuario esté autenticado
-      if (!user) {
-        setError(
-          "Usuario no autenticado. Por favor, inicia sesión nuevamente.",
-        );
-        setLoading(false);
-        return;
-      }
-
-      // Verificar que el usuario tenga un rol válido para esta sección
-      const rolesPermitidos = ["admin", "auxiliar", "docente"];
-      if (!rolesPermitidos.includes(user.role)) {
-        setError(
-          `No tienes permisos para acceder a esta sección. Tu rol actual es: ${user.role}`,
-        );
-        setLoading(false);
-        return;
-      }
-
-      // Si es docente, usar los endpoints del portal de docente
-      if (user.role === "docente") {
-        const [asistenciasData, estudiantesData, asignacionesData] =
-          await Promise.all([
-            docentePortalService.misAsistencias(),
-            docentePortalService.misEstudiantes(),
-            docentePortalService.misAsignaciones(),
-          ]);
-
-        setAsistencias(
-          Array.isArray(asistenciasData.asistencias)
-            ? asistenciasData.asistencias
-            : [],
-        );
-        setEstudiantes(
-          Array.isArray(estudiantesData.estudiantes)
-            ? estudiantesData.estudiantes
-            : [],
-        );
-
-        // Extraer materias únicas de las asignaciones usando Map
-        const materiasMap = new Map();
-        asignacionesData.asignaciones?.forEach((a: any) => {
-          if (a.materia && !materiasMap.has(a.materia.id)) {
-            materiasMap.set(a.materia.id, a.materia);
-          }
-        });
-        const materiasUnicas = Array.from(materiasMap.values());
-        setMaterias(materiasUnicas);
-      } else if (user.role === "admin" || user.role === "auxiliar") {
-        // Admin/Auxiliar usan endpoints generales
-        const [asistenciasData, estudiantesData, materiasData] =
-          await Promise.all([
-            asistenciaService.getAll(),
-            estudianteService.getAll(),
-            materiaService.getAll(),
-          ]);
-
-        // Manejar respuesta paginada o sin paginar
-        const asistenciasArray = asistenciasData?.data || asistenciasData || [];
-        const estudiantesArray = estudiantesData?.data || estudiantesData || [];
-        const materiasArray = materiasData?.data || materiasData || [];
-
-        setAsistencias(Array.isArray(asistenciasArray) ? asistenciasArray : []);
-        setEstudiantes(Array.isArray(estudiantesArray) ? estudiantesArray : []);
-        setMaterias(Array.isArray(materiasArray) ? materiasArray : []);
-      }
-    } catch (error: any) {
-      let errorMessage = "Error al cargar los datos";
-
-      if (error?.response?.status === 403) {
-        errorMessage = `No tienes permisos para acceder a este recurso. Rol actual: ${
-          user?.role || "desconocido"
-        }`;
-        if (error?.response?.data?.required_roles) {
-          errorMessage += `. Roles requeridos: ${error.response.data.required_roles.join(
-            ", ",
-          )}`;
-        }
-      } else if (error?.response?.status === 401) {
-        errorMessage = "Sesión expirada. Por favor, inicia sesión nuevamente.";
-      } else if (error?.message) {
-        errorMessage = error.message;
-      }
-
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
+  const refreshData = async () => {
+    if (!user) return;
+    if (user.role === "docente") {
+      await loadDocenteData();
+    } else {
+      await loadAdminData();
     }
   };
+
+  useEffect(() => {
+    if (!user) return;
+
+    const rolesPermitidos = ["admin", "auxiliar", "docente"];
+    if (!rolesPermitidos.includes(user.role)) {
+      setError(
+        `No tienes permisos para acceder a esta sección. Tu rol actual es: ${user.role}`,
+      );
+      setLoading(false);
+      return;
+    }
+
+    if (user.role === "docente") {
+      loadDocenteData();
+    } else {
+      loadAdminData();
+    }
+  }, [user, currentPage, perPage]);
 
   const handleCreate = () => {
     setEditingItem(null);
@@ -308,7 +277,7 @@ export default function AsistenciasPage() {
     try {
       await asistenciaService.delete(item.id);
       setSuccess("Asistencia eliminada correctamente");
-      fetchData();
+      refreshData();
     } catch (err) {
       handleError(err, "Error al eliminar la asistencia");
     }
@@ -354,7 +323,7 @@ export default function AsistenciasPage() {
         observaciones: "",
       });
       setEditingItem(null);
-      fetchData();
+      refreshData();
     } catch (err: any) {
       handleError(err, "Error al guardar la asistencia");
     }

@@ -57,11 +57,21 @@ export default function SeccionesPage() {
     try {
       setLoading(true);
       const [seccionesData, gradosData] = await Promise.all([
-        seccionService.getAll({ all: true }),
+        seccionService.getAll({ all: true, per_page: 500, page: 1 }),
         gradoService.getAll({ all: true }),
       ]);
 
-      setSecciones(Array.isArray(seccionesData) ? seccionesData : []);
+      if (
+        seccionesData &&
+        typeof seccionesData === "object" &&
+        "data" in seccionesData
+      ) {
+        setSecciones(
+          Array.isArray(seccionesData.data) ? seccionesData.data : [],
+        );
+      } else {
+        setSecciones(Array.isArray(seccionesData) ? seccionesData : []);
+      }
       setGrados(Array.isArray(gradosData) ? gradosData : []);
     } catch (err) {
       handleError(err, "Error al cargar los datos");
