@@ -2,11 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Button, Card, Input, Modal, Alert } from "@/src/components/ui";
-import {
-  seccionService,
-  gradoService,
-  estudianteService,
-} from "@/src/lib/services";
+import { seccionService, gradoService } from "@/src/lib/services";
 import { Seccion, Grado, Estudiante } from "@/src/types/models";
 import { useAuth } from "@/src/features/auth/hooks/useAuth";
 import { useErrorHandler } from "@/src/hooks/useErrorHandler";
@@ -139,11 +135,8 @@ export default function SeccionesPage() {
     try {
       setSelectedSeccion(seccion);
       setShowEstudiantes(true);
-      const estudiantes = await estudianteService.getAll();
-      const estudiantesFiltrados = estudiantes.filter(
-        (e: Estudiante) => e.seccion_id === seccion.id,
-      );
-      setEstudiantesSeccion(estudiantesFiltrados);
+      const seccionData = await seccionService.getById(seccion.id);
+      setEstudiantesSeccion((seccionData as any).estudiantes || []);
     } catch (err) {
       handleError(err, "Error al cargar estudiantes");
     }

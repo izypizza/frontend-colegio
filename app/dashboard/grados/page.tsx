@@ -69,7 +69,7 @@ export default function GradosYSeccionesPage() {
       const [gradosData, seccionesData, estudiantesData] = await Promise.all([
         gradoService.getAll({ all: true }),
         seccionService.getAll({ all: true }),
-        estudianteService.getAll(),
+        estudianteService.getAll({ all: true }),
       ]);
 
       setGrados(Array.isArray(gradosData) ? gradosData : []);
