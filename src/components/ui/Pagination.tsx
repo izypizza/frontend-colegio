@@ -80,11 +80,11 @@ export const Pagination: React.FC<PaginationProps> = ({
               onChange={(e) => onPerPageChange(Number(e.target.value))}
               className="rounded-md border-gray-300 text-sm focus:border-blue-500 focus:ring-blue-500"
             >
+              {/* Backend valida per_page entre 10-100 */}
               <option value={10}>10 por página</option>
               <option value={25}>25 por página</option>
               <option value={50}>50 por página</option>
               <option value={100}>100 por página</option>
-              <option value={200}>200 por página</option>
             </select>
           )}
         </div>

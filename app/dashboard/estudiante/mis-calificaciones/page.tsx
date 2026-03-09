@@ -76,13 +76,14 @@ export default function MisCalificacionesPage() {
 
   useEffect(() => {
     fetchPeriodos();
+    fetchTodasLasCalificaciones(); // Cargar todas al inicio para gráficos
   }, []);
 
   useEffect(() => {
-    if (selectedPeriodo) {
-      fetchCalificaciones(pagination.current_page);
+    if (selectedPeriodo && allData.length > 0) {
+      filtrarYCalcularPorPeriodo();
     }
-  }, [selectedPeriodo, pagination.current_page]);
+  }, [selectedPeriodo, allData]);
 
   const handlePageChange = (page: number) => {
     setPagination((prev) => ({ ...prev, current_page: page }));
@@ -106,59 +107,56 @@ export default function MisCalificacionesPage() {
     }
   };
 
-  const fetchCalificaciones = async (page = 1) => {
+  const fetchTodasLasCalificaciones = async () => {
     try {
       setLoading(true);
       const [calificacionesResponse, perfilResponse] = await Promise.all([
         estudiantePortalService.misCalificaciones({
-          page,
-          per_page: pagination.per_page,
+          per_page: 1000, // Obtener todas las calificaciones
         }),
         estudiantePortalService.miPerfil(),
       ]);
 
-      const allCalificaciones = calificacionesResponse.calificaciones || [];
-      const paginationData = calificacionesResponse.pagination;
-      const promedioData = calificacionesResponse.promedio || 0;
+      const todasCalificaciones = calificacionesResponse.calificaciones || [];
+      setAllData(todasCalificaciones);
 
-      if (paginationData) {
-        setPagination({
-          current_page: paginationData.current_page,
-          last_page: paginationData.last_page,
-          per_page: paginationData.per_page,
-          total: paginationData.total,
-        });
-      }
-
-      setAllData(allCalificaciones);
-
-      // Obtener nivel del estudiante (primaria/secundaria)
+      // Obtener nivel del estudiante
       const estudianteData = perfilResponse.estudiante || perfilResponse;
       const nivel = estudianteData?.seccion?.grado?.nivel || "secundaria";
       setNivelEstudiante(nivel);
-
-      // Filtrar por periodo seleccionado
-      const calificacionesFiltradas = selectedPeriodo
-        ? allCalificaciones.filter(
-            (c: Calificacion) => c.periodo.id === selectedPeriodo,
-          )
-        : allCalificaciones;
-
-      // Calcular promedio
-      const promedio =
-        calificacionesFiltradas.length > 0
-          ? calificacionesFiltradas.reduce(
-              (sum: number, c: Calificacion) => sum + c.nota,
-              0,
-            ) / calificacionesFiltradas.length
-          : promedioData;
-
-      setData({ calificaciones: calificacionesFiltradas, promedio });
     } catch (error) {
       console.error("Error al cargar calificaciones:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const filtrarYCalcularPorPeriodo = () => {
+    if (!allData || allData.length === 0) return;
+
+    // Filtrar por periodo seleccionado
+    const calificacionesFiltradas = selectedPeriodo
+      ? allData.filter((c: Calificacion) => c.periodo.id === selectedPeriodo)
+      : allData;
+
+    // Calcular promedio del periodo
+    const promedio =
+      calificacionesFiltradas.length > 0
+        ? calificacionesFiltradas.reduce(
+            (sum: number, c: Calificacion) => sum + Number(c.nota || 0),
+            0,
+          ) / calificacionesFiltradas.length
+        : 0;
+
+    setData({
+      calificaciones: calificacionesFiltradas,
+      promedio: Number(promedio.toFixed(2)),
+    });
+  };
+
+  const fetchCalificaciones = async (page = 1) => {
+    // Esta función ya no se usa, la dejo por compatibilidad
+    return;
   };
 
   const getNotaColor = (nota: number) => {
@@ -197,7 +195,7 @@ export default function MisCalificacionesPage() {
         c.materia.nombre.length > 20
           ? c.materia.nombre.substring(0, 20) + "..."
           : c.materia.nombre,
-      nota: c.nota,
+      nota: Number(c.nota || 0),
       nombreCompleto: c.materia.nombre,
     }));
 
@@ -207,18 +205,18 @@ export default function MisCalificacionesPage() {
         c.materia.nombre.length > 15
           ? c.materia.nombre.substring(0, 15) + "..."
           : c.materia.nombre,
-      nota: c.nota,
-      promedio: data.promedio,
+      nota: Number(c.nota || 0),
+      promedio: Number(data.promedio || 0),
     }));
 
     // Datos para gráfico de dona (distribución de notas)
     const distribucion = {
-      excelente: data.calificaciones.filter((c) => c.nota >= 16).length,
-      bueno: data.calificaciones.filter((c) => c.nota >= 13 && c.nota < 16)
+      excelente: data.calificaciones.filter((c) => Number(c.nota || 0) >= 16).length,
+      bueno: data.calificaciones.filter((c) => Number(c.nota || 0) >= 13 && Number(c.nota || 0) < 16)
         .length,
-      aprobado: data.calificaciones.filter((c) => c.nota >= 11 && c.nota < 13)
+      aprobado: data.calificaciones.filter((c) => Number(c.nota || 0) >= 11 && Number(c.nota || 0) < 13)
         .length,
-      reprobado: data.calificaciones.filter((c) => c.nota < 11).length,
+      reprobado: data.calificaciones.filter((c) => Number(c.nota || 0) < 11).length,
     };
 
     const pieData = [
@@ -247,7 +245,7 @@ export default function MisCalificacionesPage() {
       );
       const promedioPeriodo =
         calificacionesPeriodo.length > 0
-          ? calificacionesPeriodo.reduce((sum, c) => sum + c.nota, 0) /
+          ? calificacionesPeriodo.reduce((sum, c) => sum + Number(c.nota || 0), 0) /
             calificacionesPeriodo.length
           : 0;
       return {
@@ -302,11 +300,6 @@ export default function MisCalificacionesPage() {
             Promedio General
           </h3>
           <div className="flex items-center justify-center gap-4">
-            {nivelEstudiante === "primaria" && data?.promedio && (
-              <span className="text-6xl" title="¿Cómo voy?">
-                {getEmojiNota(data.promedio)}
-              </span>
-            )}
             <div
               className={`text-5xl font-bold ${getNotaColor(
                 data?.promedio || 0,
@@ -503,11 +496,6 @@ export default function MisCalificacionesPage() {
                   <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Nota
                   </th>
-                  {nivelEstudiante === "primaria" && (
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      ¿Cómo voy?
-                    </th>
-                  )}
                   <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Estado
                   </th>
@@ -535,16 +523,6 @@ export default function MisCalificacionesPage() {
                           : Number(calificacion.nota || 0).toFixed(2)}
                       </span>
                     </td>
-                    {nivelEstudiante === "primaria" && (
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <span
-                          className="text-4xl"
-                          title={`Nota: ${Number(calificacion.nota || 0).toFixed(2)}`}
-                        >
-                          {getEmojiNota(Number(calificacion.nota || 0))}
-                        </span>
-                      </td>
-                    )}
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <span
                         className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${

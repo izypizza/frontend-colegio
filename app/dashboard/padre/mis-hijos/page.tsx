@@ -31,7 +31,7 @@ export default function MisHijosPage() {
   const fetchHijos = async () => {
     try {
       setLoading(true);
-      const response = await padrePortalService.misHijos();
+      const response = await padrePortalService.misHijos() as any;
       setHijos(response.hijos || []);
     } catch (error) {
       console.error("Error al cargar hijos:", error);

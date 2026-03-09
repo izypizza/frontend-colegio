@@ -11,6 +11,10 @@ import { Pagination } from "@/src/components/ui/Pagination";
 import { useErrorHandler } from "@/src/hooks/useErrorHandler";
 import { useModalState } from "@/src/hooks/useModalState";
 import { usePagination } from "@/src/hooks/usePagination";
+import { usePermissions } from "@/src/hooks/usePermissions";
+import { PermissionGuard } from "@/src/components/auth";
+import { UserRole } from "@/src/types";
+import { useAuth } from "@/src/features/auth";
 
 interface Prestamo {
   id: number;
@@ -39,6 +43,8 @@ interface Libro {
 }
 
 export default function PrestamosPage() {
+  const { user } = useAuth();
+  const permissions = usePermissions('prestamos');
   const { error, success, setError, setSuccess, handleError } =
     useErrorHandler();
   const {
@@ -65,30 +71,37 @@ export default function PrestamosPage() {
   });
 
   useEffect(() => {
+    // Solo cargar datos si el usuario tiene permisos
+    if (!user || !["admin", "bibliotecario"].includes(user.role)) {
+      return;
+    }
     loadData();
-  }, [currentPage, perPage]);
+  }, [currentPage, perPage, user]);
 
   const loadData = async () => {
     try {
       setLoading(true);
       const [prestamosData, librosData] = await Promise.all([
-        prestamoLibroService.getAll({ page: currentPage, per_page: perPage }),
+        prestamoLibroService.getAll(),
         libroService.getAll({ all: true }),
-      ]);
+      ]) as any[];
 
       if (
         prestamosData &&
         typeof prestamosData === "object" &&
         "data" in prestamosData &&
-        "current_page" in prestamosData
+        "current_page" in prestamosData &&
+        "total" in prestamosData &&
+        "last_page" in prestamosData
       ) {
-        setPrestamos(prestamosData.data);
+        setPrestamos(prestamosData.data as Prestamo[]);
         setPaginationData({
-          total: prestamosData.total || 0,
-          lastPage: prestamosData.last_page || 1,
+          total: prestamosData.total as number || 0,
+          lastPage: prestamosData.last_page as number || 1,
         });
       } else {
-        setPrestamos(Array.isArray(prestamosData) ? prestamosData : []);
+        const prestamosArray = Array.isArray(prestamosData) ? prestamosData : prestamosData?.data || [];
+        setPrestamos(prestamosArray);
       }
 
       const disponibles = Array.isArray(librosData)
@@ -165,7 +178,7 @@ export default function PrestamosPage() {
       key: "user",
       label: "Usuario",
       render: (value: unknown, prestamo: Prestamo) =>
-        prestamo?.usuario?.name || "-",
+        (prestamo as any)?.user?.name || "-",
     },
     {
       key: "fecha_prestamo",
@@ -184,7 +197,7 @@ export default function PrestamosPage() {
     {
       key: "estado",
       label: "Estado",
-      render: (prestamo: Prestamo) => {
+      render: (value: unknown, prestamo: Prestamo) => {
         const hoy = new Date();
         const fechaDevolucion = new Date(prestamo.fecha_devolucion);
         const atrasado = !prestamo.devuelto && hoy > fechaDevolucion;
@@ -204,22 +217,25 @@ export default function PrestamosPage() {
         );
       },
     },
+    {
+      key: "acciones",
+      label: "Acciones",
+      render: (value: unknown, prestamo: Prestamo) => {
+        if (!prestamo.devuelto) {
+          return (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => handleDevolver(prestamo.id)}
+            >
+              Devolver
+            </Button>
+          );
+        }
+        return null;
+      },
+    },
   ];
-
-  const customActions = (prestamo: Prestamo) => {
-    if (!prestamo.devuelto) {
-      return (
-        <Button
-          variant="primary"
-          size="small"
-          onClick={() => handleDevolver(prestamo.id)}
-        >
-          Devolver
-        </Button>
-      );
-    }
-    return null;
-  };
 
   if (loading) {
     return (
@@ -230,12 +246,25 @@ export default function PrestamosPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <PermissionGuard
+      requiredRoles={[UserRole.ADMIN, UserRole.BIBLIOTECARIO]}
+      fallback={
+        <div className="p-6">
+          <Alert
+            type="error"
+            message="No tiene permisos para acceder a esta página."
+          />
+        </div>
+      }
+    >
+      <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-800">
           Gestión de Préstamos
         </h1>
-        <Button onClick={openModal}>+ Nuevo Préstamo</Button>
+        {permissions.canCreate && (
+          <Button onClick={openModal}>+ Nuevo Préstamo</Button>
+        )}
       </div>
 
       {error && (
@@ -291,9 +320,6 @@ export default function PrestamosPage() {
         <Table
           columns={columns}
           data={prestamos}
-          customActions={customActions}
-          hideEdit
-          hideDelete
         />
       </Card>
 
@@ -386,6 +412,7 @@ export default function PrestamosPage() {
           </div>
         </form>
       </Modal>
-    </div>
+      </div>
+    </PermissionGuard>
   );
 }

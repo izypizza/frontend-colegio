@@ -13,6 +13,10 @@ import { Pagination } from "@/src/components/ui/Pagination";
 import { useErrorHandler } from "@/src/hooks/useErrorHandler";
 import { useModalState } from "@/src/hooks/useModalState";
 import { usePagination } from "@/src/hooks/usePagination";
+import { usePermissions } from "@/src/hooks/usePermissions";
+import { PermissionGuard, NoPermission } from "@/src/components/auth/PermissionGuard";
+import { UserRole } from "@/src/types";
+import { isForbiddenError, getPermissionErrorInfo } from "@/src/lib/permissions";
 
 interface Libro {
   id: number;
@@ -38,6 +42,7 @@ interface Categoria {
 
 export default function LibrosPage() {
   const { user } = useAuth();
+  const permissions = usePermissions('biblioteca');
   const { error, success, setError, setSuccess, handleError } =
     useErrorHandler();
   const {
@@ -92,8 +97,12 @@ export default function LibrosPage() {
   const [filterDisponible, setFilterDisponible] = useState("");
 
   useEffect(() => {
+    // Solo cargar datos si el usuario tiene permisos
+    if (!user || !["admin", "bibliotecario"].includes(user.role)) {
+      return;
+    }
     loadData();
-  }, [currentPage, perPage]);
+  }, [currentPage, perPage, user]);
 
   const loadData = async () => {
     try {
@@ -311,37 +320,46 @@ export default function LibrosPage() {
     },
   ];
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-lg">Cargando...</div>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Biblioteca</h1>
-          <p className="text-gray-600 mt-1">
-            Gestión de libros y recursos digitales
-          </p>
+    <PermissionGuard 
+      requiredRoles={[UserRole.ADMIN, UserRole.BIBLIOTECARIO]}
+      fallback={
+        <NoPermission 
+          message="No tiene permisos para acceder a la biblioteca"
+          requiredRoles={['admin', 'bibliotecario']}
+          currentRole={user?.role}
+        />
+      }
+    >
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="text-lg">Cargando...</div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={openCategoriaModal}>
-            Categorías
-          </Button>
-          <Button
-            onClick={() => {
-              resetForm();
-              openModal();
-            }}
-          >
-            + Nuevo Libro
-          </Button>
-        </div>
-      </div>
+      ) : (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Biblioteca</h1>
+              <p className="text-gray-600 mt-1">
+                Gestión de libros y recursos digitales
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={openCategoriaModal}>
+                Categorías
+              </Button>
+              {permissions.canCreate && (
+                <Button
+                  onClick={() => {
+                    resetForm();
+                    openModal();
+                  }}
+                >
+                  + Nuevo Libro
+                </Button>
+              )}
+            </div>
+          </div>
 
       {/* Resumen de estadísticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -831,6 +849,8 @@ export default function LibrosPage() {
           </div>
         </form>
       </Modal>
-    </div>
+        </div>
+      )}
+    </PermissionGuard>
   );
 }

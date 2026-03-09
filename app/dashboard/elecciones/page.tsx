@@ -54,13 +54,22 @@ export default function EleccionesPage() {
 
   const handleVerEleccion = async (eleccion: Eleccion) => {
     try {
-      const [detalleEleccion, voteStatus] = await Promise.all([
-        eleccionService.getById(eleccion.id),
-        eleccionService.yaVote(eleccion.id),
-      ]);
-
+      const detalleEleccion = await eleccionService.getById(eleccion.id);
       setEleccionSeleccionada(detalleEleccion);
-      setYaVote(voteStatus?.ya_voto || false);
+
+      // Solo verificar voto si el usuario es estudiante
+      if (user?.role === "estudiante") {
+        try {
+          const voteStatus = await eleccionService.yaVote(eleccion.id);
+          setYaVote(voteStatus?.ya_voto || false);
+        } catch (err) {
+          // Si hay error al verificar voto, asumir que no ha votado
+          setYaVote(false);
+        }
+      } else {
+        // Si no es estudiante, no puede votar
+        setYaVote(false);
+      }
     } catch (err: any) {
       handleError(err, "Error al cargar la elección");
     }

@@ -74,7 +74,7 @@ export default function CalificacionesHijosPage() {
     try {
       const response = await periodoService.getAll();
       // Manejar diferentes estructuras de respuesta
-      const periodosData = response.data?.data || response.data || response;
+      const periodosData = Array.isArray(response) ? response : response?.data || [];
       setPeriodos(periodosData);
 
       if (periodosData.length > 0) {
@@ -88,7 +88,7 @@ export default function CalificacionesHijosPage() {
   const fetchCalificaciones = async () => {
     try {
       setLoading(true);
-      const response = await padrePortalService.calificacionesHijos();
+      const response = await padrePortalService.calificacionesHijos() as any;
       const hijosData = response.hijos || [];
 
       // Filtrar calificaciones por periodo seleccionado

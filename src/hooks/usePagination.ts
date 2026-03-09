@@ -14,10 +14,19 @@ interface PaginationInfo {
  * Reemplaza el código duplicado en 10+ páginas
  */
 export function usePagination(initialPerPage: number = 50) {
+  // Validar que initialPerPage esté en el rango permitido por el backend (10-100)
+  const validInitialPerPage = Math.min(Math.max(initialPerPage, 10), 100);
+  
   const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(initialPerPage);
+  const [perPage, setPerPageInternal] = useState(validInitialPerPage);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
+
+  // Función segura para establecer perPage con validación
+  const setPerPage = (value: number) => {
+    const validValue = Math.min(Math.max(value, 10), 100);
+    setPerPageInternal(validValue);
+  };
 
   const goToPage = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -47,7 +56,9 @@ export function usePagination(initialPerPage: number = 50) {
     setTotalPages(nextLastPage);
 
     if (pagination.perPage) {
-      setPerPage(pagination.perPage);
+      // Validar que perPage esté en el rango 10-100
+      const validPerPage = Math.min(Math.max(pagination.perPage, 10), 100);
+      setPerPageInternal(validPerPage);
     }
 
     if (pagination.currentPage) {

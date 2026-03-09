@@ -7,6 +7,9 @@ import { useEffect, useState } from "react";
 import { useErrorHandler } from "@/src/hooks/useErrorHandler";
 import { useModalState } from "@/src/hooks/useModalState";
 import { useFilteredData } from "@/src/hooks/useFilteredData";
+import { usePermissions } from "@/src/hooks/usePermissions";
+import { PermissionGuard } from "@/src/components/auth";
+import { UserRole } from "@/src/types";
 
 export default function PeriodosPage() {
   const [periodos, setPeriodos] = useState<PeriodoAcademico[]>([]);
@@ -20,7 +23,8 @@ export default function PeriodosPage() {
   const [filterAnio, setFilterAnio] = useState("");
 
   // Hooks personalizados
-  const { error, success, handleError, handleSuccess, setError } =
+  const permissions = usePermissions('periodos');
+  const { error, success, handleError, handleSuccess, setError, setSuccess } =
     useErrorHandler();
   const { isOpen, editingItem, openCreate, openEdit, close } =
     useModalState<PeriodoAcademico>();
@@ -40,7 +44,8 @@ export default function PeriodosPage() {
     try {
       setLoading(true);
       const data = await periodoAcademicoService.getAll();
-      setPeriodos(data);
+      const periodosArray = Array.isArray(data) ? data : data?.data || [];
+      setPeriodos(periodosArray);
     } catch (err) {
       handleError(err, "Error al cargar los periodos");
     } finally {
@@ -131,7 +136,18 @@ export default function PeriodosPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <PermissionGuard
+      requiredRoles={[UserRole.ADMIN, UserRole.AUXILIAR]}
+      fallback={
+        <div className="p-6">
+          <Alert
+            type="error"
+            message="No tiene permisos para acceder a esta página."
+          />
+        </div>
+      }
+    >
+      <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
@@ -139,9 +155,11 @@ export default function PeriodosPage() {
           </h1>
           <p className="text-gray-600 mt-2">Gestión de periodos académicos</p>
         </div>
-        <Button variant="primary" onClick={handleCreate}>
-          + Agregar Periodo
-        </Button>
+        {permissions.canCreate && (
+          <Button variant="primary" onClick={handleCreate}>
+            + Agregar Periodo
+          </Button>
+        )}
       </div>
 
       {success && (
@@ -185,8 +203,8 @@ export default function PeriodosPage() {
           columns={columns}
           data={periodosFiltradosCompletos}
           loading={loading}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
+          onEdit={permissions.canEdit ? handleEdit : undefined}
+          onDelete={permissions.canDelete ? handleDelete : undefined}
         />
       </Card>
 
@@ -253,6 +271,7 @@ export default function PeriodosPage() {
           </div>
         </form>
       </Modal>
-    </div>
+      </div>
+    </PermissionGuard>
   );
 }

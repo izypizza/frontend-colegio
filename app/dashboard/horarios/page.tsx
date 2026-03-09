@@ -23,9 +23,13 @@ import { useAuth } from "@/src/features/auth";
 import { useErrorHandler } from "@/src/hooks/useErrorHandler";
 import { useModalState } from "@/src/hooks/useModalState";
 import { usePagination } from "@/src/hooks/usePagination";
+import { usePermissions } from "@/src/hooks/usePermissions";
+import { PermissionGuard } from "@/src/components/auth";
+import { UserRole } from "@/src/types";
 
 export default function HorariosPage() {
   const { user } = useAuth();
+  const permissions = usePermissions('horarios');
   const [horarios, setHorarios] = useState<Horario[]>([]);
   const [secciones, setSecciones] = useState<Seccion[]>([]);
   const [materias, setMaterias] = useState<Materia[]>([]);
@@ -43,7 +47,7 @@ export default function HorariosPage() {
   });
 
   // Hooks personalizados
-  const { error, success, handleError, handleSuccess, setError } =
+  const { error, success, handleError, handleSuccess, setError, setSuccess } =
     useErrorHandler();
   const { isOpen, editingItem, openCreate, openEdit, close } =
     useModalState<Horario>();
@@ -100,7 +104,7 @@ export default function HorariosPage() {
           totalItems: horariosData.total || 0,
         });
       } else {
-        const horariosArray = horariosData?.data || horariosData || [];
+        const horariosArray = Array.isArray(horariosData) ? horariosData : (horariosData as any)?.data || [];
         setHorarios(horariosArray);
       }
 
@@ -125,7 +129,7 @@ export default function HorariosPage() {
 
       if (user?.role === "docente") {
         // Docentes obtienen horarios de sus secciones
-        const asignacionesData = await docentePortalService.misAsignaciones();
+        const asignacionesData = await docentePortalService.misAsignaciones() as any;
         const asignaciones = asignacionesData.asignaciones || [];
 
         // Extraer secciones y materias únicas
@@ -148,45 +152,45 @@ export default function HorariosPage() {
         const horariosData = await horarioService.getAll();
         const horariosArray = Array.isArray(horariosData)
           ? horariosData
-          : horariosData?.data || [];
+          : (horariosData as any)?.data || [];
         const horariosFiltrados = horariosArray.filter((h: Horario) =>
           seccionIds.includes(h.seccion_id),
         );
         setHorarios(horariosFiltrados);
       } else if (user?.role === "estudiante") {
         // Estudiantes ven el horario de su sección
-        const perfilData = await estudiantePortalService.miPerfil();
+        const perfilData = await estudiantePortalService.miPerfil() as any;
         const estudiante = perfilData.estudiante || perfilData;
 
         if (estudiante?.seccion_id) {
           const [horariosData, materiasData] = await Promise.all([
             horarioService.getAll(),
             materiaService.getAll(),
-          ]);
+          ]) as any[];
 
           // Manejar respuesta paginada o sin paginar
-          const horariosArray = horariosData?.data || horariosData || [];
+          const horariosArray = Array.isArray(horariosData) ? horariosData : horariosData?.data || [];
 
           const horariosFiltrados = horariosArray.filter(
             (h: Horario) => h.seccion_id === estudiante.seccion_id,
           );
           setHorarios(horariosFiltrados);
           setSecciones([estudiante.seccion]);
-          setMaterias(materiasData || []);
+          setMaterias(Array.isArray(materiasData) ? materiasData : materiasData?.data || []);
         }
       } else if (user?.role === "padre") {
         // Padres ven horarios de sus hijos
-        const hijosData = await padrePortalService.misHijos();
+        const hijosData = await padrePortalService.misHijos() as any;
         const hijos = hijosData.hijos || [];
 
         if (hijos.length > 0) {
           const [horariosData, materiasData] = await Promise.all([
             horarioService.getAll(),
             materiaService.getAll(),
-          ]);
+          ]) as any[];
 
           // Manejar respuesta paginada o sin paginar
-          const horariosArray = horariosData?.data || horariosData || [];
+          const horariosArray = Array.isArray(horariosData) ? horariosData : horariosData?.data || [];
 
           const seccionIds = hijos.map((h: any) => h.seccion_id);
           const horariosFiltrados = horariosArray.filter((h: Horario) =>
@@ -194,7 +198,7 @@ export default function HorariosPage() {
           );
           setHorarios(horariosFiltrados);
           setSecciones(hijos.map((h: any) => h.seccion).filter(Boolean));
-          setMaterias(materiasData || []);
+          setMaterias(Array.isArray(materiasData) ? materiasData : materiasData?.data || []);
         }
       } else {
         // Admin/Auxiliar usan endpoints generales con paginación
@@ -220,7 +224,7 @@ export default function HorariosPage() {
             totalItems: horariosData.total || 0,
           });
         } else {
-          const horariosArray = horariosData?.data || horariosData || [];
+          const horariosArray = Array.isArray(horariosData) ? horariosData : (horariosData as any)?.data || [];
           setHorarios(horariosArray);
         }
 
@@ -354,13 +358,24 @@ export default function HorariosPage() {
   ];
 
   return (
-    <div className="space-y-6 p-6">
+    <PermissionGuard
+      requiredRoles={[UserRole.ADMIN, UserRole.AUXILIAR, UserRole.DOCENTE, UserRole.ESTUDIANTE, UserRole.PADRE]}
+      fallback={
+        <div className="p-6">
+          <Alert
+            type="error"
+            message="No tiene permisos para acceder a esta página."
+          />
+        </div>
+      }
+    >
+      <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Horarios</h1>
           <p className="text-gray-600 mt-2">Gestión de horarios de clases</p>
         </div>
-        {(user?.role === "admin" || user?.role === "auxiliar") && (
+        {permissions.canCreate && (
           <Button variant="primary" onClick={handleCreate}>
             + Nuevo Horario
           </Button>
@@ -511,16 +526,8 @@ export default function HorariosPage() {
               columns={columns}
               data={horariosFiltrados}
               loading={loading}
-              onEdit={
-                user?.role === "admin" || user?.role === "auxiliar"
-                  ? handleEdit
-                  : undefined
-              }
-              onDelete={
-                user?.role === "admin" || user?.role === "auxiliar"
-                  ? handleDelete
-                  : undefined
-              }
+              onEdit={permissions.canEdit ? handleEdit : undefined}
+              onDelete={permissions.canDelete ? handleDelete : undefined}
             />
           </Card>
 
@@ -645,6 +652,7 @@ export default function HorariosPage() {
           </div>
         </form>
       </Modal>
-    </div>
+      </div>
+    </PermissionGuard>
   );
 }

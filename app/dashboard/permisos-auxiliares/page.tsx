@@ -3,6 +3,9 @@
 import { Alert, Button, Card, Input, Modal, Table } from "@/src/components/ui";
 import { apiClient } from "@/src/lib/api-client";
 import { useEffect, useState } from "react";
+import { usePermissions } from "@/src/hooks/usePermissions";
+import { PermissionGuard } from "@/src/components/auth";
+import { UserRole } from "@/src/types";
 
 interface User {
   id: number;
@@ -25,6 +28,7 @@ interface AuxiliarPermiso {
 }
 
 export default function PermisosAuxiliaresPage() {
+  const permissions = usePermissions('permisos_auxiliares');
   const [permisos, setPermisos] = useState<AuxiliarPermiso[]>([]);
   const [auxiliares, setAuxiliares] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -202,7 +206,18 @@ export default function PermisosAuxiliaresPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <PermissionGuard
+      requiredRoles={[UserRole.ADMIN]}
+      fallback={
+        <div className="p-6">
+          <Alert
+            type="error"
+            message="Solo administradores pueden gestionar permisos especiales."
+          />
+        </div>
+      }
+    >
+      <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
@@ -212,9 +227,11 @@ export default function PermisosAuxiliaresPage() {
             Gestión de permisos temporales para auxiliares
           </p>
         </div>
-        <Button variant="primary" onClick={handleCreate}>
-          + Configurar Permiso
-        </Button>
+        {permissions.canCreate && (
+          <Button variant="primary" onClick={handleCreate}>
+            + Configurar Permiso
+          </Button>
+        )}
       </div>
 
       {error && (
@@ -233,8 +250,8 @@ export default function PermisosAuxiliaresPage() {
           columns={columns}
           data={permisos}
           loading={loading}
-          onEdit={handleEdit}
-          onDelete={(item: AuxiliarPermiso) => handleDesactivar(item.user_id)}
+          onEdit={permissions.canEdit ? handleEdit : undefined}
+          onDelete={permissions.canDelete ? (item: AuxiliarPermiso) => handleDesactivar(item.user_id) : undefined}
         />
       </Card>
 
@@ -361,6 +378,7 @@ export default function PermisosAuxiliaresPage() {
           </div>
         </form>
       </Modal>
-    </div>
+      </div>
+    </PermissionGuard>
   );
 }
