@@ -11,12 +11,16 @@ import { Grado, Seccion, Estudiante } from "@/src/types/models";
 import { useAuth } from "@/src/features/auth/hooks/useAuth";
 import { useErrorHandler } from "@/src/hooks/useErrorHandler";
 import { useModalState } from "@/src/hooks/useModalState";
+import { usePermissions } from "@/src/hooks/usePermissions";
+import { PermissionGuard } from "@/src/components/auth";
+import { UserRole } from "@/src/types";
 
 type ViewMode = "grados" | "secciones";
 
 export default function GradosYSeccionesPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
+  const permissions = usePermissions('grados');
   const { error, success, setError, setSuccess, handleError } =
     useErrorHandler();
   const {
@@ -270,7 +274,18 @@ export default function GradosYSeccionesPage() {
     );
 
   return (
-    <div className="space-y-6">
+    <PermissionGuard
+      requiredRoles={[UserRole.ADMIN, UserRole.AUXILIAR]}
+      fallback={
+        <div className="p-6">
+          <Alert
+            type="error"
+            message="No tiene permisos para acceder a esta página."
+          />
+        </div>
+      }
+    >
+      <div className="space-y-6">
       {/* Header */}
       <div className="bg-gradient-to-r from-[#04ADBF] to-[#038a9a] rounded-xl p-6 text-white">
         <div className="flex items-center justify-between mb-4">
@@ -349,7 +364,7 @@ export default function GradosYSeccionesPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="max-w-md"
             />
-            {isAdmin && (
+            {permissions.canCreate && (
               <Button variant="primary" onClick={handleCreateGrado}>
                 + Nuevo Grado
               </Button>
@@ -442,45 +457,45 @@ export default function GradosYSeccionesPage() {
                         </svg>
                         Ver Secciones
                       </Button>
-                      {isAdmin && (
-                        <>
-                          <Button
-                            variant="outline"
-                            onClick={() => handleEditGrado(grado)}
+                      {permissions.canEdit && (
+                        <Button
+                          variant="outline"
+                          onClick={() => handleEditGrado(grado)}
+                        >
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
                           >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
-                          </Button>
-                          <Button
-                            variant="danger"
-                            onClick={() => handleDeleteGrado(grado)}
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
+                          </svg>
+                        </Button>
+                      )}
+                      {permissions.canDelete && (
+                        <Button
+                          variant="danger"
+                          onClick={() => handleDeleteGrado(grado)}
+                        >
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
                           >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                              />
-                            </svg>
-                          </Button>
-                        </>
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -501,7 +516,7 @@ export default function GradosYSeccionesPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="max-w-md"
             />
-            {isAdmin && (
+            {permissions.canCreate && (
               <Button
                 variant="primary"
                 onClick={() => handleCreateSeccion(selectedGrado.id)}
@@ -633,45 +648,45 @@ export default function GradosYSeccionesPage() {
                           </svg>
                           Ver Estudiantes
                         </Button>
-                        {isAdmin && (
-                          <>
-                            <Button
-                              variant="outline"
-                              onClick={() => handleEditSeccion(seccion)}
+                        {permissions.canEdit && (
+                          <Button
+                            variant="outline"
+                            onClick={() => handleEditSeccion(seccion)}
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
                             >
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                />
-                              </svg>
-                            </Button>
-                            <Button
-                              variant="danger"
-                              onClick={() => handleDeleteSeccion(seccion)}
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
+                          </Button>
+                        )}
+                        {permissions.canDelete && (
+                          <Button
+                            variant="danger"
+                            onClick={() => handleDeleteSeccion(seccion)}
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
                             >
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                />
-                              </svg>
-                            </Button>
-                          </>
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
+                          </Button>
                         )}
                       </div>
                     </div>
@@ -857,6 +872,7 @@ export default function GradosYSeccionesPage() {
           )}
         </div>
       </Modal>
-    </div>
+      </div>
+    </PermissionGuard>
   );
 }

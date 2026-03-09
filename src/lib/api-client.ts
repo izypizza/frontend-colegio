@@ -67,19 +67,18 @@ class ApiClient {
       if (response.status === HTTP_STATUS.FORBIDDEN) {
         const errorMessage =
           data?.message || "No tiene permisos para acceder a este recurso";
-        console.error("Error de permisos:", {
-          status: response.status,
-          message: errorMessage,
-          requiredRoles: data?.required_roles,
-          userRole: data?.user_role,
-          url: response.url,
-        });
-
+        
+        // No hacer console.error aquí, será manejado por el componente
         const error: any = new Error(errorMessage);
         error.response = {
           status: response.status,
-          data: data,
+          data: {
+            ...data,
+            requiredRoles: data?.required_roles,
+            userRole: data?.user_role,
+          },
         };
+        error.isForbidden = true;
         throw error;
       }
 

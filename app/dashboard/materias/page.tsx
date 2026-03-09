@@ -7,6 +7,9 @@ import { useEffect, useState } from "react";
 import { useErrorHandler } from "@/src/hooks/useErrorHandler";
 import { useModalState } from "@/src/hooks/useModalState";
 import { useFilteredData } from "@/src/hooks/useFilteredData";
+import { PermissionGuard } from "@/src/components/auth";
+import { UserRole } from "@/src/types";
+import { usePermissions } from "@/src/hooks/usePermissions";
 
 export default function MateriasPage() {
   const [materias, setMaterias] = useState<Materia[]>([]);
@@ -14,7 +17,8 @@ export default function MateriasPage() {
   const [formData, setFormData] = useState({ nombre: "" });
 
   // Hooks centralizados
-  const { error, success, handleError, handleSuccess, setError } =
+  const permissions = usePermissions('materias');
+  const { error, success, handleError, handleSuccess, setError, setSuccess } =
     useErrorHandler();
   const { isOpen, editingItem, openCreate, openEdit, close } =
     useModalState<Materia>();
@@ -32,7 +36,8 @@ export default function MateriasPage() {
     try {
       setLoading(true);
       const data = await materiaService.getAll();
-      setMaterias(data);
+      const materiasArray = Array.isArray(data) ? data : data?.data || [];
+      setMaterias(materiasArray);
     } catch (err) {
       handleError(err, "Error al cargar las materias");
     } finally {
@@ -86,7 +91,18 @@ export default function MateriasPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <PermissionGuard
+      requiredRoles={[UserRole.ADMIN, UserRole.AUXILIAR, UserRole.DOCENTE]}
+      fallback={
+        <div className="p-6">
+          <Alert
+            type="error"
+            message="No tiene permisos para acceder a esta página."
+          />
+        </div>
+      }
+    >
+      <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Materias</h1>
@@ -94,9 +110,11 @@ export default function MateriasPage() {
             Gestión de materias del currículo
           </p>
         </div>
-        <Button variant="primary" onClick={handleCreateClick}>
-          + Nueva Materia
-        </Button>
+        {permissions.canCreate && (
+          <Button variant="primary" onClick={handleCreateClick}>
+            + Nueva Materia
+          </Button>
+        )}
       </div>
 
       {success && (
@@ -126,8 +144,8 @@ export default function MateriasPage() {
           columns={columns}
           data={materiasFiltradas}
           loading={loading}
-          onEdit={handleEditClick}
-          onDelete={handleDelete}
+          onEdit={permissions.canEdit ? handleEditClick : undefined}
+          onDelete={permissions.canDelete ? handleDelete : undefined}
         />
       </Card>
 
@@ -168,6 +186,7 @@ export default function MateriasPage() {
           </div>
         </form>
       </Modal>
-    </div>
+      </div>
+    </PermissionGuard>
   );
 }

@@ -16,6 +16,9 @@ import { useErrorHandler } from "@/src/hooks/useErrorHandler";
 import { useModalState } from "@/src/hooks/useModalState";
 import { usePagination } from "@/src/hooks/usePagination";
 import { useFilteredData } from "@/src/hooks/useFilteredData";
+import { PermissionGuard } from "@/src/components/auth";
+import { UserRole } from "@/src/types";
+import { usePermissions } from "@/src/hooks/usePermissions";
 
 export default function EstudiantesPage() {
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
@@ -36,6 +39,7 @@ export default function EstudiantesPage() {
   const [filterSeccion, setFilterSeccion] = useState("");
 
   // Hooks personalizados
+  const permissions = usePermissions('estudiantes');
   const { error, success, handleError, handleSuccess, setError, setSuccess } =
     useErrorHandler();
   const { isOpen, editingItem, openCreate, openEdit, close } =
@@ -77,19 +81,20 @@ export default function EstudiantesPage() {
         estudiantesData &&
         typeof estudiantesData === "object" &&
         "data" in estudiantesData &&
-        "current_page" in estudiantesData
+        "current_page" in estudiantesData &&
+        "per_page" in estudiantesData
       ) {
         setEstudiantes(estudiantesData.data);
         pagination.updatePagination({
           currentPage: estudiantesData.current_page,
           lastPage: estudiantesData.last_page || 1,
           total: estudiantesData.total || 0,
-          perPage: estudiantesData.per_page,
+          perPage: estudiantesData.per_page as number,
         });
       } else {
         const estudiantesArray = Array.isArray(estudiantesData)
           ? estudiantesData
-          : estudiantesData?.data || [];
+          : (estudiantesData as any)?.data || [];
         setEstudiantes(estudiantesArray);
       }
 
@@ -220,7 +225,18 @@ export default function EstudiantesPage() {
   const effectiveCurrentPage = hasFilters ? 1 : pagination.currentPage;
 
   return (
-    <div className="space-y-6">
+    <PermissionGuard
+      requiredRoles={[UserRole.ADMIN, UserRole.AUXILIAR]}
+      fallback={
+        <div className="p-6">
+          <Alert
+            type="error"
+            message="No tiene permisos para acceder a esta página."
+          />
+        </div>
+      }
+    >
+      <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Estudiantes</h1>
@@ -228,9 +244,11 @@ export default function EstudiantesPage() {
             Gestión de estudiantes del colegio
           </p>
         </div>
-        <Button variant="primary" onClick={handleCreate}>
-          + Nuevo Estudiante
-        </Button>
+        {permissions.canCreate && (
+          <Button variant="primary" onClick={handleCreate}>
+            + Nuevo Estudiante
+          </Button>
+        )}
       </div>
 
       {success && (
@@ -271,8 +289,8 @@ export default function EstudiantesPage() {
           data={estudiantesFiltradosCompletos}
           loading={loading}
           onView={handleView}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
+          onEdit={permissions.canEdit ? handleEdit : undefined}
+          onDelete={permissions.canDelete ? handleDelete : undefined}
         />
 
         {/* Paginación */}
@@ -546,6 +564,7 @@ export default function EstudiantesPage() {
           </div>
         )}
       </Modal>
-    </div>
+      </div>
+    </PermissionGuard>
   );
 }

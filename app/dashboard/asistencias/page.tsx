@@ -21,9 +21,13 @@ import { useAuth } from "@/src/features/auth";
 import { useErrorHandler } from "@/src/hooks/useErrorHandler";
 import { useModalState } from "@/src/hooks/useModalState";
 import { usePagination } from "@/src/hooks/usePagination";
+import { usePermissions } from "@/src/hooks/usePermissions";
+import { PermissionGuard } from "@/src/components/auth";
+import { UserRole } from "@/src/types";
 
 export default function AsistenciasPage() {
   const { user } = useAuth();
+  const permissions = usePermissions('asistencias');
   const { error, success, setError, setSuccess, handleError } =
     useErrorHandler();
   const {
@@ -141,7 +145,7 @@ export default function AsistenciasPage() {
           docentePortalService.misAsistencias(),
           docentePortalService.misEstudiantes(),
           docentePortalService.misAsignaciones(),
-        ]);
+        ]) as any[];
 
       setAsistencias(
         Array.isArray(asistenciasData.asistencias)
@@ -195,7 +199,7 @@ export default function AsistenciasPage() {
           lastPage: asistenciasData.last_page || 1,
         });
       } else {
-        const asistenciasArray = asistenciasData?.data || asistenciasData || [];
+        const asistenciasArray = Array.isArray(asistenciasData) ? asistenciasData : (asistenciasData as any)?.data || [];
         setAsistencias(asistenciasArray);
         setPaginationData({
           total: Array.isArray(asistenciasArray) ? asistenciasArray.length : 0,
@@ -375,7 +379,7 @@ export default function AsistenciasPage() {
         const estudiante = value as Estudiante;
         return (
           <div>
-            <div className="font-medium">{estudiante?.nombre || "N/A"}</div>
+            <div className="font-medium">{estudiante?.nombres || "N/A"}</div>
             {estudiante?.dni && (
               <div className="text-sm text-gray-500">DNI: {estudiante.dni}</div>
             )}
@@ -518,7 +522,18 @@ export default function AsistenciasPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <PermissionGuard
+      requiredRoles={[UserRole.ADMIN, UserRole.AUXILIAR, UserRole.DOCENTE, UserRole.ESTUDIANTE, UserRole.PADRE]}
+      fallback={
+        <div className="p-6">
+          <Alert
+            type="error"
+            message="No tiene permisos para acceder a esta página."
+          />
+        </div>
+      }
+    >
+      <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Asistencias</h1>
@@ -730,7 +745,7 @@ export default function AsistenciasPage() {
               <option value="">Seleccionar estudiante</option>
               {estudiantes?.map((estudiante) => (
                 <option key={estudiante.id} value={estudiante.id}>
-                  {estudiante.nombre}
+                  {estudiante.nombres}
                 </option>
               ))}
             </select>
@@ -852,6 +867,7 @@ export default function AsistenciasPage() {
           </div>
         </form>
       </Modal>
-    </div>
+      </div>
+    </PermissionGuard>
   );
 }

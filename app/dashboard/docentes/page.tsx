@@ -17,6 +17,9 @@ import { useModalState } from "@/src/hooks/useModalState";
 import { usePagination } from "@/src/hooks/usePagination";
 import { useFilteredData } from "@/src/hooks/useFilteredData";
 import { useAuth } from "@/src/features/auth";
+import { PermissionGuard } from "@/src/components/auth";
+import { UserRole } from "@/src/types";
+import { usePermissions } from "@/src/hooks/usePermissions";
 
 export default function DocentesPage() {
   const ESPECIALIDADES = [
@@ -50,6 +53,7 @@ export default function DocentesPage() {
   const [filterEspecialidad, setFilterEspecialidad] = useState("");
 
   const { user } = useAuth();
+  const permissions = usePermissions('docentes');
   const { error, success, handleError, handleSuccess, setError, setSuccess } =
     useErrorHandler();
   const { isOpen, editingItem, openCreate, openEdit, close } =
@@ -207,15 +211,28 @@ export default function DocentesPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <PermissionGuard
+      requiredRoles={[UserRole.ADMIN, UserRole.AUXILIAR]}
+      fallback={
+        <div className="p-6">
+          <Alert
+            type="error"
+            message="No tiene permisos para acceder a esta página."
+          />
+        </div>
+      }
+    >
+      <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Docentes</h1>
           <p className="text-gray-600 mt-2">Gestión de docentes del colegio</p>
         </div>
-        <Button variant="primary" onClick={handleCreate}>
-          + Nuevo Docente
-        </Button>
+        {permissions.canCreate && (
+          <Button variant="primary" onClick={handleCreate}>
+            + Nuevo Docente
+          </Button>
+        )}
       </div>
 
       {success && (
@@ -260,8 +277,8 @@ export default function DocentesPage() {
           data={docentesFiltradosCompletos}
           loading={loading}
           onView={handleView}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
+          onEdit={permissions.canEdit ? handleEdit : undefined}
+          onDelete={permissions.canDelete ? handleDelete : undefined}
         />
       </Card>
 
@@ -485,6 +502,7 @@ export default function DocentesPage() {
           </div>
         )}
       </Modal>
-    </div>
+      </div>
+    </PermissionGuard>
   );
 }

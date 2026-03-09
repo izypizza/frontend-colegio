@@ -16,9 +16,13 @@ import { useAuth } from "@/src/features/auth";
 import { useErrorHandler } from "@/src/hooks/useErrorHandler";
 import { useModalState } from "@/src/hooks/useModalState";
 import { usePagination } from "@/src/hooks/usePagination";
+import { usePermissions } from "@/src/hooks/usePermissions";
+import { PermissionGuard } from "@/src/components/auth";
+import { UserRole } from "@/src/types";
 
 export default function UsuariosPage() {
   const { user } = useAuth();
+  const permissions = usePermissions('usuarios');
   const { error, success, setError, setSuccess, handleError } =
     useErrorHandler();
   const {
@@ -493,19 +497,19 @@ export default function UsuariosPage() {
     );
   }
 
-  if (user.role !== "admin") {
-    return (
-      <div className="p-6">
-        <Alert
-          type="error"
-          message="No tiene permisos para acceder a esta página. Solo los administradores pueden gestionar usuarios."
-        />
-      </div>
-    );
-  }
-
   return (
-    <div className="p-6">
+    <PermissionGuard
+      requiredRoles={[UserRole.ADMIN]}
+      fallback={
+        <div className="p-6">
+          <Alert
+            type="error"
+            message="No tiene permisos para acceder a esta página. Solo los administradores pueden gestionar usuarios."
+          />
+        </div>
+      }
+    >
+      <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
@@ -929,6 +933,7 @@ export default function UsuariosPage() {
           </div>
         )}
       </Modal>
-    </div>
+      </div>
+    </PermissionGuard>
   );
 }

@@ -1,4 +1,4 @@
-import { UserRole } from '@/types';
+import { UserRole } from '@/src/types';
 
 /**
  * Hook para verificar permisos de acceso según el rol del usuario

@@ -127,7 +127,25 @@ class CrudService<T> {
 // Services
 export const estudianteService = new CrudService<Estudiante>("/estudiantes");
 export const docenteService = new CrudService<Docente>("/docentes");
-export const padreService = new CrudService<Padre>("/padres");
+
+// Padre Service with extra methods
+class PadreServiceExtended extends CrudService<Padre> {
+  async asociarEstudiante(padreId: number, estudianteId: number): Promise<any> {
+    return await apiClient.post(`/padres/${padreId}/asociar-estudiante`, {
+      estudiante_id: estudianteId,
+    });
+  }
+
+  async desasociarEstudiante(padreId: number, estudianteId: number): Promise<any> {
+    return await apiClient.delete(`/padres/${padreId}/desasociar-estudiante/${estudianteId}`);
+  }
+
+  async getEstudiantesDisponibles(padreId: number): Promise<Estudiante[]> {
+    return await apiClient.get(`/padres/${padreId}/estudiantes-disponibles`);
+  }
+}
+
+export const padreService = new PadreServiceExtended("/padres");
 export const gradoService = new CrudService<Grado>("/grados");
 export const seccionService = new CrudService<Seccion>("/secciones");
 export const materiaService = new CrudService<Materia>("/materias");
@@ -223,6 +241,35 @@ export const eleccionService = {
   },
   yaVote: async (id: number) => {
     return await apiClient.get(`/elecciones/${id}/ya-vote`);
+  },
+  activar: async (id: number) => {
+    return await apiClient.post(`/elecciones/${id}/activar`);
+  },
+  cerrar: async (id: number) => {
+    return await apiClient.post(`/elecciones/${id}/cerrar`);
+  },
+  publicarResultados: async (id: number) => {
+    return await apiClient.post(`/elecciones/${id}/publicar-resultados`);
+  },
+};
+
+export const partidoService = {
+  getAll: async (eleccion_id?: number) => {
+    const query = eleccion_id ? `?eleccion_id=${eleccion_id}` : '';
+    return await apiClient.get(`/partidos${query}`);
+  },
+  create: async (data: FormData) => {
+    return await apiClient.post("/partidos", data, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
+  update: async (id: number, data: FormData) => {
+    return await apiClient.put(`/partidos/${id}`, data, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
+  delete: async (id: number) => {
+    return await apiClient.delete(`/partidos/${id}`);
   },
 };
 

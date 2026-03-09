@@ -10,18 +10,28 @@ import {
   Pagination,
 } from "@/src/components/ui";
 import { padreService } from "@/src/lib/services";
-import { Padre } from "@/src/types/models";
+import { Padre, Estudiante } from "@/src/types/models";
 import { useEffect, useState } from "react";
 import { useErrorHandler } from "@/src/hooks/useErrorHandler";
 import { useModalState } from "@/src/hooks/useModalState";
 import { usePagination } from "@/src/hooks/usePagination";
 import { useFilteredData } from "@/src/hooks/useFilteredData";
+import { PermissionGuard } from "@/src/components/auth";
+import { UserRole } from "@/src/types";
+import { usePermissions } from "@/src/hooks/usePermissions";
 
 export default function PadresPage() {
   const [padres, setPadres] = useState<Padre[]>([]);
   const [loading, setLoading] = useState(true);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingItem, setViewingItem] = useState<Padre | null>(null);
+  
+  // Estados para gestión de estudiantes
+  const [isEstudiantesModalOpen, setIsEstudiantesModalOpen] = useState(false);
+  const [padreSeleccionado, setPadreSeleccionado] = useState<Padre | null>(null);
+  const [estudiantesDisponibles, setEstudiantesDisponibles] = useState<Estudiante[]>([]);
+  const [loadingEstudiantes, setLoadingEstudiantes] = useState(false);
+  
   const [formData, setFormData] = useState({
     nombres: "",
     apellido_paterno: "",
@@ -34,7 +44,8 @@ export default function PadresPage() {
   });
 
   // Hooks personalizados
-  const { error, success, handleError, handleSuccess } = useErrorHandler();
+  const permissions = usePermissions('padres');
+  const { error, success, handleError, handleSuccess, setError, setSuccess } = useErrorHandler();
   const { isOpen, editingItem, openCreate, openEdit, close } =
     useModalState<Padre>();
   const pagination = usePagination();
@@ -136,6 +147,67 @@ export default function PadresPage() {
     }
   };
 
+  const handleGestionarEstudiantes = async (padre: Padre) => {
+    setPadreSeleccionado(padre);
+    setIsEstudiantesModalOpen(true);
+    setLoadingEstudiantes(true);
+    
+    try {
+      const disponibles = await padreService.getEstudiantesDisponibles(padre.id);
+      setEstudiantesDisponibles(disponibles);
+    } catch (err) {
+      handleError(err, "Error al cargar estudiantes disponibles");
+    } finally {
+      setLoadingEstudiantes(false);
+    }
+  };
+
+  const handleAsociarEstudiante = async (estudianteId: number) => {
+    if (!padreSeleccionado) return;
+    
+    try {
+      await padreService.asociarEstudiante(padreSeleccionado.id, estudianteId);
+      handleSuccess("Estudiante asociado correctamente");
+      
+      // Recargar datos
+      await fetchData();
+      const disponibles = await padreService.getEstudiantesDisponibles(padreSeleccionado.id);
+      setEstudiantesDisponibles(disponibles);
+      
+      // Actualizar padre seleccionado
+      const padreActualizado = padres.find(p => p.id === padreSeleccionado.id);
+      if (padreActualizado) {
+        setPadreSeleccionado(padreActualizado);
+      }
+    } catch (err) {
+      handleError(err, "Error al asociar estudiante");
+    }
+  };
+
+  const handleDesasociarEstudiante = async (estudianteId: number) => {
+    if (!padreSeleccionado) return;
+    
+    if (!confirm("¿Está seguro de desvincular este estudiante?")) return;
+    
+    try {
+      await padreService.desasociarEstudiante(padreSeleccionado.id, estudianteId);
+      handleSuccess("Estudiante desvinculado correctamente");
+      
+      // Recargar datos
+      await fetchData();
+      const disponibles = await padreService.getEstudiantesDisponibles(padreSeleccionado.id);
+      setEstudiantesDisponibles(disponibles);
+      
+      // Actualizar padre seleccionado
+      const padreActualizado = padres.find(p => p.id === padreSeleccionado.id);
+      if (padreActualizado) {
+        setPadreSeleccionado(padreActualizado);
+      }
+    } catch (err) {
+      handleError(err, "Error al desvincular estudiante");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -177,6 +249,32 @@ export default function PadresPage() {
     },
     { key: "telefono", label: "Teléfono" },
     { key: "email", label: "Email" },
+    {
+      key: "estudiantes",
+      label: "Hijos Vinculados",
+      render: (value: unknown, item: Padre) => {
+        const count = item.estudiantes?.length || 0;
+        return (
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+              {count} {count === 1 ? 'hijo' : 'hijos'}
+            </span>
+            {permissions.canEdit && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleGestionarEstudiantes(item);
+                }}
+              >
+                Gestionar
+              </Button>
+            )}
+          </div>
+        );
+      },
+    },
   ];
 
   const hasSearch = searchTerm.trim() !== "";
@@ -187,7 +285,18 @@ export default function PadresPage() {
   const effectiveCurrentPage = hasSearch ? 1 : pagination.currentPage;
 
   return (
-    <div className="space-y-6">
+    <PermissionGuard
+      requiredRoles={[UserRole.ADMIN, UserRole.AUXILIAR]}
+      fallback={
+        <div className="p-6">
+          <Alert
+            type="error"
+            message="No tiene permisos para acceder a esta página."
+          />
+        </div>
+      }
+    >
+      <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
@@ -195,9 +304,11 @@ export default function PadresPage() {
           </h1>
           <p className="text-gray-600 mt-2">Gestión de padres de familia</p>
         </div>
-        <Button variant="primary" onClick={handleCreate}>
-          + Agregar Padre
-        </Button>
+        {permissions.canCreate && (
+          <Button variant="primary" onClick={handleCreate}>
+            + Agregar Padre
+          </Button>
+        )}
       </div>
 
       {success && (
@@ -228,8 +339,8 @@ export default function PadresPage() {
           data={padresFiltrados}
           loading={loading}
           onView={handleView}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
+          onEdit={permissions.canEdit ? handleEdit : undefined}
+          onDelete={permissions.canDelete ? handleDelete : undefined}
         />
       </Card>
 
@@ -458,6 +569,117 @@ export default function PadresPage() {
           </div>
         )}
       </Modal>
-    </div>
+
+      {/* Modal Gestionar Estudiantes */}
+      <Modal
+        isOpen={isEstudiantesModalOpen}
+        onClose={() => setIsEstudiantesModalOpen(false)}
+        title={`Gestionar Hijos - ${padreSeleccionado?.nombre_completo || ''}`}
+        size="lg"
+      >
+        {padreSeleccionado && (
+          <div className="space-y-6">
+            {/* Estudiantes Actualmente Vinculados */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                Hijos Vinculados ({padreSeleccionado.estudiantes?.length || 0})
+              </h3>
+              {padreSeleccionado.estudiantes && padreSeleccionado.estudiantes.length > 0 ? (
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {padreSeleccionado.estudiantes.map((estudiante: any) => (
+                    <div
+                      key={estudiante.id}
+                      className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {estudiante.nombre_completo ||
+                            `${estudiante.nombres} ${estudiante.apellido_paterno} ${estudiante.apellido_materno}`}
+                        </p>
+                        {estudiante.seccion && (
+                          <p className="text-sm text-gray-600">
+                            {estudiante.seccion.nombre}
+                            {estudiante.seccion.grado && ` - ${estudiante.seccion.grado.nombre}`}
+                          </p>
+                        )}
+                        <p className="text-xs text-gray-500">DNI: {estudiante.dni}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        onClick={() => handleDesasociarEstudiante(estudiante.id)}
+                      >
+                        Desvincular
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm py-4 text-center bg-gray-50 rounded-lg">
+                  No hay hijos vinculados
+                </p>
+              )}
+            </div>
+
+            {/* Estudiantes Disponibles para Asociar */}
+            <div className="border-t pt-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                Estudiantes Disponibles
+              </h3>
+              {loadingEstudiantes ? (
+                <div className="text-center py-8">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <p className="mt-2 text-gray-600">Cargando estudiantes...</p>
+                </div>
+              ) : estudiantesDisponibles.length > 0 ? (
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {estudiantesDisponibles.map((estudiante) => (
+                    <div
+                      key={estudiante.id}
+                      className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {estudiante.nombre_completo ||
+                            `${estudiante.nombres} ${estudiante.apellido_paterno} ${estudiante.apellido_materno}`}
+                        </p>
+                        {estudiante.seccion && (
+                          <p className="text-sm text-gray-600">
+                            {(estudiante.seccion as any).nombre}
+                            {(estudiante.seccion as any).grado && ` - ${(estudiante.seccion as any).grado.nombre}`}
+                          </p>
+                        )}
+                        <p className="text-xs text-gray-500">DNI: {estudiante.dni}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        onClick={() => handleAsociarEstudiante(estudiante.id)}
+                      >
+                        Asociar
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm py-4 text-center bg-gray-50 rounded-lg">
+                  No hay estudiantes disponibles para asociar
+                </p>
+              )}
+            </div>
+
+            <div className="flex justify-end pt-4">
+              <Button
+                variant="secondary"
+                onClick={() => setIsEstudiantesModalOpen(false)}
+              >
+                Cerrar
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+      </div>
+    </PermissionGuard>
   );
 }

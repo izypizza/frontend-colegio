@@ -28,12 +28,16 @@ import { useAuth } from "@/src/features/auth";
 import EstadisticasAvanzadas from "./components/EstadisticasAvanzadas";
 import { useRouter } from "next/navigation";
 import { useErrorHandler } from "@/src/hooks/useErrorHandler";
+import { usePermissions } from "@/src/hooks/usePermissions";
+import { PermissionGuard } from "@/src/components/auth";
+import { UserRole } from "@/src/types";
 import { useModalState } from "@/src/hooks/useModalState";
 import { usePagination } from "@/src/hooks/usePagination";
 
 export default function CalificacionesPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const permissions = usePermissions('calificaciones');
   const { error, success, setError, setSuccess, handleError } =
     useErrorHandler();
   const {
@@ -118,7 +122,7 @@ export default function CalificacionesPage() {
           docentePortalService.misEstudiantes(),
           docentePortalService.misAsignaciones(),
           periodoService.getAll(),
-        ]);
+        ]) as any[];
 
         setCalificaciones(calificacionesData.calificaciones || []);
         setEstudiantes(estudiantesData.estudiantes || []);
@@ -132,18 +136,18 @@ export default function CalificacionesPage() {
         });
         const materiasUnicas = Array.from(materiasMap.values());
         setMaterias(materiasUnicas);
-        setPeriodos(periodosData.data || periodosData);
+        setPeriodos(Array.isArray(periodosData) ? periodosData : periodosData?.data || []);
       } else if (user?.role === "estudiante") {
         // Estudiantes ven solo sus propias calificaciones
         const [calificacionesData, periodosData] = await Promise.all([
           estudiantePortalService.misCalificaciones(),
           periodoService.getAll(),
-        ]);
+        ]) as any[];
 
         setCalificaciones(calificacionesData.calificaciones || []);
         setEstudiantes([]);
         setMaterias([]);
-        setPeriodos(periodosData || []);
+        setPeriodos(Array.isArray(periodosData) ? periodosData : periodosData?.data || []);
       } else if (user?.role === "admin" || user?.role === "auxiliar") {
         // Admin/Auxiliar usan endpoints generales con paginación
         const [
@@ -171,8 +175,7 @@ export default function CalificacionesPage() {
             lastPage: calificacionesData.last_page || 1,
           });
         } else {
-          const calificacionesArray =
-            calificacionesData?.data || calificacionesData || [];
+          const calificacionesArray = Array.isArray(calificacionesData) ? calificacionesData : (calificacionesData as any)?.data || [];
           setCalificaciones(calificacionesArray);
         }
 
@@ -290,7 +293,7 @@ export default function CalificacionesPage() {
     {
       key: "estudiante",
       label: "Estudiante",
-      render: (value: unknown) => (value as Estudiante)?.nombre || "N/A",
+      render: (value: unknown) => (value as Estudiante)?.nombres || "N/A",
     },
     {
       key: "materia",
@@ -325,7 +328,18 @@ export default function CalificacionesPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <PermissionGuard
+      requiredRoles={[UserRole.ADMIN, UserRole.AUXILIAR, UserRole.DOCENTE, UserRole.ESTUDIANTE, UserRole.PADRE]}
+      fallback={
+        <div className="p-6">
+          <Alert
+            type="error"
+            message="No tiene permisos para acceder a esta página."
+          />
+        </div>
+      }
+    >
+      <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Calificaciones</h1>
@@ -342,9 +356,7 @@ export default function CalificacionesPage() {
               {mostrarEstadisticas ? "Ocultar" : "Mostrar"} Estadísticas
             </Button>
           )}
-          {(user?.role === "admin" ||
-            user?.role === "auxiliar" ||
-            user?.role === "docente") && (
+          {permissions.canCreate && (
             <Button variant="primary" onClick={handleCreate}>
               + Nueva Calificación
             </Button>
@@ -422,8 +434,8 @@ export default function CalificacionesPage() {
           columns={columns}
           data={calificacionesFiltradas}
           loading={loading}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
+          onEdit={permissions.canEdit ? handleEdit : undefined}
+          onDelete={permissions.canDelete ? handleDelete : undefined}
         />
       </Card>
 
@@ -486,7 +498,7 @@ export default function CalificacionesPage() {
               <option value="">Seleccionar estudiante</option>
               {estudiantes?.map((estudiante) => (
                 <option key={estudiante.id} value={estudiante.id}>
-                  {estudiante.nombre}
+                  {estudiante.nombres}
                 </option>
               ))}
             </select>
@@ -549,6 +561,7 @@ export default function CalificacionesPage() {
           />
         </form>
       </Modal>
-    </div>
+      </div>
+    </PermissionGuard>
   );
 }

@@ -5,8 +5,11 @@ import { useAuth } from "@/src/features/auth";
 import { useErrorHandler } from "@/src/hooks/useErrorHandler";
 import { useModalState } from "@/src/hooks/useModalState";
 import { usePagination } from "@/src/hooks/usePagination";
+import { usePermissions } from "@/src/hooks/usePermissions";
 import { userManagementService } from "@/src/lib/services";
 import { User } from "@/src/types/models";
+import { UserRole } from "@/src/types";
+import { PermissionGuard } from "@/src/components/auth";
 import {
   Alert,
   Button,
@@ -21,6 +24,7 @@ const ROLE = "bibliotecario";
 
 export default function BibliotecariosPage() {
   const { user } = useAuth();
+  const permissions = usePermissions('bibliotecarios');
   const { error, success, setError, setSuccess, handleError } =
     useErrorHandler();
   const {
@@ -157,17 +161,6 @@ export default function BibliotecariosPage() {
     );
   }
 
-  if (user.role !== "admin") {
-    return (
-      <div className="p-6">
-        <Alert
-          type="error"
-          message="Solo administradores pueden gestionar bibliotecarios."
-        />
-      </div>
-    );
-  }
-
   const columns = [
     {
       key: "name",
@@ -195,29 +188,46 @@ export default function BibliotecariosPage() {
       label: "Acciones",
       render: (_: unknown, u: User) => (
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => handleEdit(u)}>
-            Editar
-          </Button>
-          <Button
-            variant={u.is_active ? "danger" : "success"}
-            size="sm"
-            onClick={() => handleToggle(u)}
-          >
-            {u.is_active ? "Desactivar" : "Activar"}
-          </Button>
+          {permissions.canEdit && (
+            <Button variant="outline" size="sm" onClick={() => handleEdit(u)}>
+              Editar
+            </Button>
+          )}
+          {permissions.canDelete && (
+            <Button
+              variant={u.is_active ? "danger" : "success"}
+              size="sm"
+              onClick={() => handleToggle(u)}
+            >
+              {u.is_active ? "Desactivar" : "Activar"}
+            </Button>
+          )}
         </div>
       ),
     },
   ];
 
   return (
-    <div className="p-6">
+    <PermissionGuard
+      requiredRoles={[UserRole.ADMIN]}
+      fallback={
+        <div className="p-6">
+          <Alert
+            type="error"
+            message="Solo administradores pueden gestionar bibliotecarios."
+          />
+        </div>
+      }
+    >
+      <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Bibliotecarios</h1>
           <p className="text-gray-600">Gestiona cuentas de bibliotecarios</p>
         </div>
-        <Button onClick={openCreate}>Nuevo bibliotecario</Button>
+        {permissions.canCreate && (
+          <Button onClick={openCreate}>Nuevo bibliotecario</Button>
+        )}
       </div>
 
       {error && (
@@ -358,6 +368,7 @@ export default function BibliotecariosPage() {
           </div>
         </div>
       </Modal>
-    </div>
+      </div>
+    </PermissionGuard>
   );
 }
