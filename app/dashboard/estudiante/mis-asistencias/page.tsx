@@ -84,7 +84,7 @@ export default function MisAsistenciasPage() {
         per_page: pagination.per_page,
       };
       const response = await estudiantePortalService.misAsistencias(params);
-      
+
       if (response.pagination) {
         setPagination({
           current_page: response.pagination.current_page,
@@ -93,7 +93,7 @@ export default function MisAsistenciasPage() {
           total: response.pagination.total,
         });
       }
-      
+
       setData(response);
     } catch (error) {
       console.error("Error al cargar asistencias:", error);
@@ -401,9 +401,13 @@ export default function MisAsistenciasPage() {
                     fill="#8884d8"
                     paddingAngle={5}
                     dataKey="value"
-                    label={({ name, percent }) =>
-                      `${name} ${(percent * 100).toFixed(0)}%`
-                    }
+                    label={({
+                      name,
+                      percent,
+                    }: {
+                      name?: string;
+                      percent?: number;
+                    }) => `${name ?? ""} ${((percent ?? 0) * 100).toFixed(0)}%`}
                   >
                     {graficasData.pieData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />

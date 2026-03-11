@@ -96,7 +96,9 @@ export default function MisCalificacionesPage() {
   const fetchPeriodos = async () => {
     try {
       const response = await periodoService.getAll();
-      const periodosData = response.data || response;
+      const periodosData = Array.isArray(response)
+        ? response
+        : (response as any).data || response;
       setPeriodos(periodosData);
 
       if (Array.isArray(periodosData) && periodosData.length > 0) {
@@ -211,12 +213,16 @@ export default function MisCalificacionesPage() {
 
     // Datos para gráfico de dona (distribución de notas)
     const distribucion = {
-      excelente: data.calificaciones.filter((c) => Number(c.nota || 0) >= 16).length,
-      bueno: data.calificaciones.filter((c) => Number(c.nota || 0) >= 13 && Number(c.nota || 0) < 16)
+      excelente: data.calificaciones.filter((c) => Number(c.nota || 0) >= 16)
         .length,
-      aprobado: data.calificaciones.filter((c) => Number(c.nota || 0) >= 11 && Number(c.nota || 0) < 13)
+      bueno: data.calificaciones.filter(
+        (c) => Number(c.nota || 0) >= 13 && Number(c.nota || 0) < 16,
+      ).length,
+      aprobado: data.calificaciones.filter(
+        (c) => Number(c.nota || 0) >= 11 && Number(c.nota || 0) < 13,
+      ).length,
+      reprobado: data.calificaciones.filter((c) => Number(c.nota || 0) < 11)
         .length,
-      reprobado: data.calificaciones.filter((c) => Number(c.nota || 0) < 11).length,
     };
 
     const pieData = [
@@ -245,8 +251,10 @@ export default function MisCalificacionesPage() {
       );
       const promedioPeriodo =
         calificacionesPeriodo.length > 0
-          ? calificacionesPeriodo.reduce((sum, c) => sum + Number(c.nota || 0), 0) /
-            calificacionesPeriodo.length
+          ? calificacionesPeriodo.reduce(
+              (sum, c) => sum + Number(c.nota || 0),
+              0,
+            ) / calificacionesPeriodo.length
           : 0;
       return {
         periodo: periodo.nombre,

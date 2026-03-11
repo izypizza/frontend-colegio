@@ -14,9 +14,15 @@ import { useErrorHandler } from "@/src/hooks/useErrorHandler";
 import { useModalState } from "@/src/hooks/useModalState";
 import { usePagination } from "@/src/hooks/usePagination";
 import { usePermissions } from "@/src/hooks/usePermissions";
-import { PermissionGuard, NoPermission } from "@/src/components/auth/PermissionGuard";
+import {
+  PermissionGuard,
+  NoPermission,
+} from "@/src/components/auth/PermissionGuard";
 import { UserRole } from "@/src/types";
-import { isForbiddenError, getPermissionErrorInfo } from "@/src/lib/permissions";
+import {
+  isForbiddenError,
+  getPermissionErrorInfo,
+} from "@/src/lib/permissions";
 
 interface Libro {
   id: number;
@@ -40,9 +46,31 @@ interface Categoria {
   nombre: string;
 }
 
+type PaginatedResponse<T> = {
+  data: T[];
+  current_page?: number;
+  last_page?: number;
+  total?: number;
+};
+
+function isPaginatedResponse<T>(value: unknown): value is PaginatedResponse<T> {
+  return (
+    !!value &&
+    typeof value === "object" &&
+    "data" in value &&
+    Array.isArray((value as PaginatedResponse<T>).data)
+  );
+}
+
+function extractArray<T>(value: unknown): T[] {
+  if (Array.isArray(value)) return value as T[];
+  if (isPaginatedResponse<T>(value)) return value.data;
+  return [];
+}
+
 export default function LibrosPage() {
   const { user } = useAuth();
-  const permissions = usePermissions('biblioteca');
+  const permissions = usePermissions("biblioteca");
   const { error, success, setError, setSuccess, handleError } =
     useErrorHandler();
   const {
@@ -111,32 +139,19 @@ export default function LibrosPage() {
         libroService.getAll({ page: currentPage, per_page: perPage }),
         categoriaLibroService.getAll({ all: true }),
       ]);
-
-      // Manejar respuesta paginada
-      if (
-        librosData &&
-        typeof librosData === "object" &&
-        "data" in librosData &&
-        "current_page" in librosData
-      ) {
+      if (isPaginatedResponse<Libro>(librosData) && librosData.current_page) {
         setLibros(librosData.data);
         setPaginationData({
-          total: librosData.total || 0,
+          total: librosData.total || librosData.data.length,
           lastPage: librosData.last_page || 1,
         });
       } else {
-        const librosArray = Array.isArray(librosData)
-          ? librosData
-          : librosData?.data || [];
+        const librosArray = extractArray<Libro>(librosData);
         setLibros(librosArray);
         setPaginationData({ total: librosArray.length, lastPage: 1 });
       }
 
-      setCategorias(
-        Array.isArray(categoriasData)
-          ? categoriasData
-          : categoriasData?.data || [],
-      );
+      setCategorias(extractArray<Categoria>(categoriasData));
     } catch (err: any) {
       handleError(err, "Error al cargar los datos");
     } finally {
@@ -321,12 +336,12 @@ export default function LibrosPage() {
   ];
 
   return (
-    <PermissionGuard 
+    <PermissionGuard
       requiredRoles={[UserRole.ADMIN, UserRole.BIBLIOTECARIO]}
       fallback={
-        <NoPermission 
+        <NoPermission
           message="No tiene permisos para acceder a la biblioteca"
-          requiredRoles={['admin', 'bibliotecario']}
+          requiredRoles={["admin", "bibliotecario"]}
           currentRole={user?.role}
         />
       }
@@ -361,494 +376,506 @@ export default function LibrosPage() {
             </div>
           </div>
 
-      {/* Resumen de estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <div className="p-4">
-            <p className="text-sm text-gray-600">Total Libros</p>
-            <p className="text-2xl font-bold text-blue-600">{libros.length}</p>
-          </div>
-        </Card>
-        <Card>
-          <div className="p-4">
-            <p className="text-sm text-gray-600">Físicos</p>
-            <p className="text-2xl font-bold text-green-600">
-              {libros.filter((l) => l.tipo === "fisico").length}
-            </p>
-          </div>
-        </Card>
-        <Card>
-          <div className="p-4">
-            <p className="text-sm text-gray-600">Digitales</p>
-            <p className="text-2xl font-bold text-purple-600">
-              {libros.filter((l) => l.tipo === "digital").length}
-            </p>
-          </div>
-        </Card>
-        <Card>
-          <div className="p-4">
-            <p className="text-sm text-gray-600">Categorías</p>
-            <p className="text-2xl font-bold text-orange-600">
-              {categorias.length}
-            </p>
-          </div>
-        </Card>
-      </div>
-
-      {error && (
-        <Alert type="error" message={error} onClose={() => setError(null)} />
-      )}
-      {success && (
-        <Alert
-          type="success"
-          message={success}
-          onClose={() => setSuccess(null)}
-        />
-      )}
-
-      {/* Filtros */}
-      <Card>
-        <div className="p-4">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Filtros</h2>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setViewMode("grid")}
-                className={`p-2 rounded ${
-                  viewMode === "grid"
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-200 text-gray-600"
-                }`}
-                title="Vista de tarjetas"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
-                  />
-                </svg>
-              </button>
-              <button
-                onClick={() => setViewMode("table")}
-                className={`p-2 rounded ${
-                  viewMode === "table"
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-200 text-gray-600"
-                }`}
-                title="Vista de tabla"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 10h16M4 14h16M4 18h16"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-
+          {/* Resumen de estadísticas */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Input
-              label="Buscar"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Título o autor..."
-            />
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tipo
-              </label>
-              <select
-                value={filterTipo}
-                onChange={(e) => setFilterTipo(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
-              >
-                <option value="">Todos</option>
-                <option value="fisico">Físicos</option>
-                <option value="digital">Digitales</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Categoría
-              </label>
-              <select
-                value={filterCategoria}
-                onChange={(e) => setFilterCategoria(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
-              >
-                <option value="">Todas las categorías</option>
-                {categorias.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.nombre}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Disponibilidad
-              </label>
-              <select
-                value={filterDisponible}
-                onChange={(e) => setFilterDisponible(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
-              >
-                <option value="">Todos</option>
-                <option value="true">Disponibles</option>
-                <option value="false">Prestados</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      {/* Vista de contenido */}
-      {viewMode === "table" ? (
-        <Card>
-          <Table
-            columns={columns}
-            data={filteredLibros}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredLibros.map((libro) => (
-            <Card key={libro.id}>
-              <div className="p-4 hover:shadow-lg transition">
-                <div className="flex justify-between items-start mb-2">
-                  <span
-                    className={`px-2 py-1 rounded text-xs font-medium ${
-                      libro.tipo === "fisico"
-                        ? "bg-blue-100 text-blue-800"
-                        : "bg-purple-100 text-purple-800"
-                    }`}
-                  >
-                    {libro.tipo === "fisico" ? "Físico" : "Digital"}
-                  </span>
-                  <span
-                    className={`px-2 py-1 rounded text-xs ${
-                      libro.tipo === "digital" || libro.cantidad_disponible > 0
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {libro.tipo === "digital"
-                      ? "∞ Ilimitado"
-                      : `${libro.cantidad_disponible} disp.`}
-                  </span>
-                </div>
-                <h3 className="font-bold text-gray-900 mb-1 line-clamp-2">
-                  {libro.titulo}
-                </h3>
-                <p className="text-sm text-gray-600 mb-2">Por {libro.autor}</p>
-                <p className="text-xs text-gray-500 mb-3">
-                  {libro.categoria?.nombre || "Sin categoría"}
+            <Card>
+              <div className="p-4">
+                <p className="text-sm text-gray-600">Total Libros</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {libros.length}
                 </p>
-                {libro.isbn && (
-                  <p className="text-xs text-gray-400 mb-3">
-                    ISBN: {libro.isbn}
-                  </p>
-                )}
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => handleEdit(libro)}
-                    className="flex-1 text-sm"
-                  >
-                    Editar
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => handleDelete(libro.id)}
-                    className="flex-1 text-sm text-red-600 hover:bg-red-50"
-                  >
-                    Eliminar
-                  </Button>
-                </div>
               </div>
             </Card>
-          ))}
-        </div>
-      )}
-
-      {filteredLibros.length === 0 && (
-        <Card>
-          <div className="p-8 text-center text-gray-500">
-            No se encontraron libros con los filtros seleccionados
-          </div>
-        </Card>
-      )}
-
-      {totalRegistros > perPage && (
-        <Pagination
-          currentPage={currentPage}
-          lastPage={paginationData.lastPage || 1}
-          total={totalRegistros}
-          perPage={perPage}
-          onPageChange={(page) => {
-            setCurrentPage(page);
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          }}
-          onPerPageChange={(newPerPage) => {
-            setPerPage(newPerPage);
-            setCurrentPage(1);
-          }}
-        />
-      )}
-
-      {/* Modal de Categoría */}
-      <Modal
-        isOpen={showCategoriaModal}
-        onClose={() => {
-          closeCategoriaModal();
-          setCategoriaForm({ nombre: "" });
-        }}
-        title="Nueva Categoría"
-      >
-        <form onSubmit={handleCategoriaSubmit} className="space-y-4">
-          <Input
-            label="Nombre de la categoría *"
-            value={categoriaForm.nombre}
-            onChange={(e) => setCategoriaForm({ nombre: e.target.value })}
-            required
-          />
-          <div className="flex gap-2 justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                closeCategoriaModal();
-                setCategoriaForm({ nombre: "" });
-              }}
-            >
-              Cancelar
-            </Button>
-            <Button type="submit">Crear Categoría</Button>
-          </div>
-        </form>
-
-        {categorias.length > 0 && (
-          <div className="mt-6">
-            <h3 className="font-semibold text-gray-900 mb-2">
-              Categorías existentes:
-            </h3>
-            <div className="space-y-1">
-              {categorias.map((cat) => (
-                <div
-                  key={cat.id}
-                  className="px-3 py-2 bg-gray-50 rounded text-sm"
-                >
-                  {cat.nombre}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </Modal>
-
-      {/* Modal de formulario */}
-      <Modal
-        isOpen={showModal}
-        onClose={handleCloseModal}
-        title={editingLibro ? "Editar Libro" : "Nuevo Libro"}
-      >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            label="Título *"
-            value={formData.titulo}
-            onChange={(e) =>
-              setFormData({ ...formData, titulo: e.target.value })
-            }
-            required
-          />
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tipo de Libro *
-            </label>
-            <select
-              value={formData.tipo}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  tipo: e.target.value as "fisico" | "digital",
-                })
-              }
-              className="w-full border border-gray-300 rounded-md px-3 py-2"
-              required
-            >
-              <option value="fisico">Físico</option>
-              <option value="digital">Digital</option>
-            </select>
+            <Card>
+              <div className="p-4">
+                <p className="text-sm text-gray-600">Físicos</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {libros.filter((l) => l.tipo === "fisico").length}
+                </p>
+              </div>
+            </Card>
+            <Card>
+              <div className="p-4">
+                <p className="text-sm text-gray-600">Digitales</p>
+                <p className="text-2xl font-bold text-purple-600">
+                  {libros.filter((l) => l.tipo === "digital").length}
+                </p>
+              </div>
+            </Card>
+            <Card>
+              <div className="p-4">
+                <p className="text-sm text-gray-600">Categorías</p>
+                <p className="text-2xl font-bold text-orange-600">
+                  {categorias.length}
+                </p>
+              </div>
+            </Card>
           </div>
 
-          <Input
-            label="Autor *"
-            value={formData.autor}
-            onChange={(e) =>
-              setFormData({ ...formData, autor: e.target.value })
-            }
-            required
-          />
-
-          {/* Campos solo para libros físicos */}
-          {formData.tipo === "fisico" && (
-            <>
-              <Input
-                label="ISBN (opcional)"
-                value={formData.isbn}
-                onChange={(e) =>
-                  setFormData({ ...formData, isbn: e.target.value })
-                }
-                placeholder="Ej: 978-3-16-148410-0"
-              />
-
-              <Input
-                label="Editorial (opcional)"
-                value={formData.editorial}
-                onChange={(e) =>
-                  setFormData({ ...formData, editorial: e.target.value })
-                }
-                placeholder="Ej: Santillana"
-              />
-
-              <Input
-                label="Cantidad Total *"
-                type="number"
-                min="1"
-                value={formData.cantidad_total}
-                onChange={(e) =>
-                  setFormData({ ...formData, cantidad_total: e.target.value })
-                }
-                required
-              />
-            </>
+          {error && (
+            <Alert
+              type="error"
+              message={error}
+              onClose={() => setError(null)}
+            />
+          )}
+          {success && (
+            <Alert
+              type="success"
+              message={success}
+              onClose={() => setSuccess(null)}
+            />
           )}
 
-          {/* Campos solo para libros digitales */}
-          {formData.tipo === "digital" && (
-            <>
+          {/* Filtros */}
+          <Card>
+            <div className="p-4">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold text-gray-900">Filtros</h2>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setViewMode("grid")}
+                    className={`p-2 rounded ${
+                      viewMode === "grid"
+                        ? "bg-blue-500 text-white"
+                        : "bg-gray-200 text-gray-600"
+                    }`}
+                    title="Vista de tarjetas"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setViewMode("table")}
+                    className={`p-2 rounded ${
+                      viewMode === "table"
+                        ? "bg-blue-500 text-white"
+                        : "bg-gray-200 text-gray-600"
+                    }`}
+                    title="Vista de tabla"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 6h16M4 10h16M4 14h16M4 18h16"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Input
+                  label="Buscar"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Título o autor..."
+                />
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tipo
+                  </label>
+                  <select
+                    value={filterTipo}
+                    onChange={(e) => setFilterTipo(e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  >
+                    <option value="">Todos</option>
+                    <option value="fisico">Físicos</option>
+                    <option value="digital">Digitales</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Categoría
+                  </label>
+                  <select
+                    value={filterCategoria}
+                    onChange={(e) => setFilterCategoria(e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  >
+                    <option value="">Todas las categorías</option>
+                    {categorias.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Disponibilidad
+                  </label>
+                  <select
+                    value={filterDisponible}
+                    onChange={(e) => setFilterDisponible(e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  >
+                    <option value="">Todos</option>
+                    <option value="true">Disponibles</option>
+                    <option value="false">Prestados</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Vista de contenido */}
+          {viewMode === "table" ? (
+            <Card>
+              <Table
+                columns={columns}
+                data={filteredLibros}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {filteredLibros.map((libro) => (
+                <Card key={libro.id}>
+                  <div className="p-4 hover:shadow-lg transition">
+                    <div className="flex justify-between items-start mb-2">
+                      <span
+                        className={`px-2 py-1 rounded text-xs font-medium ${
+                          libro.tipo === "fisico"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-purple-100 text-purple-800"
+                        }`}
+                      >
+                        {libro.tipo === "fisico" ? "Físico" : "Digital"}
+                      </span>
+                      <span
+                        className={`px-2 py-1 rounded text-xs ${
+                          libro.tipo === "digital" ||
+                          libro.cantidad_disponible > 0
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {libro.tipo === "digital"
+                          ? "∞ Ilimitado"
+                          : `${libro.cantidad_disponible} disp.`}
+                      </span>
+                    </div>
+                    <h3 className="font-bold text-gray-900 mb-1 line-clamp-2">
+                      {libro.titulo}
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-2">
+                      Por {libro.autor}
+                    </p>
+                    <p className="text-xs text-gray-500 mb-3">
+                      {libro.categoria?.nombre || "Sin categoría"}
+                    </p>
+                    {libro.isbn && (
+                      <p className="text-xs text-gray-400 mb-3">
+                        ISBN: {libro.isbn}
+                      </p>
+                    )}
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => handleEdit(libro)}
+                        className="flex-1 text-sm"
+                      >
+                        Editar
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => handleDelete(libro.id)}
+                        className="flex-1 text-sm text-red-600 hover:bg-red-50"
+                      >
+                        Eliminar
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {filteredLibros.length === 0 && (
+            <Card>
+              <div className="p-8 text-center text-gray-500">
+                No se encontraron libros con los filtros seleccionados
+              </div>
+            </Card>
+          )}
+
+          {totalRegistros > perPage && (
+            <Pagination
+              currentPage={currentPage}
+              lastPage={paginationData.lastPage || 1}
+              total={totalRegistros}
+              perPage={perPage}
+              onPageChange={(page) => {
+                setCurrentPage(page);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              onPerPageChange={(newPerPage) => {
+                setPerPage(newPerPage);
+                setCurrentPage(1);
+              }}
+            />
+          )}
+
+          {/* Modal de Categoría */}
+          <Modal
+            isOpen={showCategoriaModal}
+            onClose={() => {
+              closeCategoriaModal();
+              setCategoriaForm({ nombre: "" });
+            }}
+            title="Nueva Categoría"
+          >
+            <form onSubmit={handleCategoriaSubmit} className="space-y-4">
               <Input
-                label="URL / Enlace (opcional)"
-                value={formData.url_digital}
+                label="Nombre de la categoría *"
+                value={categoriaForm.nombre}
+                onChange={(e) => setCategoriaForm({ nombre: e.target.value })}
+                required
+              />
+              <div className="flex gap-2 justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    closeCategoriaModal();
+                    setCategoriaForm({ nombre: "" });
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit">Crear Categoría</Button>
+              </div>
+            </form>
+
+            {categorias.length > 0 && (
+              <div className="mt-6">
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  Categorías existentes:
+                </h3>
+                <div className="space-y-1">
+                  {categorias.map((cat) => (
+                    <div
+                      key={cat.id}
+                      className="px-3 py-2 bg-gray-50 rounded text-sm"
+                    >
+                      {cat.nombre}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </Modal>
+
+          {/* Modal de formulario */}
+          <Modal
+            isOpen={showModal}
+            onClose={handleCloseModal}
+            title={editingLibro ? "Editar Libro" : "Nuevo Libro"}
+          >
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <Input
+                label="Título *"
+                value={formData.titulo}
                 onChange={(e) =>
-                  setFormData({ ...formData, url_digital: e.target.value })
+                  setFormData({ ...formData, titulo: e.target.value })
                 }
-                placeholder="https://..."
+                required
               />
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Formato Digital (opcional)
+                  Tipo de Libro *
                 </label>
                 <select
-                  value={formData.formato_digital}
+                  value={formData.tipo}
                   onChange={(e) =>
                     setFormData({
                       ...formData,
-                      formato_digital: e.target.value,
+                      tipo: e.target.value as "fisico" | "digital",
                     })
                   }
                   className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  required
                 >
-                  <option value="">Seleccionar formato</option>
-                  <option value="PDF">PDF</option>
-                  <option value="EPUB">EPUB</option>
-                  <option value="MOBI">MOBI</option>
-                  <option value="AZW">AZW (Kindle)</option>
-                  <option value="Online">Online / Web</option>
+                  <option value="fisico">Físico</option>
+                  <option value="digital">Digital</option>
                 </select>
               </div>
-            </>
-          )}
 
-          <Input
-            label="Año de Publicación (opcional)"
-            type="number"
-            min="1900"
-            max={new Date().getFullYear()}
-            value={formData.anio_publicacion}
-            onChange={(e) =>
-              setFormData({ ...formData, anio_publicacion: e.target.value })
-            }
-            placeholder="Ej: 2024"
-          />
+              <Input
+                label="Autor *"
+                value={formData.autor}
+                onChange={(e) =>
+                  setFormData({ ...formData, autor: e.target.value })
+                }
+                required
+              />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Categoría *
-            </label>
-            <select
-              value={formData.categoria_id}
-              onChange={(e) =>
-                setFormData({ ...formData, categoria_id: e.target.value })
-              }
-              className="w-full border border-gray-300 rounded-md px-3 py-2"
-              required
-            >
-              <option value="">Seleccionar categoría</option>
-              {categorias.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.nombre}
-                </option>
-              ))}
-            </select>
-          </div>
+              {/* Campos solo para libros físicos */}
+              {formData.tipo === "fisico" && (
+                <>
+                  <Input
+                    label="ISBN (opcional)"
+                    value={formData.isbn}
+                    onChange={(e) =>
+                      setFormData({ ...formData, isbn: e.target.value })
+                    }
+                    placeholder="Ej: 978-3-16-148410-0"
+                  />
 
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="disponible"
-              checked={formData.disponible}
-              onChange={(e) =>
-                setFormData({ ...formData, disponible: e.target.checked })
-              }
-              className="mr-2"
-            />
-            <label
-              htmlFor="disponible"
-              className="text-sm font-medium text-gray-700"
-            >
-              Disponible{" "}
-              {formData.tipo === "digital" &&
-                "(siempre disponible para digitales)"}
-            </label>
-          </div>
+                  <Input
+                    label="Editorial (opcional)"
+                    value={formData.editorial}
+                    onChange={(e) =>
+                      setFormData({ ...formData, editorial: e.target.value })
+                    }
+                    placeholder="Ej: Santillana"
+                  />
 
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={handleCloseModal}
-            >
-              Cancelar
-            </Button>
-            <Button type="submit">
-              {editingLibro ? "Actualizar" : "Crear"}
-            </Button>
-          </div>
-        </form>
-      </Modal>
+                  <Input
+                    label="Cantidad Total *"
+                    type="number"
+                    min="1"
+                    value={formData.cantidad_total}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        cantidad_total: e.target.value,
+                      })
+                    }
+                    required
+                  />
+                </>
+              )}
+
+              {/* Campos solo para libros digitales */}
+              {formData.tipo === "digital" && (
+                <>
+                  <Input
+                    label="URL / Enlace (opcional)"
+                    value={formData.url_digital}
+                    onChange={(e) =>
+                      setFormData({ ...formData, url_digital: e.target.value })
+                    }
+                    placeholder="https://..."
+                  />
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Formato Digital (opcional)
+                    </label>
+                    <select
+                      value={formData.formato_digital}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          formato_digital: e.target.value,
+                        })
+                      }
+                      className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    >
+                      <option value="">Seleccionar formato</option>
+                      <option value="PDF">PDF</option>
+                      <option value="EPUB">EPUB</option>
+                      <option value="MOBI">MOBI</option>
+                      <option value="AZW">AZW (Kindle)</option>
+                      <option value="Online">Online / Web</option>
+                    </select>
+                  </div>
+                </>
+              )}
+
+              <Input
+                label="Año de Publicación (opcional)"
+                type="number"
+                min="1900"
+                max={new Date().getFullYear()}
+                value={formData.anio_publicacion}
+                onChange={(e) =>
+                  setFormData({ ...formData, anio_publicacion: e.target.value })
+                }
+                placeholder="Ej: 2024"
+              />
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Categoría *
+                </label>
+                <select
+                  value={formData.categoria_id}
+                  onChange={(e) =>
+                    setFormData({ ...formData, categoria_id: e.target.value })
+                  }
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  required
+                >
+                  <option value="">Seleccionar categoría</option>
+                  {categorias.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="disponible"
+                  checked={formData.disponible}
+                  onChange={(e) =>
+                    setFormData({ ...formData, disponible: e.target.checked })
+                  }
+                  className="mr-2"
+                />
+                <label
+                  htmlFor="disponible"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Disponible{" "}
+                  {formData.tipo === "digital" &&
+                    "(siempre disponible para digitales)"}
+                </label>
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleCloseModal}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit">
+                  {editingLibro ? "Actualizar" : "Crear"}
+                </Button>
+              </div>
+            </form>
+          </Modal>
         </div>
       )}
     </PermissionGuard>

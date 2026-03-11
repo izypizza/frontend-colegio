@@ -1,4 +1,4 @@
-import { UserRole } from '@/src/types';
+import { UserRole } from "@/src/types";
 
 /**
  * Hook para verificar permisos de acceso según el rol del usuario
@@ -88,6 +88,19 @@ export const useRolePermissions = () => {
         canManageTeachers: false,
         canManageParents: false,
       },
+      [UserRole.BIBLIOTECARIO]: {
+        canManageUsers: false,
+        canManageSystem: false,
+        canViewReports: true,
+        canManageRoles: false,
+        canManageStudents: false,
+        canManageGrades: false,
+        canManageAttendance: false,
+        canManageSchedules: false,
+        canManageSubjects: false,
+        canManageTeachers: false,
+        canManageParents: false,
+      },
     };
 
     return permissions[userRole];
@@ -99,42 +112,47 @@ export const useRolePermissions = () => {
   const getAccessibleRoutes = (userRole: UserRole) => {
     const routes = {
       [UserRole.ADMIN]: [
-        '/dashboard',
-        '/dashboard/estudiantes',
-        '/dashboard/docentes',
-        '/dashboard/padres',
-        '/dashboard/grados',
-        '/dashboard/secciones',
-        '/dashboard/materias',
-        '/dashboard/horarios',
-        '/dashboard/calificaciones',
-        '/dashboard/asistencias',
-        '/dashboard/periodos',
+        "/dashboard",
+        "/dashboard/estudiantes",
+        "/dashboard/docentes",
+        "/dashboard/padres",
+        "/dashboard/grados",
+        "/dashboard/secciones",
+        "/dashboard/materias",
+        "/dashboard/horarios",
+        "/dashboard/calificaciones",
+        "/dashboard/asistencias",
+        "/dashboard/periodos",
       ],
       [UserRole.AUXILIAR]: [
-        '/dashboard',
-        '/dashboard/estudiantes',
-        '/dashboard/calificaciones',
-        '/dashboard/asistencias',
-        '/dashboard/horarios',
+        "/dashboard",
+        "/dashboard/estudiantes",
+        "/dashboard/calificaciones",
+        "/dashboard/asistencias",
+        "/dashboard/horarios",
       ],
       [UserRole.DOCENTE]: [
-        '/dashboard',
-        '/dashboard/calificaciones',
-        '/dashboard/asistencias',
-        '/dashboard/horarios',
+        "/dashboard",
+        "/dashboard/calificaciones",
+        "/dashboard/asistencias",
+        "/dashboard/horarios",
       ],
       [UserRole.PADRE]: [
-        '/dashboard',
-        '/dashboard/calificaciones',
-        '/dashboard/asistencias',
-        '/dashboard/horarios',
+        "/dashboard",
+        "/dashboard/calificaciones",
+        "/dashboard/asistencias",
+        "/dashboard/horarios",
       ],
       [UserRole.ESTUDIANTE]: [
-        '/dashboard',
-        '/dashboard/calificaciones',
-        '/dashboard/asistencias',
-        '/dashboard/horarios',
+        "/dashboard",
+        "/dashboard/calificaciones",
+        "/dashboard/asistencias",
+        "/dashboard/horarios",
+      ],
+      [UserRole.BIBLIOTECARIO]: [
+        "/dashboard",
+        "/dashboard/biblioteca",
+        "/dashboard/prestamos",
       ],
     };
 
