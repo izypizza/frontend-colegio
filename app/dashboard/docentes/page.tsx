@@ -53,7 +53,7 @@ export default function DocentesPage() {
   const [filterEspecialidad, setFilterEspecialidad] = useState("");
 
   const { user } = useAuth();
-  const permissions = usePermissions('docentes');
+  const permissions = usePermissions("docentes");
   const { error, success, handleError, handleSuccess, setError, setSuccess } =
     useErrorHandler();
   const { isOpen, editingItem, openCreate, openEdit, close } =
@@ -102,7 +102,7 @@ export default function DocentesPage() {
           perPage: data.per_page,
         });
       } else {
-        const docentesArray = Array.isArray(data) ? data : data?.data || [];
+        const docentesArray = Array.isArray(data) ? data : [];
         setDocentes(docentesArray);
         pagination.updatePagination({
           currentPage: 1,
@@ -223,162 +223,43 @@ export default function DocentesPage() {
       }
     >
       <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Docentes</h1>
-          <p className="text-gray-600 mt-2">Gestión de docentes del colegio</p>
-        </div>
-        {permissions.canCreate && (
-          <Button variant="primary" onClick={handleCreate}>
-            + Nuevo Docente
-          </Button>
-        )}
-      </div>
-
-      {success && (
-        <Alert
-          type="success"
-          message={success}
-          onClose={() => setSuccess(null)}
-        />
-      )}
-
-      {/* Filtros de búsqueda */}
-      <Card>
-        <div className="flex flex-col md:flex-row gap-4 mb-4">
-          <Input
-            placeholder="Buscar por nombre o email..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1"
-          />
-          <select
-            value={filterEspecialidad}
-            onChange={(e) => setFilterEspecialidad(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Todas las especialidades</option>
-            {ESPECIALIDADES.map((esp) => (
-              <option key={esp} value={esp}>
-                {esp}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="text-sm text-gray-600">
-          Mostrando {docentesFiltradosCompletos.length} de {docentes.length}{" "}
-          docentes
-        </div>
-      </Card>
-
-      <Card>
-        <Table
-          columns={columns}
-          data={docentesFiltradosCompletos}
-          loading={loading}
-          onView={handleView}
-          onEdit={permissions.canEdit ? handleEdit : undefined}
-          onDelete={permissions.canDelete ? handleDelete : undefined}
-        />
-      </Card>
-
-      {(user?.role === "admin" || user?.role === "auxiliar") &&
-        pagination.totalItems > 0 && (
-          <Pagination
-            currentPage={pagination.currentPage}
-            lastPage={pagination.totalPages}
-            total={pagination.totalItems}
-            perPage={pagination.perPage}
-            onPageChange={(page) => {
-              pagination.goToPage(page);
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-            onPerPageChange={(newPerPage) => {
-              pagination.updatePagination({ perPage: newPerPage });
-            }}
-          />
-        )}
-
-      <Modal
-        isOpen={isOpen}
-        onClose={close}
-        title={editingItem ? "Editar Docente" : "Nuevo Docente"}
-        size="lg"
-      >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <Alert
-              type="error"
-              message={error}
-              onClose={() => setError(null)}
-            />
-          )}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Input
-              label="Nombres"
-              value={formData.nombres}
-              onChange={(e) =>
-                setFormData({ ...formData, nombres: e.target.value })
-              }
-              required
-              placeholder="Roberto"
-            />
-            <Input
-              label="Apellido Paterno"
-              value={formData.apellido_paterno}
-              onChange={(e) =>
-                setFormData({ ...formData, apellido_paterno: e.target.value })
-              }
-              required
-              placeholder="García"
-            />
-            <Input
-              label="Apellido Materno"
-              value={formData.apellido_materno}
-              onChange={(e) =>
-                setFormData({ ...formData, apellido_materno: e.target.value })
-              }
-              required
-              placeholder="López"
-            />
-          </div>
-          <Input
-            label="DNI"
-            value={formData.dni}
-            onChange={(e) => {
-              const value = e.target.value.replace(/\D/g, "");
-              if (value.length <= 8) {
-                setFormData({ ...formData, dni: value });
-              }
-            }}
-            placeholder="12345678"
-            required
-            maxLength={8}
-            pattern="[0-9]{8}"
-          />
-          <Input
-            label="Email"
-            type="email"
-            value={formData.email}
-            onChange={(e) =>
-              setFormData({ ...formData, email: e.target.value })
-            }
-            placeholder="docente@colegio.pe"
-            required
-          />
+        <div className="flex items-center justify-between">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Especialidad *
-            </label>
+            <h1 className="text-3xl font-bold text-gray-900">Docentes</h1>
+            <p className="text-gray-600 mt-2">
+              Gestión de docentes del colegio
+            </p>
+          </div>
+          {permissions.canCreate && (
+            <Button variant="primary" onClick={handleCreate}>
+              + Nuevo Docente
+            </Button>
+          )}
+        </div>
+
+        {success && (
+          <Alert
+            type="success"
+            message={success}
+            onClose={() => setSuccess(null)}
+          />
+        )}
+
+        {/* Filtros de búsqueda */}
+        <Card>
+          <div className="flex flex-col md:flex-row gap-4 mb-4">
+            <Input
+              placeholder="Buscar por nombre o email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="flex-1"
+            />
             <select
-              value={formData.especialidad}
-              onChange={(e) =>
-                setFormData({ ...formData, especialidad: e.target.value })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
+              value={filterEspecialidad}
+              onChange={(e) => setFilterEspecialidad(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Seleccionar especialidad</option>
+              <option value="">Todas las especialidades</option>
               {ESPECIALIDADES.map((esp) => (
                 <option key={esp} value={esp}>
                   {esp}
@@ -386,122 +267,243 @@ export default function DocentesPage() {
               ))}
             </select>
           </div>
-          <Input
-            label="Teléfono (9 dígitos)"
-            value={formData.telefono}
-            onChange={(e) => {
-              const value = e.target.value.replace(/\D/g, "");
-              if (value.length <= 9) {
-                setFormData({ ...formData, telefono: value });
-              }
-            }}
-            placeholder="987654321"
-            maxLength={9}
-            pattern="9[0-9]{8}"
-          />
-          <Input
-            label="Dirección"
-            value={formData.direccion}
-            onChange={(e) =>
-              setFormData({ ...formData, direccion: e.target.value })
-            }
-            placeholder="Av. Principal 123"
-          />
-
-          <div className="flex justify-end gap-3 pt-4">
-            <Button variant="secondary" type="button" onClick={close}>
-              Cancelar
-            </Button>
-            <Button variant="primary" type="submit">
-              {editingItem ? "Actualizar" : "Guardar"}
-            </Button>
+          <div className="text-sm text-gray-600">
+            Mostrando {docentesFiltradosCompletos.length} de {docentes.length}{" "}
+            docentes
           </div>
-        </form>
-      </Modal>
+        </Card>
 
-      <Modal
-        isOpen={isViewModalOpen}
-        onClose={() => setIsViewModalOpen(false)}
-        title="Detalle del Docente"
-        size="md"
-      >
-        {viewingItem && (
-          <div className="space-y-6">
-            <div className="border-b pb-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                Información Personal
-              </h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-500">ID</p>
-                  <p className="font-medium">{viewingItem.id}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">DNI</p>
-                  <p className="font-medium">
-                    {viewingItem.dni || "No registrado"}
-                  </p>
-                </div>
-                <div className="col-span-2">
-                  <p className="text-sm text-gray-500">Nombre Completo</p>
-                  <p className="font-medium">
-                    {`${viewingItem.nombres} ${viewingItem.apellido_paterno} ${viewingItem.apellido_materno}`}
-                  </p>
-                </div>
-              </div>
+        <Card>
+          <Table
+            columns={columns}
+            data={docentesFiltradosCompletos}
+            loading={loading}
+            onView={handleView}
+            onEdit={permissions.canEdit ? handleEdit : undefined}
+            onDelete={permissions.canDelete ? handleDelete : undefined}
+          />
+        </Card>
+
+        {(user?.role === "admin" || user?.role === "auxiliar") &&
+          pagination.totalItems > 0 && (
+            <Pagination
+              currentPage={pagination.currentPage}
+              lastPage={pagination.totalPages}
+              total={pagination.totalItems}
+              perPage={pagination.perPage}
+              onPageChange={(page) => {
+                pagination.goToPage(page);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              onPerPageChange={(newPerPage) => {
+                pagination.updatePagination({ perPage: newPerPage });
+              }}
+            />
+          )}
+
+        <Modal
+          isOpen={isOpen}
+          onClose={close}
+          title={editingItem ? "Editar Docente" : "Nuevo Docente"}
+          size="lg"
+        >
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <Alert
+                type="error"
+                message={error}
+                onClose={() => setError(null)}
+              />
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Input
+                label="Nombres"
+                value={formData.nombres}
+                onChange={(e) =>
+                  setFormData({ ...formData, nombres: e.target.value })
+                }
+                required
+                placeholder="Roberto"
+              />
+              <Input
+                label="Apellido Paterno"
+                value={formData.apellido_paterno}
+                onChange={(e) =>
+                  setFormData({ ...formData, apellido_paterno: e.target.value })
+                }
+                required
+                placeholder="García"
+              />
+              <Input
+                label="Apellido Materno"
+                value={formData.apellido_materno}
+                onChange={(e) =>
+                  setFormData({ ...formData, apellido_materno: e.target.value })
+                }
+                required
+                placeholder="López"
+              />
             </div>
-
-            <div className="border-b pb-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                Información de Contacto
-              </h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-500">Email</p>
-                  <p className="font-medium">
-                    {viewingItem.email || "No registrado"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Teléfono</p>
-                  <p className="font-medium">
-                    {viewingItem.telefono || "No registrado"}
-                  </p>
-                </div>
-                <div className="col-span-2">
-                  <p className="text-sm text-gray-500">Dirección</p>
-                  <p className="font-medium">
-                    {viewingItem.direccion || "No registrada"}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="border-b pb-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                Información Profesional
-              </h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-500">Especialidad</p>
-                  <p className="font-medium">
-                    {viewingItem.especialidad || "No especificada"}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end">
-              <Button
-                variant="secondary"
-                onClick={() => setIsViewModalOpen(false)}
+            <Input
+              label="DNI"
+              value={formData.dni}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, "");
+                if (value.length <= 8) {
+                  setFormData({ ...formData, dni: value });
+                }
+              }}
+              placeholder="12345678"
+              required
+              maxLength={8}
+              pattern="[0-9]{8}"
+            />
+            <Input
+              label="Email"
+              type="email"
+              value={formData.email}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
+              placeholder="docente@colegio.pe"
+              required
+            />
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Especialidad *
+              </label>
+              <select
+                value={formData.especialidad}
+                onChange={(e) =>
+                  setFormData({ ...formData, especialidad: e.target.value })
+                }
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
               >
-                Cerrar
+                <option value="">Seleccionar especialidad</option>
+                {ESPECIALIDADES.map((esp) => (
+                  <option key={esp} value={esp}>
+                    {esp}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <Input
+              label="Teléfono (9 dígitos)"
+              value={formData.telefono}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, "");
+                if (value.length <= 9) {
+                  setFormData({ ...formData, telefono: value });
+                }
+              }}
+              placeholder="987654321"
+              maxLength={9}
+              pattern="9[0-9]{8}"
+            />
+            <Input
+              label="Dirección"
+              value={formData.direccion}
+              onChange={(e) =>
+                setFormData({ ...formData, direccion: e.target.value })
+              }
+              placeholder="Av. Principal 123"
+            />
+
+            <div className="flex justify-end gap-3 pt-4">
+              <Button variant="secondary" type="button" onClick={close}>
+                Cancelar
+              </Button>
+              <Button variant="primary" type="submit">
+                {editingItem ? "Actualizar" : "Guardar"}
               </Button>
             </div>
-          </div>
-        )}
-      </Modal>
+          </form>
+        </Modal>
+
+        <Modal
+          isOpen={isViewModalOpen}
+          onClose={() => setIsViewModalOpen(false)}
+          title="Detalle del Docente"
+          size="md"
+        >
+          {viewingItem && (
+            <div className="space-y-6">
+              <div className="border-b pb-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  Información Personal
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-500">ID</p>
+                    <p className="font-medium">{viewingItem.id}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">DNI</p>
+                    <p className="font-medium">
+                      {viewingItem.dni || "No registrado"}
+                    </p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-sm text-gray-500">Nombre Completo</p>
+                    <p className="font-medium">
+                      {`${viewingItem.nombres} ${viewingItem.apellido_paterno} ${viewingItem.apellido_materno}`}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-b pb-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  Información de Contacto
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-500">Email</p>
+                    <p className="font-medium">
+                      {viewingItem.email || "No registrado"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Teléfono</p>
+                    <p className="font-medium">
+                      {viewingItem.telefono || "No registrado"}
+                    </p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-sm text-gray-500">Dirección</p>
+                    <p className="font-medium">
+                      {viewingItem.direccion || "No registrada"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-b pb-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  Información Profesional
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-500">Especialidad</p>
+                    <p className="font-medium">
+                      {viewingItem.especialidad || "No especificada"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <Button
+                  variant="secondary"
+                  onClick={() => setIsViewModalOpen(false)}
+                >
+                  Cerrar
+                </Button>
+              </div>
+            </div>
+          )}
+        </Modal>
       </div>
     </PermissionGuard>
   );

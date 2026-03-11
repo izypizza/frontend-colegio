@@ -56,13 +56,12 @@ export default function BibliotecaEstudiantePage() {
 
       const endTime = performance.now();
       console.log(
-        `[Biblioteca] Datos cargados en ${(endTime - startTime).toFixed(0)}ms`
+        `[Biblioteca] Datos cargados en ${(endTime - startTime).toFixed(0)}ms`,
       );
-      
-      // Manejar respuesta que puede venir paginada o como array directo
-      const librosArray = Array.isArray(librosData) ? librosData : (librosData?.data || []);
-      const prestamosArray = Array.isArray(prestamosData) ? prestamosData : (prestamosData?.data || []);
-      
+
+      const librosArray = Array.isArray(librosData) ? librosData : [];
+      const prestamosArray = Array.isArray(prestamosData) ? prestamosData : [];
+
       console.log("[Biblioteca] Libros:", librosArray.length);
       console.log("[Biblioteca] Préstamos:", prestamosArray.length);
 
@@ -82,7 +81,7 @@ export default function BibliotecaEstudiantePage() {
 
       // Verificar si ya tiene un préstamo activo de este libro
       const prestamoActivo = misPrestamos.find(
-        (p) => p.libro_id === libroId && !p.devuelto
+        (p) => p.libro_id === libroId && !p.devuelto,
       );
 
       if (prestamoActivo) {
@@ -96,7 +95,7 @@ export default function BibliotecaEstudiantePage() {
       });
 
       setSuccess(
-        "Préstamo solicitado correctamente. Acércate a la biblioteca para recoger el libro."
+        "Préstamo solicitado correctamente. Acércate a la biblioteca para recoger el libro.",
       );
       fetchData(); // Recargar datos
     } catch (err: any) {
@@ -125,8 +124,8 @@ export default function BibliotecaEstudiantePage() {
     new Map(
       libros
         .filter((l) => l.categoria)
-        .map((l) => [l.categoria!.id, l.categoria!])
-    ).values()
+        .map((l) => [l.categoria!.id, l.categoria!]),
+    ).values(),
   );
 
   const prestamosActivos = misPrestamos.filter((p) => !p.devuelto);
@@ -181,13 +180,13 @@ export default function BibliotecaEstudiantePage() {
                 <p className="text-sm text-gray-600">
                   Fecha de préstamo:{" "}
                   {new Date(prestamo.fecha_prestamo).toLocaleDateString(
-                    "es-PE"
+                    "es-PE",
                   )}
                 </p>
                 <p className="text-sm font-semibold text-yellow-700">
                   Fecha de devolución:{" "}
                   {new Date(prestamo.fecha_devolucion).toLocaleDateString(
-                    "es-PE"
+                    "es-PE",
                   )}
                 </p>
                 <div className="mt-2">
@@ -334,12 +333,12 @@ export default function BibliotecaEstudiantePage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {new Date(prestamo.fecha_prestamo).toLocaleDateString(
-                        "es-PE"
+                        "es-PE",
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {new Date(prestamo.fecha_devolucion).toLocaleDateString(
-                        "es-PE"
+                        "es-PE",
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

@@ -63,7 +63,7 @@ export default function ChatPage() {
 
     try {
       setCreating(true);
-      const padre = user?.padre;
+      const padre = (user as any)?.padre;
 
       if (!padre) {
         alert(
