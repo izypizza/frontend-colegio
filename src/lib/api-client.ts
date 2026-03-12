@@ -67,7 +67,7 @@ class ApiClient {
       if (response.status === HTTP_STATUS.FORBIDDEN) {
         const errorMessage =
           data?.message || "No tiene permisos para acceder a este recurso";
-        
+
         // No hacer console.error aquí, será manejado por el componente
         const error: any = new Error(errorMessage);
         error.response = {
@@ -118,6 +118,7 @@ class ApiClient {
     try {
       const response = await fetch(url, {
         ...fetchOptions,
+        credentials: "include",
         headers: this.getHeaders(true),
         signal: controller.signal,
       });
