@@ -6,9 +6,22 @@ import { UserRole } from "@/src/types";
 export const MODULE_PERMISSIONS: Record<string, Record<string, UserRole[]>> = {
   // Biblioteca
   biblioteca: {
-    view: [UserRole.ADMIN, UserRole.BIBLIOTECARIO],
+    view: [
+      UserRole.ADMIN,
+      UserRole.BIBLIOTECARIO,
+      UserRole.ESTUDIANTE,
+      UserRole.DOCENTE,
+    ],
     create: [UserRole.ADMIN, UserRole.BIBLIOTECARIO],
     edit: [UserRole.ADMIN, UserRole.BIBLIOTECARIO],
+    delete: [UserRole.ADMIN, UserRole.BIBLIOTECARIO],
+  },
+
+  // Gestión de cuentas de bibliotecarios (solo administración)
+  bibliotecarios: {
+    view: [UserRole.ADMIN],
+    create: [UserRole.ADMIN],
+    edit: [UserRole.ADMIN],
     delete: [UserRole.ADMIN],
   },
 
@@ -52,13 +65,7 @@ export const MODULE_PERMISSIONS: Record<string, Record<string, UserRole[]>> = {
 
   // Asistencias
   asistencias: {
-    view: [
-      UserRole.ADMIN,
-      UserRole.AUXILIAR,
-      UserRole.DOCENTE,
-      UserRole.ESTUDIANTE,
-      UserRole.PADRE,
-    ],
+    view: [UserRole.ADMIN, UserRole.AUXILIAR, UserRole.DOCENTE],
     create: [UserRole.ADMIN, UserRole.AUXILIAR, UserRole.DOCENTE],
     edit: [UserRole.ADMIN, UserRole.AUXILIAR, UserRole.DOCENTE],
     delete: [UserRole.ADMIN],
@@ -121,14 +128,20 @@ export const MODULE_PERMISSIONS: Record<string, Record<string, UserRole[]>> = {
       UserRole.ESTUDIANTE,
       UserRole.PADRE,
     ],
-    create: [UserRole.ADMIN, UserRole.AUXILIAR],
-    edit: [UserRole.ADMIN, UserRole.AUXILIAR],
+    create: [UserRole.ADMIN],
+    edit: [UserRole.ADMIN],
     delete: [UserRole.ADMIN],
   },
 
   // Secciones
   secciones: {
-    view: [UserRole.ADMIN, UserRole.AUXILIAR],
+    view: [
+      UserRole.ADMIN,
+      UserRole.AUXILIAR,
+      UserRole.DOCENTE,
+      UserRole.PADRE,
+      UserRole.ESTUDIANTE,
+    ],
     create: [UserRole.ADMIN],
     edit: [UserRole.ADMIN],
     delete: [UserRole.ADMIN],
@@ -170,7 +183,6 @@ export function hasPermission(
 ): boolean {
   const modulePermissions = MODULE_PERMISSIONS[module];
   if (!modulePermissions) {
-    console.warn(`Módulo "${module}" no tiene permisos definidos`);
     return false;
   }
 

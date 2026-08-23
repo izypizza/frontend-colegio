@@ -29,7 +29,7 @@ import { UserRole } from "@/src/types";
 
 export default function HorariosPage() {
   const { user } = useAuth();
-  const permissions = usePermissions('horarios');
+  const permissions = usePermissions("horarios");
   const [horarios, setHorarios] = useState<Horario[]>([]);
   const [secciones, setSecciones] = useState<Seccion[]>([]);
   const [materias, setMaterias] = useState<Materia[]>([]);
@@ -104,7 +104,9 @@ export default function HorariosPage() {
           totalItems: horariosData.total || 0,
         });
       } else {
-        const horariosArray = Array.isArray(horariosData) ? horariosData : (horariosData as any)?.data || [];
+        const horariosArray = Array.isArray(horariosData)
+          ? horariosData
+          : (horariosData as any)?.data || [];
         setHorarios(horariosArray);
       }
 
@@ -129,7 +131,8 @@ export default function HorariosPage() {
 
       if (user?.role === "docente") {
         // Docentes obtienen horarios de sus secciones
-        const asignacionesData = await docentePortalService.misAsignaciones() as any;
+        const asignacionesData =
+          (await docentePortalService.misAsignaciones()) as any;
         const asignaciones = asignacionesData.asignaciones || [];
 
         // Extraer secciones y materias únicas
@@ -159,38 +162,46 @@ export default function HorariosPage() {
         setHorarios(horariosFiltrados);
       } else if (user?.role === "estudiante") {
         // Estudiantes ven el horario de su sección
-        const perfilData = await estudiantePortalService.miPerfil() as any;
+        const perfilData = (await estudiantePortalService.miPerfil()) as any;
         const estudiante = perfilData.estudiante || perfilData;
 
         if (estudiante?.seccion_id) {
-          const [horariosData, materiasData] = await Promise.all([
+          const [horariosData, materiasData] = (await Promise.all([
             horarioService.getAll(),
             materiaService.getAll(),
-          ]) as any[];
+          ])) as any[];
 
           // Manejar respuesta paginada o sin paginar
-          const horariosArray = Array.isArray(horariosData) ? horariosData : horariosData?.data || [];
+          const horariosArray = Array.isArray(horariosData)
+            ? horariosData
+            : horariosData?.data || [];
 
           const horariosFiltrados = horariosArray.filter(
             (h: Horario) => h.seccion_id === estudiante.seccion_id,
           );
           setHorarios(horariosFiltrados);
           setSecciones([estudiante.seccion]);
-          setMaterias(Array.isArray(materiasData) ? materiasData : materiasData?.data || []);
+          setMaterias(
+            Array.isArray(materiasData)
+              ? materiasData
+              : materiasData?.data || [],
+          );
         }
       } else if (user?.role === "padre") {
         // Padres ven horarios de sus hijos
-        const hijosData = await padrePortalService.misHijos() as any;
+        const hijosData = (await padrePortalService.misHijos()) as any;
         const hijos = hijosData.hijos || [];
 
         if (hijos.length > 0) {
-          const [horariosData, materiasData] = await Promise.all([
+          const [horariosData, materiasData] = (await Promise.all([
             horarioService.getAll(),
             materiaService.getAll(),
-          ]) as any[];
+          ])) as any[];
 
           // Manejar respuesta paginada o sin paginar
-          const horariosArray = Array.isArray(horariosData) ? horariosData : horariosData?.data || [];
+          const horariosArray = Array.isArray(horariosData)
+            ? horariosData
+            : horariosData?.data || [];
 
           const seccionIds = hijos.map((h: any) => h.seccion_id);
           const horariosFiltrados = horariosArray.filter((h: Horario) =>
@@ -198,7 +209,11 @@ export default function HorariosPage() {
           );
           setHorarios(horariosFiltrados);
           setSecciones(hijos.map((h: any) => h.seccion).filter(Boolean));
-          setMaterias(Array.isArray(materiasData) ? materiasData : materiasData?.data || []);
+          setMaterias(
+            Array.isArray(materiasData)
+              ? materiasData
+              : materiasData?.data || [],
+          );
         }
       } else {
         // Admin/Auxiliar usan endpoints generales con paginación
@@ -224,7 +239,9 @@ export default function HorariosPage() {
             totalItems: horariosData.total || 0,
           });
         } else {
-          const horariosArray = Array.isArray(horariosData) ? horariosData : (horariosData as any)?.data || [];
+          const horariosArray = Array.isArray(horariosData)
+            ? horariosData
+            : (horariosData as any)?.data || [];
           setHorarios(horariosArray);
         }
 
@@ -359,7 +376,13 @@ export default function HorariosPage() {
 
   return (
     <PermissionGuard
-      requiredRoles={[UserRole.ADMIN, UserRole.AUXILIAR, UserRole.DOCENTE, UserRole.ESTUDIANTE, UserRole.PADRE]}
+      requiredRoles={[
+        UserRole.ADMIN,
+        UserRole.AUXILIAR,
+        UserRole.DOCENTE,
+        UserRole.ESTUDIANTE,
+        UserRole.PADRE,
+      ]}
       fallback={
         <div className="p-6">
           <Alert
@@ -370,288 +393,295 @@ export default function HorariosPage() {
       }
     >
       <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Horarios</h1>
-          <p className="text-gray-600 mt-2">Gestión de horarios de clases</p>
-        </div>
-        {permissions.canCreate && (
-          <Button variant="primary" onClick={handleCreate}>
-            + Nuevo Horario
-          </Button>
-        )}
-      </div>
-
-      {error && (
-        <Alert type="error" message={error} onClose={() => setError(null)} />
-      )}
-      {success && (
-        <Alert
-          type="success"
-          message={success}
-          onClose={() => setSuccess(null)}
-        />
-      )}
-
-      {/* Controles */}
-      <Card>
-        <div className="flex flex-wrap gap-4 items-center justify-between">
-          <div className="flex gap-2">
-            <button
-              onClick={() => setViewMode("calendario")}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                viewMode === "calendario"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
-            >
-              Vista Calendario
-            </button>
-            <button
-              onClick={() => setViewMode("lista")}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                viewMode === "lista"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
-            >
-              Vista Lista
-            </button>
-          </div>
-
-          <select
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={selectedSeccion}
-            onChange={(e) => setSelectedSeccion(e.target.value)}
-          >
-            <option value="">Todas las secciones</option>
-            {secciones.map((seccion, index) => (
-              <option key={`${seccion.id}-${index}`} value={seccion.id}>
-                {seccion.nombre} - {seccion.grado?.nombre}
-              </option>
-            ))}
-          </select>
-        </div>
-      </Card>
-
-      {/* Vista Calendario */}
-      {viewMode === "calendario" ? (
-        <Card>
-          {loading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-4 text-gray-600">Cargando horarios...</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full border-collapse">
-                <thead>
-                  <tr className="bg-gradient-to-r from-blue-600 to-blue-500">
-                    <th className="sticky left-0 z-10 bg-blue-600 border border-blue-400 px-2 py-2 text-left text-xs font-bold text-white w-16">
-                      HORA
-                    </th>
-                    {dias.map((dia) => (
-                      <th
-                        key={dia}
-                        className="border border-blue-400 px-2 py-2 text-center text-xs font-bold text-white uppercase min-w-[140px]"
-                      >
-                        {dia}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {horas.map((hora, idx) => (
-                    <tr
-                      key={hora}
-                      className={idx % 2 === 0 ? "bg-gray-50" : "bg-white"}
-                    >
-                      <td className="sticky left-0 z-10 border border-gray-300 px-2 py-2 text-xs font-bold text-gray-800 whitespace-nowrap bg-gradient-to-r from-gray-100 to-gray-50">
-                        {hora}
-                      </td>
-                      {dias.map((dia) => {
-                        const horario = getHorarioParaCelda(dia, hora);
-                        return (
-                          <td
-                            key={`${dia}-${hora}`}
-                            className="border border-gray-300 p-1 align-top h-20"
-                          >
-                            {horario && (
-                              <div
-                                className={`${getColorMateria(
-                                  horario.materia_id,
-                                )} border-l-4 rounded-lg p-2 h-full cursor-pointer hover:shadow-lg transition-all`}
-                                onClick={() =>
-                                  (user?.role === "admin" ||
-                                    user?.role === "auxiliar") &&
-                                  handleEdit(horario)
-                                }
-                              >
-                                <div className="font-bold text-xs mb-0.5 line-clamp-2">
-                                  {horario.materia?.nombre}
-                                </div>
-                                {(user?.role === "admin" ||
-                                  user?.role === "auxiliar") && (
-                                  <div className="text-[10px] text-gray-700 mb-0.5 truncate">
-                                    {horario.seccion?.nombre} -{" "}
-                                    {horario.seccion?.grado?.nombre}
-                                  </div>
-                                )}
-                                <div className="text-[10px] font-medium text-gray-600">
-                                  {horario.hora_inicio.substring(0, 5)} -{" "}
-                                  {horario.hora_fin.substring(0, 5)}
-                                </div>
-                              </div>
-                            )}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {horariosFiltrados.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  No hay horarios registrados
-                  {selectedSeccion ? " para esta sección" : ""}
-                </div>
-              )}
-            </div>
-          )}
-        </Card>
-      ) : (
-        <>
-          <Card>
-            <Table
-              columns={columns}
-              data={horariosFiltrados}
-              loading={loading}
-              onEdit={permissions.canEdit ? handleEdit : undefined}
-              onDelete={permissions.canDelete ? handleDelete : undefined}
-            />
-          </Card>
-
-          {(user?.role === "admin" || user?.role === "auxiliar") &&
-            pagination.totalItems > 0 && (
-              <Pagination
-                currentPage={pagination.currentPage}
-                lastPage={pagination.totalPages}
-                total={pagination.totalItems}
-                perPage={pagination.perPage}
-                onPageChange={(page) => {
-                  pagination.goToPage(page);
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-                onPerPageChange={(newPerPage) => {
-                  pagination.updatePagination({ perPage: newPerPage });
-                }}
-              />
-            )}
-        </>
-      )}
-
-      <Modal
-        isOpen={isOpen}
-        onClose={close}
-        title={editingItem ? "Editar Horario" : "Nuevo Horario"}
-        size="lg"
-        footer={
-          <>
-            <Button variant="secondary" onClick={close}>
-              Cancelar
-            </Button>
-            <Button variant="primary" onClick={handleSubmit}>
-              Guardar
-            </Button>
-          </>
-        }
-      >
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="flex items-center justify-between">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Sección
-            </label>
+            <h1 className="text-3xl font-bold text-gray-900">Horarios</h1>
+            <p className="text-gray-600 mt-2">Gestión de horarios de clases</p>
+          </div>
+          {permissions.canCreate && (
+            <Button variant="primary" onClick={handleCreate}>
+              + Nuevo Horario
+            </Button>
+          )}
+        </div>
+
+        {error && (
+          <Alert type="error" message={error} onClose={() => setError(null)} />
+        )}
+        {success && (
+          <Alert
+            type="success"
+            message={success}
+            onClose={() => setSuccess(null)}
+          />
+        )}
+
+        {/* Controles */}
+        <Card>
+          <div className="flex flex-wrap gap-4 items-center justify-between">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setViewMode("calendario")}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  viewMode === "calendario"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+              >
+                Vista Calendario
+              </button>
+              <button
+                onClick={() => setViewMode("lista")}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  viewMode === "lista"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+              >
+                Vista Lista
+              </button>
+            </div>
+
             <select
-              value={formData.seccion_id}
-              onChange={(e) =>
-                setFormData({ ...formData, seccion_id: e.target.value })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={selectedSeccion}
+              onChange={(e) => setSelectedSeccion(e.target.value)}
             >
-              <option value="">Seleccionar sección</option>
-              {secciones?.map((seccion) => (
-                <option key={seccion.id} value={seccion.id}>
+              <option value="">Todas las secciones</option>
+              {secciones.map((seccion, index) => (
+                <option key={`${seccion.id}-${index}`} value={seccion.id}>
                   {seccion.nombre} - {seccion.grado?.nombre}
                 </option>
               ))}
             </select>
           </div>
+        </Card>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Materia
-            </label>
-            <select
-              value={formData.materia_id}
-              onChange={(e) =>
-                setFormData({ ...formData, materia_id: e.target.value })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            >
-              <option value="">Seleccionar materia</option>
-              {materias?.map((materia) => (
-                <option key={materia.id} value={materia.id}>
-                  {materia.nombre}
-                </option>
-              ))}
-            </select>
-          </div>
+        {/* Vista Calendario */}
+        {viewMode === "calendario" ? (
+          <Card>
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="mt-4 text-gray-600">Cargando horarios...</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full border-collapse">
+                  <thead>
+                    <tr className="bg-gradient-to-r from-blue-600 to-blue-500">
+                      <th className="sticky left-0 z-10 bg-blue-600 border border-blue-400 px-2 py-2 text-left text-xs font-bold text-white w-16">
+                        HORA
+                      </th>
+                      {dias.map((dia) => (
+                        <th
+                          key={dia}
+                          className="border border-blue-400 px-2 py-2 text-center text-xs font-bold text-white uppercase min-w-[140px]"
+                        >
+                          {dia}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {horas.map((hora, idx) => (
+                      <tr
+                        key={hora}
+                        className={idx % 2 === 0 ? "bg-gray-50" : "bg-white"}
+                      >
+                        <td className="sticky left-0 z-10 border border-gray-300 px-2 py-2 text-xs font-bold text-gray-800 whitespace-nowrap bg-gradient-to-r from-gray-100 to-gray-50">
+                          {hora}
+                        </td>
+                        {dias.map((dia) => {
+                          const horario = getHorarioParaCelda(dia, hora);
+                          return (
+                            <td
+                              key={`${dia}-${hora}`}
+                              className="border border-gray-300 p-1 align-top h-20"
+                            >
+                              {horario && (
+                                <div
+                                  className={`${getColorMateria(
+                                    horario.materia_id,
+                                  )} border-l-4 rounded-lg p-2 h-full cursor-pointer hover:shadow-lg transition-all`}
+                                  onClick={() =>
+                                    (user?.role === "admin" ||
+                                      user?.role === "auxiliar") &&
+                                    handleEdit(horario)
+                                  }
+                                >
+                                  <div className="font-bold text-xs mb-0.5 line-clamp-2">
+                                    {horario.materia?.nombre}
+                                  </div>
+                                  {(user?.role === "admin" ||
+                                    user?.role === "auxiliar") && (
+                                    <div className="text-[10px] text-gray-700 mb-0.5 truncate">
+                                      {horario.seccion?.nombre} -{" "}
+                                      {horario.seccion?.grado?.nombre}
+                                    </div>
+                                  )}
+                                  <div className="text-[10px] font-medium text-gray-600">
+                                    {horario.hora_inicio.substring(0, 5)} -{" "}
+                                    {horario.hora_fin.substring(0, 5)}
+                                  </div>
+                                </div>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {horariosFiltrados.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    No hay horarios registrados
+                    {selectedSeccion ? " para esta sección" : ""}
+                  </div>
+                )}
+              </div>
+            )}
+          </Card>
+        ) : (
+          <>
+            <Card>
+              <Table
+                columns={columns}
+                data={horariosFiltrados}
+                loading={loading}
+                onEdit={permissions.canEdit ? handleEdit : undefined}
+                onDelete={permissions.canDelete ? handleDelete : undefined}
+              />
+            </Card>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Día
-            </label>
-            <select
-              value={formData.dia}
-              onChange={(e) =>
-                setFormData({ ...formData, dia: e.target.value })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            >
-              <option value="">Seleccionar día</option>
-              {dias?.map((dia) => (
-                <option key={dia} value={dia}>
-                  {dia}
-                </option>
-              ))}
-            </select>
-          </div>
+            {(user?.role === "admin" || user?.role === "auxiliar") &&
+              pagination.totalItems > 0 && (
+                <Pagination
+                  currentPage={pagination.currentPage}
+                  lastPage={pagination.totalPages}
+                  total={pagination.totalItems}
+                  perPage={pagination.perPage}
+                  onPageChange={(page) => {
+                    pagination.goToPage(page);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  onPerPageChange={(newPerPage) => {
+                    pagination.updatePagination({ perPage: newPerPage });
+                  }}
+                />
+              )}
+          </>
+        )}
 
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Hora Inicio"
-              type="time"
-              value={formData.hora_inicio}
-              onChange={(e) =>
-                setFormData({ ...formData, hora_inicio: e.target.value })
-              }
-              required
-            />
-            <Input
-              label="Hora Fin"
-              type="time"
-              value={formData.hora_fin}
-              onChange={(e) =>
-                setFormData({ ...formData, hora_fin: e.target.value })
-              }
-              required
-            />
-          </div>
-        </form>
-      </Modal>
+        <Modal
+          isOpen={isOpen}
+          onClose={close}
+          title={editingItem ? "Editar Horario" : "Nuevo Horario"}
+          size="lg"
+          footer={
+            <>
+              <Button variant="secondary" onClick={close}>
+                Cancelar
+              </Button>
+              <Button variant="primary" onClick={handleSubmit}>
+                Guardar
+              </Button>
+            </>
+          }
+        >
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <Alert
+                type="error"
+                message={error}
+                onClose={() => setError(null)}
+              />
+            )}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Sección
+              </label>
+              <select
+                value={formData.seccion_id}
+                onChange={(e) =>
+                  setFormData({ ...formData, seccion_id: e.target.value })
+                }
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="">Seleccionar sección</option>
+                {secciones?.map((seccion) => (
+                  <option key={seccion.id} value={seccion.id}>
+                    {seccion.nombre} - {seccion.grado?.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Materia
+              </label>
+              <select
+                value={formData.materia_id}
+                onChange={(e) =>
+                  setFormData({ ...formData, materia_id: e.target.value })
+                }
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="">Seleccionar materia</option>
+                {materias?.map((materia) => (
+                  <option key={materia.id} value={materia.id}>
+                    {materia.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Día
+              </label>
+              <select
+                value={formData.dia}
+                onChange={(e) =>
+                  setFormData({ ...formData, dia: e.target.value })
+                }
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="">Seleccionar día</option>
+                {dias?.map((dia) => (
+                  <option key={dia} value={dia}>
+                    {dia}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="Hora Inicio"
+                type="time"
+                value={formData.hora_inicio}
+                onChange={(e) =>
+                  setFormData({ ...formData, hora_inicio: e.target.value })
+                }
+                required
+              />
+              <Input
+                label="Hora Fin"
+                type="time"
+                value={formData.hora_fin}
+                onChange={(e) =>
+                  setFormData({ ...formData, hora_fin: e.target.value })
+                }
+                required
+              />
+            </div>
+          </form>
+        </Modal>
       </div>
     </PermissionGuard>
   );

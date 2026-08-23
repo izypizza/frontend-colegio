@@ -14,13 +14,6 @@ export const ROUTES = {
   LOGIN: "/login",
   DASHBOARD: "/dashboard",
   HOME: "/",
-  STUDENTS: "/dashboard/estudiantes",
-  TEACHERS: "/dashboard/docentes",
-  SUBJECTS: "/dashboard/materias",
-  SCHEDULE: "/dashboard/horarios",
-  GRADES: "/dashboard/calificaciones",
-  ATTENDANCE: "/dashboard/asistencias",
-  SETTINGS: "/dashboard/configuracion",
 } as const;
 
 // HTTP Status codes

@@ -28,7 +28,7 @@ interface AuxiliarPermiso {
 }
 
 export default function PermisosAuxiliaresPage() {
-  const permissions = usePermissions('permisos_auxiliares');
+  const permissions = usePermissions("permisos_auxiliares");
   const [permisos, setPermisos] = useState<AuxiliarPermiso[]>([]);
   const [auxiliares, setAuxiliares] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -218,166 +218,177 @@ export default function PermisosAuxiliaresPage() {
       }
     >
       <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Permisos Especiales para Auxiliares
-          </h1>
-          <p className="text-gray-600 mt-2">
-            Gestión de permisos temporales para auxiliares
-          </p>
-        </div>
-        {permissions.canCreate && (
-          <Button variant="primary" onClick={handleCreate}>
-            + Configurar Permiso
-          </Button>
-        )}
-      </div>
-
-      {error && (
-        <Alert type="error" message={error} onClose={() => setError(null)} />
-      )}
-      {success && (
-        <Alert
-          type="success"
-          message={success}
-          onClose={() => setSuccess(null)}
-        />
-      )}
-
-      <Card>
-        <Table
-          columns={columns}
-          data={permisos}
-          loading={loading}
-          onEdit={permissions.canEdit ? handleEdit : undefined}
-          onDelete={permissions.canDelete ? (item: AuxiliarPermiso) => handleDesactivar(item.user_id) : undefined}
-        />
-      </Card>
-
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={selectedUserId ? "Editar Permisos" : "Configurar Permisos"}
-        size="lg"
-      >
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="flex items-center justify-between">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Auxiliar *
-            </label>
-            <select
-              value={formData.user_id}
-              onChange={(e) =>
-                setFormData({ ...formData, user_id: e.target.value })
-              }
-              required
-              disabled={!!selectedUserId}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Seleccionar auxiliar</option>
-              {auxiliares.map((aux) => (
-                <option key={aux.id} value={aux.id}>
-                  {aux.name} - {aux.email}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              Permisos a Otorgar *
-            </label>
-            <div className="space-y-2 bg-gray-50 p-3 rounded-md">
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={formData.puede_editar_estudiantes}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      puede_editar_estudiantes: e.target.checked,
-                    })
-                  }
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <span>Puede editar estudiantes</span>
-              </label>
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={formData.puede_editar_asistencias}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      puede_editar_asistencias: e.target.checked,
-                    })
-                  }
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <span>Puede editar asistencias</span>
-              </label>
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={formData.puede_editar_calificaciones}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      puede_editar_calificaciones: e.target.checked,
-                    })
-                  }
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <span>Puede editar calificaciones</span>
-              </label>
-            </div>
-          </div>
-
-          <Input
-            label="Válido Hasta (opcional)"
-            type="datetime-local"
-            value={formData.activado_hasta}
-            onChange={(e) =>
-              setFormData({ ...formData, activado_hasta: e.target.value })
-            }
-            helperText="Dejar vacío para permiso sin fecha de expiración"
-          />
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Motivo del Permiso Especial *
-            </label>
-            <textarea
-              value={formData.motivo}
-              onChange={(e) =>
-                setFormData({ ...formData, motivo: e.target.value })
-              }
-              required
-              rows={3}
-              maxLength={500}
-              placeholder="Ej: Secretaria de licencia médica por una semana"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              {formData.motivo.length}/500 caracteres
+            <h1 className="text-3xl font-bold text-gray-900">
+              Permisos Especiales para Auxiliares
+            </h1>
+            <p className="text-gray-600 mt-2">
+              Gestión de permisos temporales para auxiliares
             </p>
           </div>
+          {permissions.canCreate && (
+            <Button variant="primary" onClick={handleCreate}>
+              + Configurar Permiso
+            </Button>
+          )}
+        </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button
-              variant="secondary"
-              type="button"
-              onClick={() => setIsModalOpen(false)}
-            >
-              Cancelar
-            </Button>
-            <Button variant="primary" type="submit">
-              Guardar Permisos
-            </Button>
-          </div>
-        </form>
-      </Modal>
+        {error && (
+          <Alert type="error" message={error} onClose={() => setError(null)} />
+        )}
+        {success && (
+          <Alert
+            type="success"
+            message={success}
+            onClose={() => setSuccess(null)}
+          />
+        )}
+
+        <Card>
+          <Table
+            columns={columns}
+            data={permisos}
+            loading={loading}
+            onEdit={permissions.canEdit ? handleEdit : undefined}
+            onDelete={
+              permissions.canDelete
+                ? (item: AuxiliarPermiso) => handleDesactivar(item.user_id)
+                : undefined
+            }
+          />
+        </Card>
+
+        <Modal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          title={selectedUserId ? "Editar Permisos" : "Configurar Permisos"}
+          size="lg"
+        >
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <Alert
+                type="error"
+                message={error}
+                onClose={() => setError(null)}
+              />
+            )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Auxiliar *
+              </label>
+              <select
+                value={formData.user_id}
+                onChange={(e) =>
+                  setFormData({ ...formData, user_id: e.target.value })
+                }
+                required
+                disabled={!!selectedUserId}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Seleccionar auxiliar</option>
+                {auxiliares.map((aux) => (
+                  <option key={aux.id} value={aux.id}>
+                    {aux.name} - {aux.email}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Permisos a Otorgar *
+              </label>
+              <div className="space-y-2 bg-gray-50 p-3 rounded-md">
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.puede_editar_estudiantes}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        puede_editar_estudiantes: e.target.checked,
+                      })
+                    }
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span>Puede editar estudiantes</span>
+                </label>
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.puede_editar_asistencias}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        puede_editar_asistencias: e.target.checked,
+                      })
+                    }
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span>Puede editar asistencias</span>
+                </label>
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.puede_editar_calificaciones}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        puede_editar_calificaciones: e.target.checked,
+                      })
+                    }
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span>Puede editar calificaciones</span>
+                </label>
+              </div>
+            </div>
+
+            <Input
+              label="Válido Hasta (opcional)"
+              type="datetime-local"
+              value={formData.activado_hasta}
+              onChange={(e) =>
+                setFormData({ ...formData, activado_hasta: e.target.value })
+              }
+              helperText="Dejar vacío para permiso sin fecha de expiración"
+            />
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Motivo del Permiso Especial *
+              </label>
+              <textarea
+                value={formData.motivo}
+                onChange={(e) =>
+                  setFormData({ ...formData, motivo: e.target.value })
+                }
+                required
+                rows={3}
+                maxLength={500}
+                placeholder="Ej: Secretaria de licencia médica por una semana"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                {formData.motivo.length}/500 caracteres
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <Button
+                variant="secondary"
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button variant="primary" type="submit">
+                Guardar Permisos
+              </Button>
+            </div>
+          </form>
+        </Modal>
       </div>
     </PermissionGuard>
   );

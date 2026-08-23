@@ -321,6 +321,11 @@ export default function ChatPage() {
           title="Iniciar Nueva Conversación"
         >
           <div className="space-y-4">
+            {error && (
+              <div className="p-4 bg-red-50 border border-red-200 text-red-800 rounded-lg">
+                {error}
+              </div>
+            )}
             {/* Seleccionar hijo */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">

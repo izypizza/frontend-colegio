@@ -405,18 +405,10 @@ export const chatService = {
   getConversaciones: async (params?: any) => {
     return await apiClient.get<any>("/chat/conversaciones", { params });
   },
-  conversaciones: async (params?: any) => {
-    return await apiClient.get<any>("/chat/conversaciones", { params });
-  },
   crearConversacion: async (data: any) => {
     return await apiClient.post("/chat/conversaciones", data);
   },
   getMensajes: async (conversacionId: number) => {
-    return await apiClient.get<any>(
-      `/chat/conversaciones/${conversacionId}/mensajes`,
-    );
-  },
-  mensajes: async (conversacionId: number) => {
     return await apiClient.get<any>(
       `/chat/conversaciones/${conversacionId}/mensajes`,
     );

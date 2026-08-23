@@ -24,7 +24,7 @@ const ROLE = "auxiliar";
 
 export default function AuxiliaresPage() {
   const { user } = useAuth();
-  const permissions = usePermissions('auxiliares');
+  const permissions = usePermissions("auxiliares");
   const { error, success, setError, setSuccess, handleError } =
     useErrorHandler();
   const {
@@ -220,149 +220,169 @@ export default function AuxiliaresPage() {
       }
     >
       <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Auxiliares</h1>
-          <p className="text-gray-600">Gestiona cuentas de auxiliares</p>
-        </div>
-        {permissions.canCreate && (
-          <Button onClick={openCreate}>Nuevo auxiliar</Button>
-        )}
-      </div>
-
-      {error && (
-        <Alert
-          type="error"
-          message={error}
-          className="mb-4"
-          onClose={() => setError(null)}
-        />
-      )}
-      {success && (
-        <Alert
-          type="success"
-          message={success}
-          className="mb-4"
-          onClose={() => setSuccess(null)}
-        />
-      )}
-
-      <Card className="mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
-            placeholder="Buscar por nombre o email"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-      </Card>
-
-      <Card>
-        {loading ? (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
-            <p className="mt-4 text-gray-600">Cargando...</p>
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Auxiliares</h1>
+            <p className="text-gray-600">Gestiona cuentas de auxiliares</p>
           </div>
-        ) : (
-          <Table columns={columns} data={filtered} />
+          {permissions.canCreate && (
+            <Button onClick={openCreate}>Nuevo auxiliar</Button>
+          )}
+        </div>
+
+        {error && (
+          <Alert
+            type="error"
+            message={error}
+            className="mb-4"
+            onClose={() => setError(null)}
+          />
         )}
-      </Card>
+        {success && (
+          <Alert
+            type="success"
+            message={success}
+            className="mb-4"
+            onClose={() => setSuccess(null)}
+          />
+        )}
 
-      <Pagination
-        currentPage={currentPage}
-        lastPage={paginationData.lastPage}
-        total={paginationData.total}
-        perPage={perPage}
-        onPageChange={(page) => {
-          setCurrentPage(page);
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        }}
-        onPerPageChange={(newPerPage) => {
-          setPerPage(newPerPage);
-          setCurrentPage(1);
-        }}
-      />
-
-      <Modal isOpen={isCreateOpen} onClose={closeCreate} title="Nuevo auxiliar">
-        <div className="space-y-4">
-          <Input
-            label="Nombre"
-            value={createForm.name}
-            onChange={(e) =>
-              setCreateForm({ ...createForm, name: e.target.value })
-            }
-          />
-          <Input
-            label="Email"
-            value={createForm.email}
-            onChange={(e) =>
-              setCreateForm({ ...createForm, email: e.target.value })
-            }
-          />
-          <Input
-            label="Contraseña"
-            type="password"
-            value={createForm.password}
-            onChange={(e) =>
-              setCreateForm({ ...createForm, password: e.target.value })
-            }
-          />
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="create_active_aux"
-              checked={createForm.is_active}
-              onChange={(e) =>
-                setCreateForm({ ...createForm, is_active: e.target.checked })
-              }
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+        <Card className="mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              placeholder="Buscar por nombre o email"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
             />
-            <label
-              htmlFor="create_active_aux"
-              className="text-sm text-gray-700"
-            >
-              Usuario activo
-            </label>
           </div>
-          <div className="flex justify-end gap-2 mt-6">
-            <Button variant="secondary" onClick={closeCreate}>
-              Cancelar
-            </Button>
-            <Button onClick={handleCreate}>Crear</Button>
-          </div>
-        </div>
-      </Modal>
+        </Card>
 
-      <Modal isOpen={isEditOpen} onClose={closeEdit} title="Editar auxiliar">
-        <div className="space-y-4">
-          <Input
-            label="Nombre"
-            value={editForm.name}
-            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-          />
-          <Input
-            label="Email"
-            value={editForm.email}
-            onChange={(e) =>
-              setEditForm({ ...editForm, email: e.target.value })
-            }
-          />
-          <Input
-            label="Nueva contraseña (opcional)"
-            type="password"
-            value={editForm.password}
-            onChange={(e) =>
-              setEditForm({ ...editForm, password: e.target.value })
-            }
-          />
-          <div className="flex justify-end gap-2 mt-6">
-            <Button variant="secondary" onClick={closeEdit}>
-              Cancelar
-            </Button>
-            <Button onClick={handleUpdate}>Guardar</Button>
+        <Card>
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
+              <p className="mt-4 text-gray-600">Cargando...</p>
+            </div>
+          ) : (
+            <Table columns={columns} data={filtered} />
+          )}
+        </Card>
+
+        <Pagination
+          currentPage={currentPage}
+          lastPage={paginationData.lastPage}
+          total={paginationData.total}
+          perPage={perPage}
+          onPageChange={(page) => {
+            setCurrentPage(page);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          onPerPageChange={(newPerPage) => {
+            setPerPage(newPerPage);
+            setCurrentPage(1);
+          }}
+        />
+
+        <Modal
+          isOpen={isCreateOpen}
+          onClose={closeCreate}
+          title="Nuevo auxiliar"
+        >
+          <div className="space-y-4">
+            {error && (
+              <Alert
+                type="error"
+                message={error}
+                onClose={() => setError(null)}
+              />
+            )}
+            <Input
+              label="Nombre"
+              value={createForm.name}
+              onChange={(e) =>
+                setCreateForm({ ...createForm, name: e.target.value })
+              }
+            />
+            <Input
+              label="Email"
+              value={createForm.email}
+              onChange={(e) =>
+                setCreateForm({ ...createForm, email: e.target.value })
+              }
+            />
+            <Input
+              label="Contraseña"
+              type="password"
+              value={createForm.password}
+              onChange={(e) =>
+                setCreateForm({ ...createForm, password: e.target.value })
+              }
+            />
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="create_active_aux"
+                checked={createForm.is_active}
+                onChange={(e) =>
+                  setCreateForm({ ...createForm, is_active: e.target.checked })
+                }
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label
+                htmlFor="create_active_aux"
+                className="text-sm text-gray-700"
+              >
+                Usuario activo
+              </label>
+            </div>
+            <div className="flex justify-end gap-2 mt-6">
+              <Button variant="secondary" onClick={closeCreate}>
+                Cancelar
+              </Button>
+              <Button onClick={handleCreate}>Crear</Button>
+            </div>
           </div>
-        </div>
-      </Modal>
+        </Modal>
+
+        <Modal isOpen={isEditOpen} onClose={closeEdit} title="Editar auxiliar">
+          <div className="space-y-4">
+            {error && (
+              <Alert
+                type="error"
+                message={error}
+                onClose={() => setError(null)}
+              />
+            )}
+            <Input
+              label="Nombre"
+              value={editForm.name}
+              onChange={(e) =>
+                setEditForm({ ...editForm, name: e.target.value })
+              }
+            />
+            <Input
+              label="Email"
+              value={editForm.email}
+              onChange={(e) =>
+                setEditForm({ ...editForm, email: e.target.value })
+              }
+            />
+            <Input
+              label="Nueva contraseña (opcional)"
+              type="password"
+              value={editForm.password}
+              onChange={(e) =>
+                setEditForm({ ...editForm, password: e.target.value })
+              }
+            />
+            <div className="flex justify-end gap-2 mt-6">
+              <Button variant="secondary" onClick={closeEdit}>
+                Cancelar
+              </Button>
+              <Button onClick={handleUpdate}>Guardar</Button>
+            </div>
+          </div>
+        </Modal>
       </div>
     </PermissionGuard>
   );

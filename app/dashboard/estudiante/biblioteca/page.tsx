@@ -46,24 +46,14 @@ export default function BibliotecaEstudiantePage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      console.log("[Biblioteca] Cargando datos...");
-      const startTime = performance.now();
 
       const [librosData, prestamosData] = await Promise.all([
         apiClient.get<Libro[]>("/libros-disponibles"),
         apiClient.get<Prestamo[]>("/mis-prestamos"),
       ]);
 
-      const endTime = performance.now();
-      console.log(
-        `[Biblioteca] Datos cargados en ${(endTime - startTime).toFixed(0)}ms`,
-      );
-
       const librosArray = Array.isArray(librosData) ? librosData : [];
       const prestamosArray = Array.isArray(prestamosData) ? prestamosData : [];
-
-      console.log("[Biblioteca] Libros:", librosArray.length);
-      console.log("[Biblioteca] Préstamos:", prestamosArray.length);
 
       setLibros(librosArray);
       setMisPrestamos(prestamosArray);
