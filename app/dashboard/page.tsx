@@ -18,7 +18,6 @@ export default function DashboardPage() {
       try {
         setError(null);
         const data = await dashboardService.getStats();
-        console.log("Estadísticas cargadas:", data);
         setStats(data);
       } catch (error: any) {
         console.error("Error al cargar estadísticas:", error);
@@ -935,27 +934,36 @@ export default function DashboardPage() {
                 Actividad Reciente
               </h2>
               <div className="space-y-3">
-                {stats.actividad_reciente.map((actividad: any, idx: number) => (
-                  <div
-                    key={idx}
-                    className="flex items-start gap-3 pb-3 border-b last:border-b-0"
-                  >
+                {stats.actividad_reciente.map((actividad: any, idx: number) => {
+                  const colorClasses: Record<string, string> = {
+                    blue: "bg-blue-600",
+                    green: "bg-green-600",
+                    red: "bg-red-600",
+                  };
+                  return (
                     <div
-                      className={`w-2 h-2 rounded-full mt-2 bg-${actividad.color}-600`}
-                    ></div>
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-900">
-                        {actividad.titulo}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        {actividad.descripcion}
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        {actividad.fecha}
-                      </p>
+                      key={idx}
+                      className="flex items-start gap-3 pb-3 border-b last:border-b-0"
+                    >
+                      <div
+                        className={`w-2 h-2 rounded-full mt-2 ${
+                          colorClasses[actividad.color] || "bg-gray-600"
+                        }`}
+                      ></div>
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900">
+                          {actividad.titulo}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          {actividad.descripcion}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {actividad.fecha}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </Card>
           )}

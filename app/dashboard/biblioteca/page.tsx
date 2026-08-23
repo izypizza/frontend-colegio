@@ -650,6 +650,13 @@ export default function LibrosPage() {
             title="Nueva Categoría"
           >
             <form onSubmit={handleCategoriaSubmit} className="space-y-4">
+              {error && (
+                <Alert
+                  type="error"
+                  message={error}
+                  onClose={() => setError(null)}
+                />
+              )}
               <Input
                 label="Nombre de la categoría *"
                 value={categoriaForm.nombre}
@@ -697,6 +704,13 @@ export default function LibrosPage() {
             title={editingLibro ? "Editar Libro" : "Nuevo Libro"}
           >
             <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <Alert
+                  type="error"
+                  message={error}
+                  onClose={() => setError(null)}
+                />
+              )}
               <Input
                 label="Título *"
                 value={formData.titulo}

@@ -327,6 +327,13 @@ export default function EleccionesAdminPage() {
         size="lg"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <Alert
+              type="error"
+              message={error}
+              onClose={() => setError(null)}
+            />
+          )}
           <Input
             label="Título de la Elección"
             value={formData.titulo}

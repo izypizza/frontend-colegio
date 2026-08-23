@@ -246,7 +246,7 @@ const menuItems: MenuItem[] = [
   {
     label: "Biblioteca",
     href: "/dashboard/biblioteca",
-    roles: [UserRole.ADMIN, UserRole.AUXILIAR, UserRole.BIBLIOTECARIO],
+    roles: [UserRole.ADMIN, UserRole.BIBLIOTECARIO],
     modulo: "biblioteca",
     icon: (
       <svg
@@ -267,7 +267,7 @@ const menuItems: MenuItem[] = [
   {
     label: "Préstamos",
     href: "/dashboard/prestamos",
-    roles: [UserRole.ADMIN, UserRole.AUXILIAR, UserRole.BIBLIOTECARIO],
+    roles: [UserRole.ADMIN, UserRole.BIBLIOTECARIO],
     modulo: "biblioteca",
     icon: (
       <svg
@@ -665,7 +665,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       {/* Overlay for mobile */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-20 lg:hidden"
           onClick={onClose}
         />
       )}
@@ -760,7 +760,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           {/* Footer */}
           <div className="p-3 sm:p-4 border-t bg-gray-50">
             <p className="text-[10px] sm:text-xs text-gray-500 text-center leading-tight">
-              © 2025 I.E. N° 51006
+              © {new Date().getFullYear()} I.E. N° 51006
               <br className="sm:hidden" /> Túpac Amaru
             </p>
           </div>

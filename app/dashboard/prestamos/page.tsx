@@ -44,7 +44,7 @@ interface Libro {
 
 export default function PrestamosPage() {
   const { user } = useAuth();
-  const permissions = usePermissions('prestamos');
+  const permissions = usePermissions("prestamos");
   const { error, success, setError, setSuccess, handleError } =
     useErrorHandler();
   const {
@@ -81,10 +81,10 @@ export default function PrestamosPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [prestamosData, librosData] = await Promise.all([
+      const [prestamosData, librosData] = (await Promise.all([
         prestamoLibroService.getAll(),
         libroService.getAll({ all: true }),
-      ]) as any[];
+      ])) as any[];
 
       if (
         prestamosData &&
@@ -96,11 +96,13 @@ export default function PrestamosPage() {
       ) {
         setPrestamos(prestamosData.data as Prestamo[]);
         setPaginationData({
-          total: prestamosData.total as number || 0,
-          lastPage: prestamosData.last_page as number || 1,
+          total: (prestamosData.total as number) || 0,
+          lastPage: (prestamosData.last_page as number) || 1,
         });
       } else {
-        const prestamosArray = Array.isArray(prestamosData) ? prestamosData : prestamosData?.data || [];
+        const prestamosArray = Array.isArray(prestamosData)
+          ? prestamosData
+          : prestamosData?.data || [];
         setPrestamos(prestamosArray);
       }
 
@@ -258,160 +260,164 @@ export default function PrestamosPage() {
       }
     >
       <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-800">
-          Gestión de Préstamos
-        </h1>
-        {permissions.canCreate && (
-          <Button onClick={openModal}>+ Nuevo Préstamo</Button>
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-gray-800">
+            Gestión de Préstamos
+          </h1>
+          {permissions.canCreate && (
+            <Button onClick={openModal}>+ Nuevo Préstamo</Button>
+          )}
+        </div>
+
+        {error && (
+          <Alert type="error" message={error} onClose={() => setError(null)} />
         )}
-      </div>
+        {success && (
+          <Alert
+            type="success"
+            message={success}
+            onClose={() => setSuccess(null)}
+          />
+        )}
 
-      {error && (
-        <Alert type="error" message={error} onClose={() => setError(null)} />
-      )}
-      {success && (
-        <Alert
-          type="success"
-          message={success}
-          onClose={() => setSuccess(null)}
+        {/* Estadísticas */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-[#04ADBF]">
+                {prestamos.filter((p) => !p.devuelto).length}
+              </div>
+              <div className="text-gray-600">Préstamos Activos</div>
+            </div>
+          </Card>
+
+          <Card>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-green-600">
+                {prestamos.filter((p) => p.devuelto).length}
+              </div>
+              <div className="text-gray-600">Devoluciones</div>
+            </div>
+          </Card>
+
+          <Card>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-[#F22727]">
+                {
+                  prestamos.filter((p) => {
+                    if (p.devuelto) return false;
+                    const hoy = new Date();
+                    const fechaDevolucion = new Date(p.fecha_devolucion);
+                    return hoy > fechaDevolucion;
+                  }).length
+                }
+              </div>
+              <div className="text-gray-600">Préstamos Atrasados</div>
+            </div>
+          </Card>
+        </div>
+
+        {/* Tabla de préstamos */}
+        <Card>
+          <Table columns={columns} data={prestamos} />
+        </Card>
+
+        <Pagination
+          currentPage={currentPage}
+          lastPage={paginationData.lastPage}
+          total={paginationData.total}
+          perPage={perPage}
+          onPageChange={(page) => {
+            setCurrentPage(page);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          onPerPageChange={(newPerPage) => {
+            setPerPage(newPerPage);
+            setCurrentPage(1);
+          }}
         />
-      )}
 
-      {/* Estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-[#04ADBF]">
-              {prestamos.filter((p) => !p.devuelto).length}
+        {/* Modal de formulario */}
+        <Modal
+          isOpen={showModal}
+          onClose={handleCloseModal}
+          title="Nuevo Préstamo"
+        >
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <Alert
+                type="error"
+                message={error}
+                onClose={() => setError(null)}
+              />
+            )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Libro *
+              </label>
+              <select
+                value={formData.libro_id}
+                onChange={(e) =>
+                  setFormData({ ...formData, libro_id: e.target.value })
+                }
+                className="w-full border border-gray-300 rounded-md px-3 py-2"
+                required
+              >
+                <option value="">Seleccionar libro</option>
+                {librosDisponibles.map((libro) => (
+                  <option key={libro.id} value={libro.id}>
+                    {libro.titulo} - {libro.autor}
+                  </option>
+                ))}
+              </select>
             </div>
-            <div className="text-gray-600">Préstamos Activos</div>
-          </div>
-        </Card>
 
-        <Card>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-green-600">
-              {prestamos.filter((p) => p.devuelto).length}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                ID de Usuario *
+              </label>
+              <input
+                type="number"
+                value={formData.user_id}
+                onChange={(e) =>
+                  setFormData({ ...formData, user_id: e.target.value })
+                }
+                className="w-full border border-gray-300 rounded-md px-3 py-2"
+                required
+              />
+              <p className="text-sm text-gray-500 mt-1">
+                Ingrese el ID del usuario que solicita el préstamo
+              </p>
             </div>
-            <div className="text-gray-600">Devoluciones</div>
-          </div>
-        </Card>
 
-        <Card>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-[#F22727]">
-              {
-                prestamos.filter((p) => {
-                  if (p.devuelto) return false;
-                  const hoy = new Date();
-                  const fechaDevolucion = new Date(p.fecha_devolucion);
-                  return hoy > fechaDevolucion;
-                }).length
-              }
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Fecha de Devolución *
+              </label>
+              <input
+                type="date"
+                value={formData.fecha_devolucion}
+                onChange={(e) =>
+                  setFormData({ ...formData, fecha_devolucion: e.target.value })
+                }
+                className="w-full border border-gray-300 rounded-md px-3 py-2"
+                required
+                min={new Date().toISOString().split("T")[0]}
+              />
             </div>
-            <div className="text-gray-600">Préstamos Atrasados</div>
-          </div>
-        </Card>
-      </div>
 
-      {/* Tabla de préstamos */}
-      <Card>
-        <Table
-          columns={columns}
-          data={prestamos}
-        />
-      </Card>
-
-      <Pagination
-        currentPage={currentPage}
-        lastPage={paginationData.lastPage}
-        total={paginationData.total}
-        perPage={perPage}
-        onPageChange={(page) => {
-          setCurrentPage(page);
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        }}
-        onPerPageChange={(newPerPage) => {
-          setPerPage(newPerPage);
-          setCurrentPage(1);
-        }}
-      />
-
-      {/* Modal de formulario */}
-      <Modal
-        isOpen={showModal}
-        onClose={handleCloseModal}
-        title="Nuevo Préstamo"
-      >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Libro *
-            </label>
-            <select
-              value={formData.libro_id}
-              onChange={(e) =>
-                setFormData({ ...formData, libro_id: e.target.value })
-              }
-              className="w-full border border-gray-300 rounded-md px-3 py-2"
-              required
-            >
-              <option value="">Seleccionar libro</option>
-              {librosDisponibles.map((libro) => (
-                <option key={libro.id} value={libro.id}>
-                  {libro.titulo} - {libro.autor}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              ID de Usuario *
-            </label>
-            <input
-              type="number"
-              value={formData.user_id}
-              onChange={(e) =>
-                setFormData({ ...formData, user_id: e.target.value })
-              }
-              className="w-full border border-gray-300 rounded-md px-3 py-2"
-              required
-            />
-            <p className="text-sm text-gray-500 mt-1">
-              Ingrese el ID del usuario que solicita el préstamo
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Fecha de Devolución *
-            </label>
-            <input
-              type="date"
-              value={formData.fecha_devolucion}
-              onChange={(e) =>
-                setFormData({ ...formData, fecha_devolucion: e.target.value })
-              }
-              className="w-full border border-gray-300 rounded-md px-3 py-2"
-              required
-              min={new Date().toISOString().split("T")[0]}
-            />
-          </div>
-
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={handleCloseModal}
-            >
-              Cancelar
-            </Button>
-            <Button type="submit">Registrar Préstamo</Button>
-          </div>
-        </form>
-      </Modal>
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleCloseModal}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit">Registrar Préstamo</Button>
+            </div>
+          </form>
+        </Modal>
       </div>
     </PermissionGuard>
   );

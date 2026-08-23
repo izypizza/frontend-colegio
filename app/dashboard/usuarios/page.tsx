@@ -22,7 +22,7 @@ import { UserRole } from "@/src/types";
 
 export default function UsuariosPage() {
   const { user } = useAuth();
-  const permissions = usePermissions('usuarios');
+  const permissions = usePermissions("usuarios");
   const { error, success, setError, setSuccess, handleError } =
     useErrorHandler();
   const {
@@ -510,429 +510,449 @@ export default function UsuariosPage() {
       }
     >
       <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Gestión de Usuarios
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Administra los usuarios del sistema y sus accesos
-          </p>
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Gestión de Usuarios
+            </h1>
+            <p className="text-gray-600 mt-1">
+              Administra los usuarios del sistema y sus accesos
+            </p>
+          </div>
         </div>
-      </div>
 
-      {error && (
-        <Alert
-          type="error"
-          message={error}
-          className="mb-4"
-          onClose={() => setError(null)}
-        />
-      )}
-      {success && (
-        <Alert
-          type="success"
-          message={success}
-          className="mb-4"
-          onClose={() => setSuccess(null)}
-        />
-      )}
-
-      {/* Pestañas */}
-      <div className="mb-6">
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
-            <button
-              onClick={() => setActiveTab("usuarios")}
-              className={`${
-                activeTab === "usuarios"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors`}
-            >
-              Usuarios con Cuenta ({users.length})
-            </button>
-            <button
-              onClick={() => setActiveTab("sin-usuario")}
-              className={`${
-                activeTab === "sin-usuario"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors`}
-            >
-              Personas sin Usuario ({allPersonasSinUsuario.length})
-            </button>
-          </nav>
-        </div>
-      </div>
-
-      {activeTab === "usuarios" ? (
-        <>
-          <Card className="mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Input
-                placeholder="Buscar por nombre o email..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <select
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={filterRole}
-                onChange={(e) => setFilterRole(e.target.value)}
-              >
-                <option value="">Todos los roles</option>
-                <option value="admin">Admin</option>
-                <option value="auxiliar">Auxiliar</option>
-                <option value="docente">Docente</option>
-                <option value="padre">Padre</option>
-                <option value="estudiante">Estudiante</option>
-                <option value="bibliotecario">Bibliotecario</option>
-              </select>
-              <select
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-              >
-                <option value="">Todos los estados</option>
-                <option value="activo">Activos</option>
-                <option value="inactivo">Inactivos</option>
-              </select>
-            </div>
-          </Card>
-
-          <Card>
-            {loading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-4 text-gray-600">Cargando usuarios...</p>
-              </div>
-            ) : (
-              <Table columns={columns} data={filteredUsers} />
-            )}
-          </Card>
-
-          <Pagination
-            currentPage={currentPage}
-            lastPage={paginationData.lastPage}
-            total={paginationData.total}
-            perPage={perPage}
-            onPageChange={(page) => {
-              setCurrentPage(page);
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-            onPerPageChange={(newPerPage) => {
-              setPerPage(newPerPage);
-              setCurrentPage(1);
-            }}
+        {error && (
+          <Alert
+            type="error"
+            message={error}
+            className="mb-4"
+            onClose={() => setError(null)}
           />
-        </>
-      ) : (
-        <>
-          <Card className="mb-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="usarDniPassword"
-                    checked={usarDniComoPassword}
-                    onChange={(e) => setUsarDniComoPassword(e.target.checked)}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label
-                    htmlFor="usarDniPassword"
-                    className="text-sm text-gray-700"
-                  >
-                    Usar DNI como contraseña
-                  </label>
-                </div>
-                <div className="text-sm text-gray-600">
-                  {usarDniComoPassword
-                    ? "Contraseña = DNI"
-                    : 'Contraseña = DNI + "123"'}
-                </div>
-              </div>
+        )}
+        {success && (
+          <Alert
+            type="success"
+            message={success}
+            className="mb-4"
+            onClose={() => setSuccess(null)}
+          />
+        )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Pestañas */}
+        <div className="mb-6">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => setActiveTab("usuarios")}
+                className={`${
+                  activeTab === "usuarios"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors`}
+              >
+                Usuarios con Cuenta ({users.length})
+              </button>
+              <button
+                onClick={() => setActiveTab("sin-usuario")}
+                className={`${
+                  activeTab === "sin-usuario"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors`}
+              >
+                Personas sin Usuario ({allPersonasSinUsuario.length})
+              </button>
+            </nav>
+          </div>
+        </div>
+
+        {activeTab === "usuarios" ? (
+          <>
+            <Card className="mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Input
-                  placeholder="Buscar por nombre o DNI..."
-                  value={searchPersonas}
-                  onChange={(e) => setSearchPersonas(e.target.value)}
+                  placeholder="Buscar por nombre o email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
                 <select
                   className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={filterTipoPersona}
-                  onChange={(e) => setFilterTipoPersona(e.target.value as any)}
+                  value={filterRole}
+                  onChange={(e) => setFilterRole(e.target.value)}
                 >
-                  <option value="todos">Todos los tipos</option>
-                  <option value="estudiante">Estudiantes</option>
-                  <option value="docente">Docentes</option>
-                  <option value="padre">Padres</option>
+                  <option value="">Todos los roles</option>
+                  <option value="admin">Admin</option>
+                  <option value="auxiliar">Auxiliar</option>
+                  <option value="docente">Docente</option>
+                  <option value="padre">Padre</option>
+                  <option value="estudiante">Estudiante</option>
+                  <option value="bibliotecario">Bibliotecario</option>
+                </select>
+                <select
+                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                >
+                  <option value="">Todos los estados</option>
+                  <option value="activo">Activos</option>
+                  <option value="inactivo">Inactivos</option>
                 </select>
               </div>
-            </div>
-          </Card>
+            </Card>
 
-          <Card>
-            {loading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-4 text-gray-600">Cargando personas...</p>
+            <Card>
+              {loading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="mt-4 text-gray-600">Cargando usuarios...</p>
+                </div>
+              ) : (
+                <Table columns={columns} data={filteredUsers} />
+              )}
+            </Card>
+
+            <Pagination
+              currentPage={currentPage}
+              lastPage={paginationData.lastPage}
+              total={paginationData.total}
+              perPage={perPage}
+              onPageChange={(page) => {
+                setCurrentPage(page);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              onPerPageChange={(newPerPage) => {
+                setPerPage(newPerPage);
+                setCurrentPage(1);
+              }}
+            />
+          </>
+        ) : (
+          <>
+            <Card className="mb-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="usarDniPassword"
+                      checked={usarDniComoPassword}
+                      onChange={(e) => setUsarDniComoPassword(e.target.checked)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label
+                      htmlFor="usarDniPassword"
+                      className="text-sm text-gray-700"
+                    >
+                      Usar DNI como contraseña
+                    </label>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    {usarDniComoPassword
+                      ? "Contraseña = DNI"
+                      : 'Contraseña = DNI + "123"'}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Input
+                    placeholder="Buscar por nombre o DNI..."
+                    value={searchPersonas}
+                    onChange={(e) => setSearchPersonas(e.target.value)}
+                  />
+                  <select
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={filterTipoPersona}
+                    onChange={(e) =>
+                      setFilterTipoPersona(e.target.value as any)
+                    }
+                  >
+                    <option value="todos">Todos los tipos</option>
+                    <option value="estudiante">Estudiantes</option>
+                    <option value="docente">Docentes</option>
+                    <option value="padre">Padres</option>
+                  </select>
+                </div>
               </div>
-            ) : filteredPersonasSinUsuario.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-500">
-                  {searchPersonas || filterTipoPersona !== "todos"
-                    ? "No se encontraron personas sin usuario con los filtros aplicados"
-                    : "¡Todas las personas tienen usuario asignado!"}
-                </p>
-              </div>
-            ) : (
-              <Table
-                columns={columnsPersonasSinUsuario}
-                data={filteredPersonasSinUsuario}
+            </Card>
+
+            <Card>
+              {loading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="mt-4 text-gray-600">Cargando personas...</p>
+                </div>
+              ) : filteredPersonasSinUsuario.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-500">
+                    {searchPersonas || filterTipoPersona !== "todos"
+                      ? "No se encontraron personas sin usuario con los filtros aplicados"
+                      : "¡Todas las personas tienen usuario asignado!"}
+                  </p>
+                </div>
+              ) : (
+                <Table
+                  columns={columnsPersonasSinUsuario}
+                  data={filteredPersonasSinUsuario}
+                />
+              )}
+            </Card>
+          </>
+        )}
+
+        {/* Modal Editar Usuario */}
+        <Modal
+          isOpen={isEditModalOpen}
+          onClose={closeEditModal}
+          title="Editar Usuario"
+        >
+          <div className="space-y-4">
+            {error && (
+              <Alert
+                type="error"
+                message={error}
+                onClose={() => setError(null)}
               />
             )}
-          </Card>
-        </>
-      )}
+            <Input
+              label="Nombre"
+              value={editFormData.name}
+              onChange={(e) =>
+                setEditFormData({ ...editFormData, name: e.target.value })
+              }
+              required
+            />
 
-      {/* Modal Editar Usuario */}
-      <Modal
-        isOpen={isEditModalOpen}
-        onClose={closeEditModal}
-        title="Editar Usuario"
-      >
-        <div className="space-y-4">
-          <Input
-            label="Nombre"
-            value={editFormData.name}
-            onChange={(e) =>
-              setEditFormData({ ...editFormData, name: e.target.value })
-            }
-            required
-          />
+            <Input
+              label="Email"
+              type="email"
+              value={editFormData.email}
+              onChange={(e) =>
+                setEditFormData({ ...editFormData, email: e.target.value })
+              }
+              required
+            />
 
-          <Input
-            label="Email"
-            type="email"
-            value={editFormData.email}
-            onChange={(e) =>
-              setEditFormData({ ...editFormData, email: e.target.value })
-            }
-            required
-          />
+            <Input
+              label="Nueva Contraseña (dejar vacío para no cambiar)"
+              type="password"
+              value={editFormData.password}
+              onChange={(e) =>
+                setEditFormData({ ...editFormData, password: e.target.value })
+              }
+              placeholder="Opcional"
+            />
 
-          <Input
-            label="Nueva Contraseña (dejar vacío para no cambiar)"
-            type="password"
-            value={editFormData.password}
-            onChange={(e) =>
-              setEditFormData({ ...editFormData, password: e.target.value })
-            }
-            placeholder="Opcional"
-          />
-
-          <div className="flex justify-end gap-2 mt-6">
-            <Button variant="secondary" onClick={closeEditModal}>
-              Cancelar
-            </Button>
-            <Button onClick={handleUpdateUser}>Actualizar</Button>
+            <div className="flex justify-end gap-2 mt-6">
+              <Button variant="secondary" onClick={closeEditModal}>
+                Cancelar
+              </Button>
+              <Button onClick={handleUpdateUser}>Actualizar</Button>
+            </div>
           </div>
-        </div>
-      </Modal>
+        </Modal>
 
-      {/* Modal Cambiar Estado Estudiante */}
-      <Modal
-        isOpen={isEstadoModalOpen}
-        onClose={closeEstadoModal}
-        title="Cambiar Estado del Estudiante"
-      >
-        <div className="space-y-4">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-            <p className="text-sm text-yellow-800">
-              <strong>Importante:</strong> Cambiar el estado afectará el acceso
-              del estudiante al sistema.
-            </p>
-            <ul className="mt-2 text-sm text-yellow-700 list-disc list-inside">
-              <li>
-                <strong>Activo:</strong> Puede acceder normalmente
-              </li>
-              <li>
-                <strong>Suspendido:</strong> No puede acceder al sistema
-              </li>
-              <li>
-                <strong>Egresado:</strong> No puede acceder, se revisarán los
-                padres para desactivarlos si todos sus hijos egresaron
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nuevo Estado
-            </label>
-            <select
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
-              value={estudianteEstado}
-              onChange={(e) => setEstudianteEstado(e.target.value as any)}
-            >
-              <option value="activo">Activo</option>
-              <option value="suspendido">Suspendido</option>
-              <option value="egresado">Egresado</option>
-            </select>
-          </div>
-
-          <div className="flex justify-end gap-2 mt-6">
-            <Button variant="secondary" onClick={closeEstadoModal}>
-              Cancelar
-            </Button>
-            <Button onClick={handleUpdateEstado}>Actualizar Estado</Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Modal Ver Detalles Usuario */}
-      <Modal
-        isOpen={isViewModalOpen}
-        onClose={closeViewModal}
-        title="Detalles del Usuario"
-        size="lg"
-      >
-        {viewingUser && (
-          <div className="space-y-6">
-            {/* Información Básica */}
-            <div className="border-b pb-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                Información Básica
-              </h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-500">ID</p>
-                  <p className="font-medium">{viewingUser.id}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Nombre</p>
-                  <p className="font-medium">{viewingUser.name}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Email</p>
-                  <p className="font-medium">{viewingUser.email}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Rol</p>
-                  <p className="font-medium">
-                    {getRoleBadge(viewingUser.role)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Estado de Cuenta</p>
-                  <p className="font-medium">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        viewingUser.is_active
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {viewingUser.is_active ? "Activo" : "Inactivo"}
-                    </span>
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Fecha de Creación</p>
-                  <p className="font-medium">
-                    {new Date(viewingUser.created_at).toLocaleDateString(
-                      "es-ES",
-                      {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      },
-                    )}
-                  </p>
-                </div>
-              </div>
+        {/* Modal Cambiar Estado Estudiante */}
+        <Modal
+          isOpen={isEstadoModalOpen}
+          onClose={closeEstadoModal}
+          title="Cambiar Estado del Estudiante"
+        >
+          <div className="space-y-4">
+            {error && (
+              <Alert
+                type="error"
+                message={error}
+                onClose={() => setError(null)}
+              />
+            )}
+            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+              <p className="text-sm text-yellow-800">
+                <strong>Importante:</strong> Cambiar el estado afectará el
+                acceso del estudiante al sistema.
+              </p>
+              <ul className="mt-2 text-sm text-yellow-700 list-disc list-inside">
+                <li>
+                  <strong>Activo:</strong> Puede acceder normalmente
+                </li>
+                <li>
+                  <strong>Suspendido:</strong> No puede acceder al sistema
+                </li>
+                <li>
+                  <strong>Egresado:</strong> No puede acceder, se revisarán los
+                  padres para desactivarlos si todos sus hijos egresaron
+                </li>
+              </ul>
             </div>
 
-            {/* Información de la Persona */}
-            {viewingUser.persona && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nuevo Estado
+              </label>
+              <select
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                value={estudianteEstado}
+                onChange={(e) => setEstudianteEstado(e.target.value as any)}
+              >
+                <option value="activo">Activo</option>
+                <option value="suspendido">Suspendido</option>
+                <option value="egresado">Egresado</option>
+              </select>
+            </div>
+
+            <div className="flex justify-end gap-2 mt-6">
+              <Button variant="secondary" onClick={closeEstadoModal}>
+                Cancelar
+              </Button>
+              <Button onClick={handleUpdateEstado}>Actualizar Estado</Button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* Modal Ver Detalles Usuario */}
+        <Modal
+          isOpen={isViewModalOpen}
+          onClose={closeViewModal}
+          title="Detalles del Usuario"
+          size="lg"
+        >
+          {viewingUser && (
+            <div className="space-y-6">
+              {/* Información Básica */}
               <div className="border-b pb-4">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                  Información de{" "}
-                  {viewingUser.role === "estudiante"
-                    ? "Estudiante"
-                    : viewingUser.role === "docente"
-                      ? "Docente"
-                      : viewingUser.role === "padre"
-                        ? "Padre"
-                        : "Persona"}
+                  Información Básica
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
-                  {viewingUser.persona.nombre_completo && (
-                    <div className="col-span-2">
-                      <p className="text-sm text-gray-500">Nombre Completo</p>
-                      <p className="font-medium">
-                        {viewingUser.persona.nombre_completo}
-                      </p>
-                    </div>
-                  )}
-                  {viewingUser.persona.dni && (
-                    <div>
-                      <p className="text-sm text-gray-500">DNI</p>
-                      <p className="font-medium">{viewingUser.persona.dni}</p>
-                    </div>
-                  )}
-                  {viewingUser.persona.estado && (
-                    <div>
-                      <p className="text-sm text-gray-500">Estado</p>
-                      <p className="font-medium">
-                        {getEstadoBadge(viewingUser.persona.estado)}
-                      </p>
-                    </div>
-                  )}
-                  {viewingUser.persona.grado && (
-                    <div>
-                      <p className="text-sm text-gray-500">Grado</p>
-                      <p className="font-medium">{viewingUser.persona.grado}</p>
-                    </div>
-                  )}
-                  {viewingUser.persona.seccion && (
-                    <div>
-                      <p className="text-sm text-gray-500">Sección</p>
-                      <p className="font-medium">
-                        {viewingUser.persona.seccion}
-                      </p>
-                    </div>
-                  )}
-                  {viewingUser.persona.especialidad && (
-                    <div>
-                      <p className="text-sm text-gray-500">Especialidad</p>
-                      <p className="font-medium">
-                        {viewingUser.persona.especialidad}
-                      </p>
-                    </div>
-                  )}
-                  {viewingUser.persona.hijos_count !== undefined && (
-                    <div>
-                      <p className="text-sm text-gray-500">Hijos Registrados</p>
-                      <p className="font-medium">
-                        {viewingUser.persona.hijos_count}
-                      </p>
-                    </div>
-                  )}
+                  <div>
+                    <p className="text-sm text-gray-500">ID</p>
+                    <p className="font-medium">{viewingUser.id}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Nombre</p>
+                    <p className="font-medium">{viewingUser.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Email</p>
+                    <p className="font-medium">{viewingUser.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Rol</p>
+                    <p className="font-medium">
+                      {getRoleBadge(viewingUser.role)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Estado de Cuenta</p>
+                    <p className="font-medium">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          viewingUser.is_active
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {viewingUser.is_active ? "Activo" : "Inactivo"}
+                      </span>
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Fecha de Creación</p>
+                    <p className="font-medium">
+                      {new Date(viewingUser.created_at).toLocaleDateString(
+                        "es-ES",
+                        {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        },
+                      )}
+                    </p>
+                  </div>
                 </div>
               </div>
-            )}
 
-            <div className="flex justify-end">
-              <Button variant="secondary" onClick={closeViewModal}>
-                Cerrar
-              </Button>
+              {/* Información de la Persona */}
+              {viewingUser.persona && (
+                <div className="border-b pb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                    Información de{" "}
+                    {viewingUser.role === "estudiante"
+                      ? "Estudiante"
+                      : viewingUser.role === "docente"
+                        ? "Docente"
+                        : viewingUser.role === "padre"
+                          ? "Padre"
+                          : "Persona"}
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    {viewingUser.persona.nombre_completo && (
+                      <div className="col-span-2">
+                        <p className="text-sm text-gray-500">Nombre Completo</p>
+                        <p className="font-medium">
+                          {viewingUser.persona.nombre_completo}
+                        </p>
+                      </div>
+                    )}
+                    {viewingUser.persona.dni && (
+                      <div>
+                        <p className="text-sm text-gray-500">DNI</p>
+                        <p className="font-medium">{viewingUser.persona.dni}</p>
+                      </div>
+                    )}
+                    {viewingUser.persona.estado && (
+                      <div>
+                        <p className="text-sm text-gray-500">Estado</p>
+                        <p className="font-medium">
+                          {getEstadoBadge(viewingUser.persona.estado)}
+                        </p>
+                      </div>
+                    )}
+                    {viewingUser.persona.grado && (
+                      <div>
+                        <p className="text-sm text-gray-500">Grado</p>
+                        <p className="font-medium">
+                          {viewingUser.persona.grado}
+                        </p>
+                      </div>
+                    )}
+                    {viewingUser.persona.seccion && (
+                      <div>
+                        <p className="text-sm text-gray-500">Sección</p>
+                        <p className="font-medium">
+                          {viewingUser.persona.seccion}
+                        </p>
+                      </div>
+                    )}
+                    {viewingUser.persona.especialidad && (
+                      <div>
+                        <p className="text-sm text-gray-500">Especialidad</p>
+                        <p className="font-medium">
+                          {viewingUser.persona.especialidad}
+                        </p>
+                      </div>
+                    )}
+                    {viewingUser.persona.hijos_count !== undefined && (
+                      <div>
+                        <p className="text-sm text-gray-500">
+                          Hijos Registrados
+                        </p>
+                        <p className="font-medium">
+                          {viewingUser.persona.hijos_count}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end">
+                <Button variant="secondary" onClick={closeViewModal}>
+                  Cerrar
+                </Button>
+              </div>
             </div>
-          </div>
-        )}
-      </Modal>
+          )}
+        </Modal>
       </div>
     </PermissionGuard>
   );
