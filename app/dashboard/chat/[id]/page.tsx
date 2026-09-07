@@ -45,7 +45,7 @@ export default function ChatMensajesPage() {
       // Detectar el otro participante (el primer mensaje que no sea del usuario actual)
       if (response.data.length > 0 && !otroParticipante) {
         const otroMensaje = response.data.find(
-          (m: any) => m.user_id !== user?.id,
+          (m: any) => String(m.user_id) !== String(user?.id),
         );
         if (otroMensaje?.user?.name) {
           setOtroParticipante(otroMensaje.user.name);
@@ -97,6 +97,76 @@ export default function ChatMensajesPage() {
     return colors[userId % colors.length];
   };
 
+  // Metadatos visuales por rol (chat docente <-> padre)
+  const ROL_INFO: Record<
+    string,
+    { label: string; avatarClass: string; badgeClass: string }
+  > = {
+    padre: {
+      label: "Padre de familia",
+      avatarClass: "bg-blue-500",
+      badgeClass: "bg-blue-50 text-blue-700 border-blue-200",
+    },
+    docente: {
+      label: "Docente",
+      avatarClass: "bg-[#04ADBF]",
+      badgeClass: "bg-teal-50 text-teal-700 border-teal-200",
+    },
+  };
+
+  // Determina el rol de un mensaje: el del usuario actual si es propio,
+  // o el rol contrario (padre<->docente) si es del otro participante
+  const rolDelMensaje = (
+    userId?: number | string,
+  ): "padre" | "docente" | "" => {
+    if (userId === undefined || userId === null) return "";
+    if (String(userId) === String(user?.id)) {
+      return user?.role === "padre"
+        ? "padre"
+        : user?.role === "docente"
+          ? "docente"
+          : "";
+    }
+    if (user?.role === "padre") return "docente";
+    if (user?.role === "docente") return "padre";
+    return "";
+  };
+
+  const rolDelOtroParticipante = (): "padre" | "docente" | "" => {
+    if (user?.role === "padre") return "docente";
+    if (user?.role === "docente") return "padre";
+    return "";
+  };
+
+  // Icono de rol (Padre = familia, Docente = birrete)
+  const IconoRol = ({ rol }: { rol: string }) => {
+    if (rol === "padre") {
+      return (
+        <svg
+          className="w-3.5 h-3.5"
+          fill="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+        </svg>
+      );
+    }
+    return (
+      <svg
+        className="w-3.5 h-3.5"
+        fill="currentColor"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z" />
+      </svg>
+    );
+  };
+
+  const esPadre = user?.role === "padre";
+  const esDocente = user?.role === "docente";
+
   if (loading && mensajes.length === 0) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -113,7 +183,14 @@ export default function ChatMensajesPage() {
           {/* Avatar del participante */}
           {otroParticipante && (
             <div
-              className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg ${getAvatarColor(mensajes.find((m: any) => m.user_id !== user?.id)?.user_id || 0)}`}
+              className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg ${
+                ROL_INFO[rolDelOtroParticipante()]?.avatarClass ||
+                getAvatarColor(
+                  mensajes.find(
+                    (m: any) => String(m.user_id) !== String(user?.id),
+                  )?.user_id || 0,
+                )
+              }`}
             >
               {getInitials(otroParticipante)}
             </div>
@@ -124,11 +201,26 @@ export default function ChatMensajesPage() {
             <h1 className="text-xl font-bold text-gray-900">
               {otroParticipante || "Conversación"}
             </h1>
-            <p className="text-sm text-gray-500">
-              {mensajes.length > 0
-                ? `${mensajes.length} mensaje${mensajes.length !== 1 ? "s" : ""}`
-                : "Nueva conversación"}
-            </p>
+            <div className="flex items-center gap-2 mt-0.5">
+              {rolDelOtroParticipante() ? (
+                <span
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${
+                    ROL_INFO[rolDelOtroParticipante()].badgeClass
+                  }`}
+                >
+                  <IconoRol rol={rolDelOtroParticipante()} />
+                  {ROL_INFO[rolDelOtroParticipante()].label}
+                </span>
+              ) : (
+                <span className="text-sm text-gray-500">Participante</span>
+              )}
+              <span className="text-sm text-gray-400">•</span>
+              <p className="text-sm text-gray-500">
+                {mensajes.length > 0
+                  ? `${mensajes.length} mensaje${mensajes.length !== 1 ? "s" : ""}`
+                  : "Nueva conversación"}
+              </p>
+            </div>
           </div>
 
           {/* Indicador de estado (online/offline - opcional) */}
@@ -164,7 +256,7 @@ export default function ChatMensajesPage() {
             </div>
           ) : (
             mensajes.map((msg: any, index: number) => {
-              const isMine = msg.user_id === user?.id;
+              const isMine = String(msg.user_id) === String(user?.id);
               const showAvatar =
                 index === 0 || mensajes[index - 1]?.user_id !== msg.user_id;
 
@@ -178,7 +270,10 @@ export default function ChatMensajesPage() {
                     <div className="flex-shrink-0">
                       {showAvatar ? (
                         <div
-                          className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm ${getAvatarColor(msg.user_id)}`}
+                          className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm ${
+                            ROL_INFO[rolDelMensaje(msg.user_id)]?.avatarClass ||
+                            getAvatarColor(msg.user_id)
+                          }`}
                           title={msg.user?.name || "Usuario"}
                         >
                           {getInitials(msg.user?.name || "Usuario")}
@@ -193,15 +288,33 @@ export default function ChatMensajesPage() {
                   <div
                     className={`flex flex-col ${isMine ? "items-end" : "items-start"} max-w-xs lg:max-w-md`}
                   >
-                    {/* Nombre del usuario (solo si es el primer mensaje de ese usuario o cambió de usuario) */}
+                    {/* Nombre del usuario + rol (solo si es el primer mensaje de ese usuario) */}
                     {showAvatar && (
-                      <span
-                        className={`text-xs font-semibold mb-1 px-1 ${
-                          isMine ? "text-[#04ADBF]" : "text-gray-700"
-                        }`}
-                      >
-                        {isMine ? "Tú" : msg.user?.name || "Usuario"}
-                      </span>
+                      <div className="flex items-center gap-1.5 mb-1 px-1">
+                        <span
+                          className={`text-xs font-semibold ${
+                            isMine ? "text-[#04ADBF]" : "text-gray-700"
+                          }`}
+                        >
+                          {isMine
+                            ? esPadre
+                              ? "Tú (Padre de familia)"
+                              : esDocente
+                                ? "Tú (Docente)"
+                                : "Tú"
+                            : msg.user?.name || "Usuario"}
+                        </span>
+                        {!isMine && rolDelMensaje(msg.user_id) && (
+                          <span
+                            className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium border ${
+                              ROL_INFO[rolDelMensaje(msg.user_id)].badgeClass
+                            }`}
+                          >
+                            <IconoRol rol={rolDelMensaje(msg.user_id)} />
+                            {ROL_INFO[rolDelMensaje(msg.user_id)].label}
+                          </span>
+                        )}
+                      </div>
                     )}
 
                     {/* Burbuja del mensaje */}

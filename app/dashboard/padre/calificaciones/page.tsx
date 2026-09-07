@@ -74,7 +74,9 @@ export default function CalificacionesHijosPage() {
     try {
       const response = await periodoService.getAll();
       // Manejar diferentes estructuras de respuesta
-      const periodosData = Array.isArray(response) ? response : response?.data || [];
+      const periodosData = Array.isArray(response)
+        ? response
+        : response?.data || [];
       setPeriodos(periodosData);
 
       if (periodosData.length > 0) {
@@ -88,7 +90,7 @@ export default function CalificacionesHijosPage() {
   const fetchCalificaciones = async () => {
     try {
       setLoading(true);
-      const response = await padrePortalService.calificacionesHijos() as any;
+      const response = (await padrePortalService.calificacionesHijos()) as any;
       const hijosData = response.hijos || [];
 
       // Filtrar calificaciones por periodo seleccionado
@@ -385,10 +387,10 @@ export default function CalificacionesHijosPage() {
                   </>
                 )}
 
-                {/* Enlaces a detalle */}
-                <div className="mt-6 pt-4 border-t flex gap-4">
+                {/* Enlace a calificaciones de otros hijos */}
+                <div className="mt-6 pt-4 border-t">
                   <Link
-                    href={`/dashboard/padre/mis-hijos/${hijo.id}`}
+                    href={`/dashboard/padre/mis-hijos`}
                     className="flex items-center text-blue-600 hover:text-blue-700 font-medium group"
                   >
                     <svg
@@ -404,26 +406,7 @@ export default function CalificacionesHijosPage() {
                         d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                       />
                     </svg>
-                    Ver Perfil Completo
-                  </Link>
-                  <Link
-                    href={`/dashboard/asistencias?estudiante=${hijo.id}`}
-                    className="flex items-center text-blue-600 hover:text-blue-700 font-medium group"
-                  >
-                    <svg
-                      className="w-4 h-4 mr-2 group-hover:translate-x-0.5 transition-transform"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                      />
-                    </svg>
-                    Ver Asistencias
+                    Ver todos mis hijos
                   </Link>
                 </div>
               </Card>
