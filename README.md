@@ -1,17 +1,17 @@
-# Sistema de Gestion Escolar - Frontend
+# Sistema de Gestión Escolar — Frontend
 
-Aplicacion web en Next.js (App Router) y TypeScript para los portales de todos los roles del sistema escolar. Consume la API Laravel del backend y ofrece dashboards, CRUDs, graficas y flujos completos de asistencia, calificaciones, biblioteca y elecciones.
+Aplicación web en **Next.js** (App Router) y **TypeScript** que consume la API Laravel del backend (`backend-colegio`) y ofrece dashboards, CRUDs, gráficas y flujos completos de asistencia, calificaciones, biblioteca, préstamos y elecciones, con portales específicos por rol (admin, auxiliar, bibliotecario, docente, padre, estudiante).
 
 ## Stack
 
-- Next.js 16 (App Router), React 19, TypeScript 5
-- Tailwind CSS 4, Recharts 3.6, Shepherd.js para guiado
-- Autenticacion por JWT emitido por Sanctum (Bearer en peticiones al backend)
+- Next.js 16 (App Router, Turbopack), React 19, TypeScript 5 (strict)
+- Tailwind CSS 4, Recharts 3.6 (gráficas), Shepherd.js (asistente/tours guiados)
+- Autenticación por token emitido por **Sanctum** (Bearer en cada petición al backend)
 
 ## Requisitos
 
 - Node 20+
-- Backend corriendo en http://localhost:8000 (con CORS y Sanctum configurados)
+- Backend corriendo en `http://localhost:8000` (con CORS y Sanctum configurados)
 
 ## Puesta en marcha
 
@@ -25,8 +25,9 @@ npm install
 
 ```
 NEXT_PUBLIC_API_URL=http://localhost:8000/api
-NODE_ENV=development
 ```
+
+> ⚠️ Es importante ejecutar `npm run dev` **desde la carpeta `frontend-colegio`** (el cwd afecta a Turbopack).
 
 3. Desarrollo:
 
@@ -34,7 +35,7 @@ NODE_ENV=development
 npm run dev   # http://localhost:3000
 ```
 
-4. Produccion:
+4. Producción:
 
 ```
 npm run build
@@ -54,42 +55,60 @@ Usa las mismas credenciales sembradas por el backend:
 - padre@colegio.pe / padre123
 - estudiante@colegio.pe / estudiante123
 
-Usuarios adicionales generados: docente{n}@colegio.pe, padre{n}@colegio.pe, estudiante{n}@colegio.pe (contrasena igual al sufijo).
+Usuarios adicionales: `docente{n}@colegio.pe`, `padre{n}@colegio.pe`, `estudiante{n}@colegio.pe` (contraseña igual al sufijo).
 
-## Modulos principales
+## Módulos principales (41 rutas)
 
-- Autenticacion y pagina de mantenimiento
-- Dashboard por rol (admin/auxiliar, docente, estudiante, padre)
-- Gestion academica: grados, secciones, materias, periodos, horarios
-- Gestion de usuarios: estudiantes, docentes, padres, usuarios del sistema
-- Calificaciones: registro, filtros y graficas (barras, radar, donut, linea)
-- Asistencias: registro por materia con 3 estados y reportes
-- Biblioteca: libros y prestamos con estados pendiente/aprobado/rechazado/devuelto
-- Elecciones estudiantiles: configuracion, candidatos, voto unico y resultados
-- Configuraciones: modo mantenimiento y permisos auxiliares
-- Chat y notificaciones (segun roles disponibles)
+- Autenticación, redirección `/` y página de mantenimiento
+- **Dashboard por rol** (admin/auxiliar, docente, estudiante, padre)
+- **Gestión académica:** grados, secciones, materias, períodos, horarios
+- **Gestión de personas/usuarios:** estudiantes, docentes, padres, usuarios del sistema, bibliotecarios, auxiliares
+- **Calificaciones:** registro, boletines, filtros y gráficas (barras, radar, dona, línea)
+- **Asistencias:** registro por materia con 3 estados y reportes
+- **Biblioteca y préstamos:** catálogo físico/digital y flujo pendiente → aprobado/rechazado → devuelto
+- **Elecciones escolares:** configuración (partidos/candidatos), votación única y resultados
+- **Comunicación:** chat docente–padre (interfaz de burbujas con identificación por rol), notificaciones y monitoreo de chat (admin)
+- **Administración:** auditoría, configuración (modo mantenimiento, módulos activos), permisos auxiliares
+- **Portales:** docente (mis clases, mis estudiantes, tutoría), estudiante (calificaciones, asistencias, biblioteca), padre (mis hijos, calificaciones)
+
+## Roles y permisos
+
+- El **Sidebar** (`src/components/layout/Sidebar.tsx`) filtra el menú por rol + módulos activos.
+- Los permisos por módulo/acción se definen en `src/lib/permissions.ts` (`MODULE_PERMISSIONS`) y **deben coincidir** con el backend (`PermissionMiddleware`).
+- `PermissionGuard` y `RoleGuard` protegen páginas; los hooks `usePermissions`, `useAuth` controlan acciones visibles.
+
+## Asistente / Tour
+
+- Botón flotante (Shepherd.js) en el dashboard.
+- **Tour completo**: recorrido guiado que navega por todas las secciones a las que el rol tiene acceso.
+- Correcciones incluidas: sidebar con `backdrop-blur` en móvil; errores mostrados dentro de los modales.
 
 ## Estructura relevante
 
 ```
 app/
   (auth)/login/            # acceso
-  maintenance/             # pagina de mantenimiento
-  dashboard/               # rutas protegidas y modulos
+  maintenance/             # página de mantenimiento
+  dashboard/               # rutas protegidas y módulos
     asistencias/, biblioteca/, calificaciones/, elecciones/, configuraciones/
-    docente/, estudiante/, padre/, usuarios/, grados/, secciones/, materias/, etc.
+    chat/, chat-admin/
+    docente/, estudiante/, padre/     # portales por rol
+    usuarios/, grados/, secciones/, materias/, periodos/, etc.
 src/
-  components/              # layout y UI reutilizable
-  config/constants.ts      # constantes globales
+  components/              # layout (Sidebar/Navbar), auth (guards) y UI reutilizable
+  config/constants.ts      # constantes globales (rutas, API)
   contexts/ThemeContext.tsx
-  hooks/                   # helpers de UI/estado
-  lib/api-client.ts        # cliente HTTP
-  lib/services.ts          # endpoints agrupados
-  types/                   # tipados compartidos
+  features/auth/           # AuthProvider, useAuth, login
+  hooks/                   # helpers de UI/estado (permisos, paginación, modales, etc.)
+  lib/api-client.ts        # cliente HTTP (manejo de 401/403/503)
+  lib/services.ts          # endpoints agrupados por recurso
+  lib/permissions.ts       # matriz de permisos por módulo
+  types/                   # tipados compartidos (UserRole, modelos)
 ```
 
-## Notas de integracion
+## Notas de integración
 
-- Las rutas protegidas esperan header "Authorization: Bearer <token>" emitido por el backend (Sanctum JWT bridge).
-- Si ves 401/403, verifica expiracion de token y permisos de rol; el sidebar se ajusta al rol del usuario.
-- Para CORS/CSRF, asegura que SANCTUM_STATEFUL_DOMAINS=localhost:3000 y APP_URL coincidan en el backend.
+- Las rutas protegidas envían el header `Authorization: Bearer <token>` emitido por el backend (Sanctum).
+- Si ves 401/403: revisa expiración de token y permisos de rol; el sidebar se ajusta al rol.
+- Para CORS/CSRF: asegura `SANCTUM_STATEFUL_DOMAINS=localhost:3000` y `FRONTEND_URL=http://localhost:3000` en el backend.
+- Repositorio: https://github.com/izypizza/frontend-colegio

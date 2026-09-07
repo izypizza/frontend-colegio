@@ -91,20 +91,122 @@ const systemTours = {
       position: "right",
     },
     {
+      element: "[href='/dashboard/prestamos']",
+      title: "Préstamos de Biblioteca",
+      text: "Gestión del flujo de préstamos: solicitud, aprobación o rechazo, y devolución de libros",
+      position: "right",
+    },
+    {
+      element: "[href='/dashboard/bibliotecarios']",
+      title: "Gestión de Bibliotecarios",
+      text: "Administración de las cuentas de los bibliotecarios y su estado de acceso",
+      position: "right",
+    },
+    {
+      element: "[href='/dashboard/auxiliares']",
+      title: "Gestión de Auxiliares",
+      text: "Administración de las cuentas del personal auxiliar y su estado de acceso",
+      position: "right",
+    },
+    {
       element: "[href='/dashboard/elecciones']",
       title: "Sistema de Votación",
       text: "Elecciones escolares: municipio escolar, brigadier y más. Votación digital con resultados en tiempo real",
       position: "right",
     },
     {
+      element: "[href='/dashboard/elecciones-admin']",
+      title: "Gestión de Elecciones",
+      text: "Creación de elecciones, partidos y candidatos, activación de la votación y publicación de resultados",
+      position: "right",
+    },
+    {
+      element: "[href='/dashboard/permisos-auxiliares']",
+      title: "Permisos Auxiliares",
+      text: "Otorga permisos especiales temporales a los auxiliares sobre estudiantes, asistencias o calificaciones",
+      position: "right",
+    },
+    {
+      element: "[href='/dashboard/usuarios']",
+      title: "Gestión de Usuarios",
+      text: "Administración de cuentas de acceso, roles y estados de cada usuario del sistema",
+      position: "right",
+    },
+    {
+      element: "[href='/dashboard/chat']",
+      title: "Chat Docente - Padre",
+      text: "Comunicación directa y segura entre docentes y padres de familia sobre el avance del estudiante",
+      position: "right",
+    },
+    {
+      element: "[href='/dashboard/chat-admin']",
+      title: "Monitoreo de Chat",
+      text: "El administrador supervisa las conversaciones entre docentes y padres de familia",
+      position: "right",
+    },
+    {
+      element: "[href='/dashboard/auditoria']",
+      title: "Auditoría del Sistema",
+      text: "Registro de todas las acciones realizadas en el sistema: quién, qué y cuándo",
+      position: "right",
+    },
+    {
+      element: "[href='/dashboard/mis-permisos']",
+      title: "Mis Permisos",
+      text: "Permisos especiales otorgados al auxiliar con su fecha de vigencia",
+      position: "right",
+    },
+    {
+      element: "[href='/dashboard/estudiante/biblioteca']",
+      title: "Biblioteca (Estudiante)",
+      text: "Consulta del catálogo de libros desde el portal del estudiante",
+      position: "right",
+    },
+    {
+      element: "[href='/dashboard/docente/mis-clases']",
+      title: "Mis Clases (Docente)",
+      text: "Clases y asignaciones del docente dentro de su portal",
+      position: "right",
+    },
+    {
+      element: "[href='/dashboard/docente/mis-estudiantes']",
+      title: "Mis Estudiantes (Docente)",
+      text: "Estudiantes a cargo del docente para registrar avances",
+      position: "right",
+    },
+    {
+      element: "[href='/dashboard/estudiante/mis-calificaciones']",
+      title: "Mis Calificaciones (Estudiante)",
+      text: "Calificaciones propias del estudiante con gráficas de rendimiento",
+      position: "right",
+    },
+    {
+      element: "[href='/dashboard/estudiante/mis-asistencias']",
+      title: "Mis Asistencias (Estudiante)",
+      text: "Registro de asistencias del estudiante en su portal",
+      position: "right",
+    },
+    {
+      element: "[href='/dashboard/padre/mis-hijos']",
+      title: "Mis Hijos (Padre)",
+      text: "Información de los hijos matriculados del padre de familia",
+      position: "right",
+    },
+    {
+      element: "[href='/dashboard/padre/calificaciones']",
+      title: "Calificaciones de Hijos (Padre)",
+      text: "Seguimiento de las calificaciones de los hijos desde el portal del padre",
+      position: "right",
+    },
+    {
       element: "[href='/dashboard/configuraciones']",
       title: "Configuración del Sistema",
-      text: "Ajustes globales: modo mantenimiento, activación de módulos, parámetros institucionales (solo Administrador)",
+      text: "Ajustes globales: modo mantenimiento, activación de módulos, parámetros institucionales",
       position: "right",
     },
     {
       title: "Tour Completado",
-      text: "Ya conoces todas las funciones del sistema. Necesitas ayuda? Haz clic en el botón flotante cuando quieras repetir el tour.",
+      text: "Ya conoces todas las funciones del sistema. ¿Necesitas ayuda? Haz clic en el botón flotante cuando quieras repetir el tour.",
     },
   ],
 
@@ -124,7 +226,7 @@ const systemTours = {
   estudiantes: [
     {
       title: "Módulo de Estudiantes",
-      text: "Gestión completa de los 421 estudiantes del colegio distribuidos en 54 secciones",
+      text: "Gestión completa de los estudiantes del colegio distribuidos en secciones",
     },
     {
       element: "button[aria-label*='Nuevo']",
@@ -143,7 +245,7 @@ const systemTours = {
   calificaciones: [
     {
       title: "Sistema de Calificaciones",
-      text: "Registro y consulta de 20,528 notas académicas por bimestre con cálculo automático de promedios",
+      text: "Registro y consulta de notas académicas por bimestre con cálculo automático de promedios",
     },
     {
       element: ".periodo-selector",
@@ -156,7 +258,7 @@ const systemTours = {
   asistencias: [
     {
       title: "Control de Asistencias",
-      text: "8,820 registros de asistencia con sistema de 3 estados y observaciones detalladas",
+      text: "Registro de asistencia con sistema de 3 estados y observaciones detalladas",
     },
     {
       element: ".fecha-selector",
@@ -175,7 +277,7 @@ const systemTours = {
   biblioteca: [
     {
       title: "Biblioteca Virtual",
-      text: "Gestión de catálogo de 15 libros y sistema completo de préstamos",
+      text: "Gestión del catálogo de libros y del sistema de préstamos",
     },
     {
       element: ".libro-tipo",
