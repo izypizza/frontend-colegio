@@ -13,6 +13,7 @@ interface Libro {
   editorial: string;
   anio_publicacion: number;
   cantidad_disponible: number;
+  disponible: boolean;
   cantidad_total: number;
   categoria?: {
     id: number;
@@ -24,8 +25,9 @@ interface Prestamo {
   id: number;
   libro_id: number;
   fecha_prestamo: string;
-  fecha_devolucion: string;
+  fecha_devolucion: string | null;
   devuelto: boolean;
+  estado: "pendiente" | "aprobado" | "rechazado";
   libro: Libro;
 }
 
@@ -48,7 +50,7 @@ export default function BibliotecaEstudiantePage() {
       setLoading(true);
 
       const [librosData, prestamosData] = await Promise.all([
-        apiClient.get<Libro[]>("/libros-disponibles"),
+        apiClient.get<Libro[]>("/libros-disponibles", { params: { all: true } }),
         apiClient.get<Prestamo[]>("/mis-prestamos"),
       ]);
 
@@ -71,7 +73,7 @@ export default function BibliotecaEstudiantePage() {
 
       // Verificar si ya tiene un préstamo activo de este libro
       const prestamoActivo = misPrestamos.find(
-        (p) => p.libro_id === libroId && !p.devuelto,
+        (p) => p.libro_id === libroId && !p.devuelto && p.estado !== "rechazado",
       );
 
       if (prestamoActivo) {
@@ -85,7 +87,7 @@ export default function BibliotecaEstudiantePage() {
       });
 
       setSuccess(
-        "Préstamo solicitado correctamente. Acércate a la biblioteca para recoger el libro.",
+        "Solicitud enviada. Espera la aprobación del bibliotecario antes de recoger el libro.",
       );
       fetchData(); // Recargar datos
     } catch (err: any) {
@@ -118,8 +120,8 @@ export default function BibliotecaEstudiantePage() {
     ).values(),
   );
 
-  const prestamosActivos = misPrestamos.filter((p) => !p.devuelto);
-  const prestamosHistoricos = misPrestamos.filter((p) => p.devuelto);
+  const prestamosActivos = misPrestamos.filter((p) => !p.devuelto && p.estado !== "rechazado");
+  const prestamosHistoricos = misPrestamos.filter((p) => p.devuelto || p.estado === "rechazado");
 
   if (loading) {
     return (
@@ -175,13 +177,11 @@ export default function BibliotecaEstudiantePage() {
                 </p>
                 <p className="text-sm font-semibold text-yellow-700">
                   Fecha de devolución:{" "}
-                  {new Date(prestamo.fecha_devolucion).toLocaleDateString(
-                    "es-PE",
-                  )}
+                  {prestamo.fecha_devolucion ? new Date(`${prestamo.fecha_devolucion.split("T")[0]}T00:00:00`).toLocaleDateString("es-PE") : "Sin fecha límite"}
                 </p>
                 <div className="mt-2">
                   <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">
-                    Préstamo Activo
+                    {prestamo.estado === "pendiente" ? "Pendiente de aprobación" : "Préstamo activo"}
                   </span>
                 </div>
               </div>
@@ -253,7 +253,7 @@ export default function BibliotecaEstudiantePage() {
                 </p>
               )}
               <div className="flex justify-end mt-4">
-                {libro.cantidad_disponible > 0 ? (
+                {libro.disponible && libro.cantidad_disponible > 0 ? (
                   <Button
                     variant="primary"
                     size="sm"
@@ -327,13 +327,11 @@ export default function BibliotecaEstudiantePage() {
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {new Date(prestamo.fecha_devolucion).toLocaleDateString(
-                        "es-PE",
-                      )}
+                      {prestamo.fecha_devolucion ? new Date(`${prestamo.fecha_devolucion.split("T")[0]}T00:00:00`).toLocaleDateString("es-PE") : "Sin fecha límite"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
-                        Devuelto
+                        {prestamo.estado === "rechazado" ? "Rechazado" : "Devuelto"}
                       </span>
                     </td>
                   </tr>

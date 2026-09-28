@@ -73,6 +73,34 @@ export default function DashboardPage() {
     );
   }
 
+  if (user?.role === UserRole.BIBLIOTECARIO) {
+    const biblioteca = stats?.biblioteca;
+    return (
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold text-gray-800">Portal de Biblioteca</h1>
+        <p className="text-gray-600">Bienvenido(a), {user.name}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            ["Libros en catálogo", biblioteca?.total_libros ?? 0],
+            ["Préstamos activos", biblioteca?.prestamos_activos ?? 0],
+            ["Solicitudes pendientes", biblioteca?.prestamos_pendientes ?? 0],
+            ["Préstamos vencidos", biblioteca?.prestamos_vencidos ?? 0],
+          ].map(([titulo, total]) => (
+            <Card key={titulo}>
+              <p className="text-sm text-gray-600">{titulo}</p>
+              <p className="text-3xl font-bold text-[#04ADBF] mt-2">{total}</p>
+            </Card>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-4">
+          <Link href="/dashboard/biblioteca" className="text-blue-700 underline">Consultar catálogo</Link>
+          <Link href="/dashboard/prestamos" className="text-blue-700 underline">Gestionar préstamos</Link>
+          <Link href="/dashboard/biblioteca/estadisticas" className="text-blue-700 underline">Ver reportes</Link>
+        </div>
+      </div>
+    );
+  }
+
   // Dashboard personalizado para docentes
   if (user?.role === UserRole.DOCENTE) {
     return (
@@ -252,7 +280,7 @@ export default function DashboardPage() {
                     Mi Promedio
                   </p>
                   <p className="text-4xl font-bold text-blue-900 my-2">
-                    {stats.calificaciones.promedio}
+                    {stats.calificaciones.promedio ?? "—"}
                   </p>
                   <p className="text-xs text-blue-600">
                     {stats.calificaciones.aprobados} aprobados /{" "}
@@ -269,7 +297,7 @@ export default function DashboardPage() {
                     Asistencia del Mes
                   </p>
                   <p className="text-4xl font-bold text-green-900 my-2">
-                    {stats.asistencia_mes.porcentaje}%
+                    {stats.asistencia_mes.total > 0 ? `${stats.asistencia_mes.porcentaje}%` : "—"}
                   </p>
                   <div className="text-xs text-green-600 space-y-1">
                     <p>• {stats.asistencia_mes.presentes} presentes</p>
@@ -289,7 +317,7 @@ export default function DashboardPage() {
                     {stats.calificaciones.curso_mejor}
                   </p>
                   <p className="text-4xl font-bold text-purple-900">
-                    {stats.calificaciones.mejor_nota}
+                    {stats.calificaciones.total_cursos > 0 ? stats.calificaciones.mejor_nota : "—"}
                   </p>
                 </div>
               </Card>
@@ -356,7 +384,7 @@ export default function DashboardPage() {
                 Promedio General de tus Hijos
               </p>
               <p className="text-5xl font-bold text-blue-900 my-3">
-                {stats.resumen.promedio_general}
+                {stats.resumen.promedio_general ?? "Sin evaluaciones"}
               </p>
               <p className="text-sm text-blue-600">
                 {stats.resumen.periodo_actual}
@@ -420,7 +448,7 @@ export default function DashboardPage() {
                             : "text-red-600"
                       }`}
                     >
-                      {hijo.promedio}
+                      {hijo.promedio ?? "Sin evaluaciones"}
                     </p>
                   </div>
                 )}
@@ -461,7 +489,7 @@ export default function DashboardPage() {
     );
   }
 
-  // Dashboard para admin/auxiliar/bibliotecario
+  // Dashboard para admin/auxiliar
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
@@ -474,8 +502,6 @@ export default function DashboardPage() {
             "Gestiona todo el sistema educativo y supervisa las operaciones"}
           {user?.role === "auxiliar" &&
             "Apoya la administracion y gestion de la institucion educativa"}
-          {user?.role === "bibliotecario" &&
-            "Administra la biblioteca y controla los prestamos de libros"}
         </p>
         <p className="text-sm text-blue-100 mt-1">
           Institución Educativa N° 51006 Túpac Amaru

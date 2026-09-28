@@ -704,6 +704,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                     {user.role === "docente" && "Docente"}
                     {user.role === "padre" && "Padre de Familia"}
                     {user.role === "estudiante" && "Estudiante"}
+                    {user.role === "bibliotecario" && "Bibliotecario"}
                   </p>
                 )}
               </div>

@@ -64,12 +64,6 @@ export default function CalificacionesHijosPage() {
     fetchCalificaciones();
   }, []);
 
-  useEffect(() => {
-    if (selectedPeriodo) {
-      fetchCalificaciones();
-    }
-  }, [selectedPeriodo]);
-
   const fetchPeriodos = async () => {
     try {
       const response = await periodoService.getAll();
@@ -80,7 +74,7 @@ export default function CalificacionesHijosPage() {
       setPeriodos(periodosData);
 
       if (periodosData.length > 0) {
-        setSelectedPeriodo(periodosData[0].id);
+        setSelectedPeriodo((periodosData.find((periodo: { estado?: string }) => periodo.estado === "activo") ?? periodosData[0]).id);
       }
     } catch (error) {
       console.error("Error al cargar periodos:", error);
@@ -93,17 +87,7 @@ export default function CalificacionesHijosPage() {
       const response = (await padrePortalService.calificacionesHijos()) as any;
       const hijosData = response.hijos || [];
 
-      // Filtrar calificaciones por periodo seleccionado
-      const hijosConCalificaciones = hijosData.map((hijo: Estudiante) => ({
-        ...hijo,
-        calificaciones: selectedPeriodo
-          ? (hijo.calificaciones || []).filter(
-              (c) => c.periodo.id === selectedPeriodo,
-            )
-          : hijo.calificaciones || [],
-      }));
-
-      setHijos(hijosConCalificaciones);
+      setHijos(hijosData);
     } catch (error) {
       console.error("Error al cargar calificaciones:", error);
       setHijos([]);
@@ -112,9 +96,16 @@ export default function CalificacionesHijosPage() {
     }
   };
 
+  const hijosDelPeriodo = hijos.map((hijo) => ({
+    ...hijo,
+    calificaciones: selectedPeriodo
+      ? (hijo.calificaciones || []).filter((nota) => nota.periodo.id === selectedPeriodo)
+      : hijo.calificaciones || [],
+  }));
+
   const calcularPromedio = (calificaciones: Calificacion[]) => {
     if (calificaciones.length === 0) return 0;
-    const suma = calificaciones.reduce((acc, c) => acc + c.nota, 0);
+    const suma = calificaciones.reduce((acc, c) => acc + Number(c.nota), 0);
     return suma / calificaciones.length;
   };
 
@@ -171,7 +162,7 @@ export default function CalificacionesHijosPage() {
       </div>
 
       {/* Selector de periodo */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {periodos.map((periodo) => (
           <button
             key={periodo.id}
@@ -196,7 +187,7 @@ export default function CalificacionesHijosPage() {
         </Card>
       ) : (
         <div className="space-y-6">
-          {hijos.map((hijo) => {
+          {hijosDelPeriodo.map((hijo) => {
             const promedio = calcularPromedio(hijo.calificaciones || []);
             const graficasData = prepararDatosHijo(hijo);
 
@@ -204,7 +195,7 @@ export default function CalificacionesHijosPage() {
               <Card key={hijo.id}>
                 {/* Encabezado del hijo */}
                 <div className="border-b pb-4 mb-4">
-                  <div className="flex justify-between items-start">
+                  <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                     <div>
                       <h2 className="text-2xl font-bold text-gray-900">
                         {hijo.nombre} {hijo.apellido}
@@ -217,16 +208,14 @@ export default function CalificacionesHijosPage() {
                         Código: {hijo.codigo}
                       </p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-left sm:text-right">
                       <p className="text-sm text-gray-500 mb-1">
                         Promedio General
                       </p>
                       <p
-                        className={`text-4xl font-bold ${getNotaColor(
-                          promedio,
-                        )}`}
+                        className={`font-bold ${hijo.calificaciones?.length ? `text-4xl ${getNotaColor(promedio)}` : "text-xl text-gray-500"}`}
                       >
-                        {promedio.toFixed(2)}
+                        {hijo.calificaciones?.length ? promedio.toFixed(2) : "Sin evaluaciones"}
                       </p>
                       <div className="mt-2 flex gap-4 text-xs">
                         <div>

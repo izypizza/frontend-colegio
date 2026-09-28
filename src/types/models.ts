@@ -153,8 +153,9 @@ export interface PeriodoAcademico {
   id: number;
   nombre: string;
   anio: number;
-  fecha_inicio: string;
-  fecha_fin: string;
+  estado: "activo" | "inactivo";
+  fecha_inicio: string | null;
+  fecha_fin: string | null;
   created_at: string;
   updated_at: string;
 }
