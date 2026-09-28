@@ -21,14 +21,16 @@ interface Prestamo {
   libro_id: number;
   user_id: number;
   fecha_prestamo: string;
-  fecha_devolucion: string;
+  fecha_devolucion: string | null;
   devuelto: boolean;
+  estado: "pendiente" | "aprobado" | "rechazado";
+  estudiante?: { nombre_completo: string };
   libro?: {
     id: number;
     titulo: string;
     autor: string;
   };
-  user?: {
+  usuario?: {
     id: number;
     name: string;
     email: string;
@@ -40,6 +42,7 @@ interface Libro {
   titulo: string;
   autor: string;
   disponible: boolean;
+  cantidad_disponible: number;
 }
 
 export default function PrestamosPage() {
@@ -62,6 +65,7 @@ export default function PrestamosPage() {
   } = usePagination(50);
 
   const [prestamos, setPrestamos] = useState<Prestamo[]>([]);
+  const [resumen, setResumen] = useState({ prestamos_activos: 0, prestamos_devueltos: 0, prestamos_vencidos: 0 });
   const [librosDisponibles, setLibrosDisponibles] = useState<Libro[]>([]);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
@@ -81,9 +85,10 @@ export default function PrestamosPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [prestamosData, librosData] = (await Promise.all([
-        prestamoLibroService.getAll(),
+      const [prestamosData, librosData, resumenData] = (await Promise.all([
+        prestamoLibroService.getAll({ page: currentPage, per_page: perPage }),
         libroService.getAll({ all: true }),
+        prestamoLibroService.reportes(),
       ])) as any[];
 
       if (
@@ -106,10 +111,11 @@ export default function PrestamosPage() {
         setPrestamos(prestamosArray);
       }
 
+      setResumen(resumenData);
       const disponibles = Array.isArray(librosData)
-        ? librosData.filter((libro: Libro) => libro.disponible)
+        ? librosData.filter((libro: Libro) => libro.disponible && libro.cantidad_disponible > 0)
         : librosData?.data
-          ? librosData.data.filter((libro: Libro) => libro.disponible)
+          ? librosData.data.filter((libro: Libro) => libro.disponible && libro.cantidad_disponible > 0)
           : [];
       setLibrosDisponibles(disponibles);
     } catch (err: any) {
@@ -150,6 +156,19 @@ export default function PrestamosPage() {
     }
   };
 
+  const handleSolicitud = async (id: number, aprobar: boolean) => {
+    const motivo = aprobar ? null : window.prompt("Motivo del rechazo (máximo 500 caracteres):");
+    if (!aprobar && !motivo?.trim()) return;
+    try {
+      if (aprobar) await prestamoLibroService.aprobar(id);
+      else await prestamoLibroService.rechazar(id, motivo!.trim());
+      setSuccess(aprobar ? "Solicitud aprobada" : "Solicitud rechazada");
+      await loadData();
+    } catch (err) {
+      handleError(err, "No se pudo procesar la solicitud");
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       libro_id: "",
@@ -177,32 +196,34 @@ export default function PrestamosPage() {
         prestamo?.libro?.autor || "-",
     },
     {
-      key: "user",
+      key: "usuario",
       label: "Usuario",
       render: (value: unknown, prestamo: Prestamo) =>
-        (prestamo as any)?.user?.name || "-",
+        prestamo.usuario?.name || prestamo.estudiante?.nombre_completo || "Sin cuenta vinculada",
     },
     {
       key: "fecha_prestamo",
       label: "Fecha Préstamo",
       render: (value: unknown, prestamo: Prestamo) =>
-        new Date(prestamo.fecha_prestamo).toLocaleDateString(),
+        new Date(`${prestamo.fecha_prestamo.split("T")[0]}T00:00:00`).toLocaleDateString("es-PE"),
     },
     {
       key: "fecha_devolucion",
-      label: "Fecha Devolución",
+      label: "Fecha límite",
       render: (value: unknown, prestamo: Prestamo) =>
         prestamo.fecha_devolucion
-          ? new Date(prestamo.fecha_devolucion).toLocaleDateString()
-          : "-",
+          ? new Date(`${prestamo.fecha_devolucion.split("T")[0]}T00:00:00`).toLocaleDateString("es-PE")
+          : "Sin fecha límite",
     },
     {
       key: "estado",
       label: "Estado",
       render: (value: unknown, prestamo: Prestamo) => {
         const hoy = new Date();
-        const fechaDevolucion = new Date(prestamo.fecha_devolucion);
-        const atrasado = !prestamo.devuelto && hoy > fechaDevolucion;
+        const fechaDevolucion = prestamo.fecha_devolucion
+          ? new Date(`${prestamo.fecha_devolucion.split("T")[0]}T23:59:59`)
+          : null;
+        const atrasado = prestamo.estado === "aprobado" && !prestamo.devuelto && fechaDevolucion !== null && hoy > fechaDevolucion;
 
         return (
           <span
@@ -214,7 +235,7 @@ export default function PrestamosPage() {
                   : "bg-yellow-100 text-yellow-800"
             }`}
           >
-            {prestamo.devuelto ? "Devuelto" : atrasado ? "Atrasado" : "Activo"}
+            {prestamo.devuelto ? "Devuelto" : prestamo.estado === "pendiente" ? "Pendiente" : prestamo.estado === "rechazado" ? "Rechazado" : atrasado ? "Atrasado" : "Activo"}
           </span>
         );
       },
@@ -223,7 +244,13 @@ export default function PrestamosPage() {
       key: "acciones",
       label: "Acciones",
       render: (value: unknown, prestamo: Prestamo) => {
-        if (!prestamo.devuelto) {
+        if (prestamo.estado === "pendiente") {
+          return <div className="flex flex-wrap gap-2">
+            <Button size="sm" onClick={() => handleSolicitud(prestamo.id, true)}>Aprobar</Button>
+            <Button size="sm" variant="secondary" onClick={() => handleSolicitud(prestamo.id, false)}>Rechazar</Button>
+          </div>;
+        }
+        if (!prestamo.devuelto && prestamo.estado === "aprobado") {
           return (
             <Button
               variant="primary"
@@ -260,7 +287,7 @@ export default function PrestamosPage() {
       }
     >
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-wrap justify-between items-center gap-3">
           <h1 className="text-3xl font-bold text-gray-800">
             Gestión de Préstamos
           </h1>
@@ -285,7 +312,7 @@ export default function PrestamosPage() {
           <Card>
             <div className="text-center">
               <div className="text-3xl font-bold text-[#04ADBF]">
-                {prestamos.filter((p) => !p.devuelto).length}
+                {resumen.prestamos_activos}
               </div>
               <div className="text-gray-600">Préstamos Activos</div>
             </div>
@@ -294,7 +321,7 @@ export default function PrestamosPage() {
           <Card>
             <div className="text-center">
               <div className="text-3xl font-bold text-green-600">
-                {prestamos.filter((p) => p.devuelto).length}
+                {resumen.prestamos_devueltos}
               </div>
               <div className="text-gray-600">Devoluciones</div>
             </div>
@@ -303,14 +330,7 @@ export default function PrestamosPage() {
           <Card>
             <div className="text-center">
               <div className="text-3xl font-bold text-[#F22727]">
-                {
-                  prestamos.filter((p) => {
-                    if (p.devuelto) return false;
-                    const hoy = new Date();
-                    const fechaDevolucion = new Date(p.fecha_devolucion);
-                    return hoy > fechaDevolucion;
-                  }).length
-                }
+                {resumen.prestamos_vencidos}
               </div>
               <div className="text-gray-600">Préstamos Atrasados</div>
             </div>

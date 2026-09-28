@@ -23,6 +23,7 @@ interface Eleccion {
   fecha_inicio?: string;
   fecha_cierre?: string;
   candidatos?: Candidato[];
+  votacion_abierta?: boolean;
 }
 
 export default function EleccionesPage() {
@@ -35,6 +36,18 @@ export default function EleccionesPage() {
     useState<Eleccion | null>(null);
   const [yaVote, setYaVote] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
+  const [ahora, setAhora] = useState(() => Date.now());
+
+  useEffect(() => {
+    const temporizador = window.setInterval(() => setAhora(Date.now()), 1000);
+    return () => window.clearInterval(temporizador);
+  }, []);
+
+  const votacionAbierta = (eleccion: Eleccion) =>
+    eleccion.estado === "activa" &&
+    !!eleccion.fecha_inicio && !!eleccion.fecha_cierre &&
+    ahora >= new Date(eleccion.fecha_inicio).getTime() &&
+    ahora < new Date(eleccion.fecha_cierre).getTime();
 
   useEffect(() => {
     loadElecciones();
@@ -76,7 +89,10 @@ export default function EleccionesPage() {
   };
 
   const handleVotar = async (candidato_id: number) => {
-    if (!eleccionSeleccionada) return;
+    if (!eleccionSeleccionada || !votacionAbierta(eleccionSeleccionada)) {
+      setError("La elección no está abierta para votar en este momento.");
+      return;
+    }
 
     if (!confirm("¿Confirmar voto? Esta acción no se puede deshacer.")) return;
 
@@ -190,7 +206,7 @@ export default function EleccionesPage() {
                   </div>
                 )}
 
-                {!yaVote && user?.role === "estudiante" && (
+                {!yaVote && user?.role === "estudiante" && votacionAbierta(eleccionSeleccionada) && (
                   <Button
                     className="w-full"
                     onClick={() => handleVotar(candidato.id)}
@@ -228,9 +244,10 @@ export default function EleccionesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {elecciones.map((eleccion) => {
-            const esActiva = eleccion.estado === "activa";
-            const esPendiente = eleccion.estado === "pendiente";
-            const esCerrada = eleccion.estado === "cerrada";
+            const esActiva = votacionAbierta(eleccion);
+            const esPendiente = eleccion.estado === "pendiente" ||
+              (eleccion.estado === "activa" && !!eleccion.fecha_inicio &&
+                ahora < new Date(eleccion.fecha_inicio).getTime());
 
             return (
               <Card

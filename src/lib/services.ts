@@ -190,9 +190,12 @@ export const calificacionService = new CalificacionServiceExtended(
 export const categoriaLibroService = new CrudService<any>("/categorias-libros");
 export const libroService = new CrudService<any>("/libros");
 export const prestamoLibroService = {
-  getAll: async () => {
-    return await apiClient.get<any>("/prestamos");
+  getAll: async (params?: { page?: number; per_page?: number }) => {
+    return await apiClient.get<any>("/prestamos", { params });
   },
+  aprobar: (id: number) => apiClient.post(`/prestamos/${id}/aprobar`),
+  rechazar: (id: number, motivo: string) => apiClient.post(`/prestamos/${id}/rechazar`, { motivo }),
+  reportes: () => apiClient.get<{ prestamos_activos: number; prestamos_devueltos: number; prestamos_vencidos: number }>("/biblioteca/reportes"),
   create: async (data: any) => {
     return await apiClient.post("/prestamos", data);
   },

@@ -87,8 +87,8 @@ export default function PeriodosPage() {
       const data = {
         nombre: formData.nombre,
         anio: parseInt(formData.anio),
-        fecha_inicio: formData.fecha_inicio,
-        fecha_fin: formData.fecha_fin,
+        fecha_inicio: formData.fecha_inicio || null,
+        fecha_fin: formData.fecha_fin || null,
       };
 
       if (editingItem) {
@@ -125,13 +125,13 @@ export default function PeriodosPage() {
       key: "fecha_inicio",
       label: "Fecha Inicio",
       render: (value: unknown) =>
-        new Date(value as string).toLocaleDateString(),
+        value ? new Date(`${String(value).split("T")[0]}T00:00:00`).toLocaleDateString("es-PE") : "Sin fecha",
     },
     {
       key: "fecha_fin",
       label: "Fecha Fin",
       render: (value: unknown) =>
-        new Date(value as string).toLocaleDateString(),
+        value ? new Date(`${String(value).split("T")[0]}T00:00:00`).toLocaleDateString("es-PE") : "Sin fecha",
     },
   ];
 
@@ -249,7 +249,7 @@ export default function PeriodosPage() {
             onChange={(e) =>
               setFormData({ ...formData, fecha_inicio: e.target.value })
             }
-            required
+            required={Boolean(formData.fecha_fin)}
           />
           <Input
             label="Fecha Fin"
@@ -258,7 +258,7 @@ export default function PeriodosPage() {
             onChange={(e) =>
               setFormData({ ...formData, fecha_fin: e.target.value })
             }
-            required
+            required={Boolean(formData.fecha_inicio)}
           />
 
           <div className="flex justify-end gap-3 pt-4">
