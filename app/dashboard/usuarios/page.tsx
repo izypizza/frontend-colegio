@@ -8,6 +8,7 @@ import {
   Modal,
   Table,
   Pagination,
+  CredencialTemporalModal,
 } from "@/src/components/ui";
 import { userManagementService } from "@/src/lib/services";
 import { User, PersonaSinUsuario, CreateUserPayload } from "@/src/types/models";
@@ -17,6 +18,7 @@ import { useErrorHandler } from "@/src/hooks/useErrorHandler";
 import { useModalState } from "@/src/hooks/useModalState";
 import { usePagination } from "@/src/hooks/usePagination";
 import { usePermissions } from "@/src/hooks/usePermissions";
+import { useRestablecerPassword } from "@/src/hooks/useRestablecerPassword";
 import { PermissionGuard } from "@/src/components/auth";
 import { UserRole } from "@/src/types";
 
@@ -25,6 +27,13 @@ export default function UsuariosPage() {
   const permissions = usePermissions("usuarios");
   const { error, success, setError, setSuccess, handleError } =
     useErrorHandler();
+  const {
+    credencial: credencialPassword,
+    cargando: restableciendoCargando,
+    error: errorRestablecer,
+    restablecer: restablecerPassword,
+    cerrar: cerrarCredencial,
+  } = useRestablecerPassword();
   const {
     isOpen: isEditModalOpen,
     open: openEditModal,
@@ -213,6 +222,26 @@ export default function UsuariosPage() {
     } catch (err: any) {
       handleError(err, "Error al cambiar estado del usuario");
     }
+  };
+
+  const handleRestablecerPassword = async (usuarioSeleccionado: User) => {
+    if (String(usuarioSeleccionado.id) === String(user?.id)) {
+      setError(
+        "No puedes restablecer tu propia contraseña desde esta opción.",
+      );
+      return;
+    }
+
+    if (
+      !confirm(
+        `¿Restablecer la contraseña de ${usuarioSeleccionado.name}? ` +
+          "Se generará una clave temporal y se cerrarán sus sesiones abiertas.",
+      )
+    ) {
+      return;
+    }
+
+    await restablecerPassword(usuarioSeleccionado.id);
   };
 
   const handleOpenEstadoModal = (user: User) => {
@@ -482,6 +511,14 @@ export default function UsuariosPage() {
             onClick={() => handleToggleActive(user)}
           >
             {user.is_active ? "Desactivar" : "Activar"}
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => handleRestablecerPassword(user)}
+            disabled={restableciendoCargando}
+          >
+            Contraseña
           </Button>
         </div>
       ),
@@ -953,6 +990,14 @@ export default function UsuariosPage() {
             </div>
           )}
         </Modal>
+
+        <CredencialTemporalModal
+          isOpen={credencialPassword !== null}
+          usuario={credencialPassword?.usuario ?? null}
+          passwordTemporal={credencialPassword?.password_temporal ?? ""}
+          onClose={cerrarCredencial}
+          error={errorRestablecer}
+        />
       </div>
     </PermissionGuard>
   );

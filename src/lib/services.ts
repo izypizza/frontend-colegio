@@ -237,6 +237,9 @@ export const userManagementService = {
   toggleActive: async (id: number) => {
     return await apiClient.post(`/users/${id}/toggle-active`, {});
   },
+  restablecerPassword: async (id: number) => {
+    return await apiClient.post<any>(`/users/${id}/restablecer-password`, {});
+  },
   getPersonasSinUsuario: async (tipo: "estudiante" | "docente" | "padre") => {
     const response = await apiClient.get<any>(`/personas-sin-usuario/${tipo}`);
     return response.personas || [];

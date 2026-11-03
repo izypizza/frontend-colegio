@@ -7,3 +7,4 @@ export { Table } from "./Table";
 export { Toast, ToastContainer } from "./Toast";
 export { Pagination } from "./Pagination";
 export { SystemStatusBanner } from "./SystemStatusBanner";
+export { CredencialTemporalModal } from "./CredencialTemporalModal";

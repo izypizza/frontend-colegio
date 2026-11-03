@@ -8,6 +8,7 @@ import {
   Modal,
   Table,
   Pagination,
+  CredencialTemporalModal,
 } from "@/src/components/ui";
 import { docenteService, userManagementService } from "@/src/lib/services";
 import { Docente } from "@/src/types/models";
@@ -16,6 +17,7 @@ import { useErrorHandler } from "@/src/hooks/useErrorHandler";
 import { useModalState } from "@/src/hooks/useModalState";
 import { usePagination } from "@/src/hooks/usePagination";
 import { useFilteredData } from "@/src/hooks/useFilteredData";
+import { useRestablecerPassword } from "@/src/hooks/useRestablecerPassword";
 import { useAuth } from "@/src/features/auth";
 import { PermissionGuard } from "@/src/components/auth";
 import { UserRole } from "@/src/types";
@@ -56,6 +58,13 @@ export default function DocentesPage() {
   const permissions = usePermissions("docentes");
   const { error, success, handleError, handleSuccess, setError, setSuccess } =
     useErrorHandler();
+  const {
+    credencial: credencialPassword,
+    cargando: restableciendoCargando,
+    error: errorRestablecer,
+    restablecer: restablecerPassword,
+    cerrar: cerrarCredencial,
+  } = useRestablecerPassword();
   const { isOpen, editingItem, openCreate, openEdit, close } =
     useModalState<Docente>();
   const pagination = usePagination();
@@ -194,6 +203,26 @@ export default function DocentesPage() {
     } catch (err) {
       handleError(err, "No se pudo cambiar el estado de la cuenta");
     }
+  };
+
+  const handleRestablecerPassword = async (item: Docente) => {
+    if (!item.user_id) {
+      setError(
+        "Este docente no tiene cuenta de acceso al sistema, no se puede restablecer la contraseña.",
+      );
+      return;
+    }
+
+    if (
+      !confirm(
+        `¿Restablecer la contraseña de ${item.nombre_completo || item.nombres}? ` +
+          "Se generará una clave temporal y se cerrarán sus sesiones abiertas.",
+      )
+    ) {
+      return;
+    }
+
+    await restablecerPassword(item.user_id);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -336,13 +365,25 @@ export default function DocentesPage() {
             extraActions={
               permissions.canEdit
                 ? (item: Docente) => (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => handleToggleActivo(item)}
-                    >
-                      {item.user?.is_active === false ? "Activar" : "Desactivar"}
-                    </Button>
+                    <>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleToggleActivo(item)}
+                      >
+                        {item.user?.is_active === false
+                          ? "Activar"
+                          : "Desactivar"}
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleRestablecerPassword(item)}
+                        disabled={restableciendoCargando}
+                      >
+                        Contraseña
+                      </Button>
+                    </>
                   )
                 : undefined
             }
@@ -569,6 +610,14 @@ export default function DocentesPage() {
             </div>
           )}
         </Modal>
+
+        <CredencialTemporalModal
+          isOpen={credencialPassword !== null}
+          usuario={credencialPassword?.usuario ?? null}
+          passwordTemporal={credencialPassword?.password_temporal ?? ""}
+          onClose={cerrarCredencial}
+          error={errorRestablecer}
+        />
       </div>
     </PermissionGuard>
   );

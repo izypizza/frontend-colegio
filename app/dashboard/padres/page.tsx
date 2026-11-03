@@ -8,6 +8,7 @@ import {
   Modal,
   Table,
   Pagination,
+  CredencialTemporalModal,
 } from "@/src/components/ui";
 import { padreService, userManagementService } from "@/src/lib/services";
 import { Padre, Estudiante } from "@/src/types/models";
@@ -16,6 +17,7 @@ import { useErrorHandler } from "@/src/hooks/useErrorHandler";
 import { useModalState } from "@/src/hooks/useModalState";
 import { usePagination } from "@/src/hooks/usePagination";
 import { useFilteredData } from "@/src/hooks/useFilteredData";
+import { useRestablecerPassword } from "@/src/hooks/useRestablecerPassword";
 import { PermissionGuard } from "@/src/components/auth";
 import { UserRole } from "@/src/types";
 import { usePermissions } from "@/src/hooks/usePermissions";
@@ -23,6 +25,13 @@ import { usePermissions } from "@/src/hooks/usePermissions";
 export default function PadresPage() {
   const [padres, setPadres] = useState<Padre[]>([]);
   const [loading, setLoading] = useState(true);
+  const {
+    credencial: credencialPassword,
+    cargando: restableciendoCargando,
+    error: errorRestablecer,
+    restablecer: restablecerPassword,
+    cerrar: cerrarCredencial,
+  } = useRestablecerPassword();
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingItem, setViewingItem] = useState<Padre | null>(null);
   
@@ -177,6 +186,26 @@ export default function PadresPage() {
     } catch (err) {
       handleError(err, "No se pudo cambiar el estado de la cuenta");
     }
+  };
+
+  const handleRestablecerPassword = async (item: Padre) => {
+    if (!item.user_id) {
+      setError(
+        "Este padre no tiene cuenta de acceso al sistema, no se puede restablecer la contraseña.",
+      );
+      return;
+    }
+
+    if (
+      !confirm(
+        `¿Restablecer la contraseña de ${item.nombre_completo || item.nombres}? ` +
+          "Se generará una clave temporal y se cerrarán sus sesiones abiertas.",
+      )
+    ) {
+      return;
+    }
+
+    await restablecerPassword(item.user_id);
   };
 
   const handleGestionarEstudiantes = async (padre: Padre) => {
@@ -395,13 +424,25 @@ export default function PadresPage() {
           extraActions={
             permissions.canEdit
               ? (item: Padre) => (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleToggleActivo(item)}
-                  >
-                    {item.user?.is_active === false ? "Activar" : "Desactivar"}
-                  </Button>
+                  <>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handleToggleActivo(item)}
+                    >
+                      {item.user?.is_active === false
+                        ? "Activar"
+                        : "Desactivar"}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handleRestablecerPassword(item)}
+                      disabled={restableciendoCargando}
+                    >
+                      Contraseña
+                    </Button>
+                  </>
                 )
               : undefined
           }
@@ -743,6 +784,14 @@ export default function PadresPage() {
           </div>
         )}
       </Modal>
+
+      <CredencialTemporalModal
+        isOpen={credencialPassword !== null}
+        usuario={credencialPassword?.usuario ?? null}
+        passwordTemporal={credencialPassword?.password_temporal ?? ""}
+        onClose={cerrarCredencial}
+        error={errorRestablecer}
+      />
       </div>
     </PermissionGuard>
   );
