@@ -8,10 +8,17 @@ import { Alert } from "@/src/components/ui/Alert";
 import { useAuth } from "@/src/features/auth/hooks/useAuth";
 import { useErrorHandler } from "@/src/hooks/useErrorHandler";
 
+interface Partido {
+  id: number;
+  nombre?: string;
+}
+
 interface Candidato {
   id: number;
   eleccion_id: number;
   nombre: string;
+  partido_id?: number;
+  partido?: Partido;
   votos_count?: number;
 }
 
@@ -22,20 +29,58 @@ interface Eleccion {
   estado?: string;
   fecha_inicio?: string;
   fecha_cierre?: string;
+  resultados_publicados?: boolean;
   candidatos?: Candidato[];
-  votacion_abierta?: boolean;
+  votos_count?: number;
 }
+
+interface FilaResultado {
+  id: number;
+  nombre: string;
+  partido: string | null;
+  votos: number;
+  porcentaje: number;
+}
+
+interface ResumenResultados {
+  titulo: string;
+  totalVotos: number;
+  filas: FilaResultado[];
+}
+
+type Vista = "lista" | "detalle" | "resultados";
+type EstadoVisual = "activa" | "proxima" | "cerrada" | "publicada";
+
+const formatoFecha = (valor?: string) => {
+  if (!valor) return "Sin fecha";
+  return new Date(valor).toLocaleDateString("es-PE", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
+
+const formatoHora = (valor?: string) => {
+  if (!valor) return "";
+  return new Date(valor).toLocaleTimeString("es-PE", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
 
 export default function EleccionesPage() {
   const { user } = useAuth();
   const { error, success, setError, setSuccess, handleError } =
     useErrorHandler();
 
+  const [vista, setVista] = useState<Vista>("lista");
   const [elecciones, setElecciones] = useState<Eleccion[]>([]);
   const [eleccionSeleccionada, setEleccionSeleccionada] =
     useState<Eleccion | null>(null);
+  const [resultados, setResultados] = useState<ResumenResultados | null>(null);
   const [yaVote, setYaVote] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
+  const [cargandoDetalle, setCargandoDetalle] = useState(false);
   const [ahora, setAhora] = useState(() => Date.now());
 
   useEffect(() => {
@@ -43,11 +88,35 @@ export default function EleccionesPage() {
     return () => window.clearInterval(temporizador);
   }, []);
 
+  const esEstudiante = user?.role === "estudiante";
+
   const votacionAbierta = (eleccion: Eleccion) =>
     eleccion.estado === "activa" &&
-    !!eleccion.fecha_inicio && !!eleccion.fecha_cierre &&
+    !!eleccion.fecha_inicio &&
+    !!eleccion.fecha_cierre &&
     ahora >= new Date(eleccion.fecha_inicio).getTime() &&
     ahora < new Date(eleccion.fecha_cierre).getTime();
+
+  const estadoVisual = (eleccion: Eleccion): EstadoVisual => {
+    if (eleccion.estado === "cerrada") {
+      return eleccion.resultados_publicados ? "publicada" : "cerrada";
+    }
+    return votacionAbierta(eleccion) ? "activa" : "proxima";
+  };
+
+  const etiquetaEstado = (estado: EstadoVisual) => {
+    if (estado === "activa") return "En votación";
+    if (estado === "proxima") return "Próximamente";
+    if (estado === "publicada") return "Resultados publicados";
+    return "Cerrada";
+  };
+
+  const clasesEstado = (estado: EstadoVisual) => {
+    if (estado === "activa") return "bg-green-100 text-green-800";
+    if (estado === "proxima") return "bg-amber-100 text-amber-800";
+    if (estado === "publicada") return "bg-sky-100 text-sky-800";
+    return "bg-gray-100 text-gray-700";
+  };
 
   useEffect(() => {
     loadElecciones();
@@ -59,95 +128,237 @@ export default function EleccionesPage() {
       const data = await eleccionService.getAll();
       setElecciones(Array.isArray(data) ? data : []);
     } catch (err: any) {
-      handleError(err, "Error al cargar las elecciones");
+      handleError(err, "No se pudo cargar la lista de elecciones");
     } finally {
       setLoading(false);
     }
   };
 
+  const volverAlListado = () => {
+    setVista("lista");
+    setEleccionSeleccionada(null);
+    setResultados(null);
+    setYaVote(false);
+    setError(null);
+    setSuccess(null);
+    loadElecciones();
+  };
+
   const handleVerEleccion = async (eleccion: Eleccion) => {
     try {
+      setCargandoDetalle(true);
+      setError(null);
+      setSuccess(null);
+
       const detalleEleccion = await eleccionService.getById(eleccion.id);
       setEleccionSeleccionada(detalleEleccion);
 
-      // Solo verificar voto si el usuario es estudiante
-      if (user?.role === "estudiante") {
+      if (esEstudiante) {
         try {
-          const voteStatus = await eleccionService.yaVote(eleccion.id);
-          setYaVote(voteStatus?.ya_voto || false);
-        } catch (err) {
-          // Si hay error al verificar voto, asumir que no ha votado
+          const estadoVoto = await eleccionService.yaVote(eleccion.id);
+          setYaVote(estadoVoto?.ya_voto || false);
+        } catch {
           setYaVote(false);
         }
       } else {
-        // Si no es estudiante, no puede votar
         setYaVote(false);
       }
+
+      setVista("detalle");
     } catch (err: any) {
-      handleError(err, "Error al cargar la elección");
+      handleError(
+        err,
+        "No se pudo abrir la elección. Vuelve a intentarlo en un momento.",
+      );
+    } finally {
+      setCargandoDetalle(false);
     }
   };
 
   const handleVotar = async (candidato_id: number) => {
     if (!eleccionSeleccionada || !votacionAbierta(eleccionSeleccionada)) {
-      setError("La elección no está abierta para votar en este momento.");
+      setError("La votación no está abierta en este momento.");
       return;
     }
 
-    if (!confirm("¿Confirmar voto? Esta acción no se puede deshacer.")) return;
+    if (
+      !confirm(
+        "¿Confirmas tu voto? Una vez registrado no se puede modificar ni anular.",
+      )
+    ) {
+      return;
+    }
 
     try {
       await votoService.votar(eleccionSeleccionada.id, candidato_id);
-      setSuccess("¡Voto registrado exitosamente!");
+      setSuccess("Tu voto fue registrado correctamente.");
       setYaVote(true);
-
-      // Pequeño delay para mostrar mensaje antes de recargar
-      setTimeout(() => {
-        setEleccionSeleccionada(null);
-        loadElecciones();
-      }, 2000);
+      setTimeout(() => setSuccess(null), 5000);
     } catch (err: any) {
-      handleError(err, "Error al registrar el voto");
+      handleError(err, "No se pudo registrar tu voto");
     }
   };
 
-  const handleVerResultados = async (eleccion_id: number) => {
+  const handleVerResultados = async (eleccion: Eleccion) => {
     try {
-      const resultados = await eleccionService.getResultados(eleccion_id);
+      setCargandoDetalle(true);
+      setError(null);
 
-      if (resultados) {
-        setEleccionSeleccionada({
-          ...resultados,
-          candidatos: resultados.candidatos || [],
-        });
-      }
+      const datos = await eleccionService.getResultados(eleccion.id);
+      const filas: FilaResultado[] = (datos?.resultados || []).map(
+        (item: any) => ({
+          id: item.candidato?.id ?? 0,
+          nombre: item.candidato?.nombre ?? "Candidato",
+          partido: item.candidato?.partido?.nombre ?? null,
+          votos: item.votos ?? 0,
+          porcentaje: item.porcentaje ?? 0,
+        }),
+      );
+
+      setResultados({
+        titulo: datos?.eleccion?.titulo ?? eleccion.titulo,
+        totalVotos: datos?.total_votos ?? 0,
+        filas,
+      });
+      setVista("resultados");
     } catch (err: any) {
-      handleError(err, "Error al cargar los resultados");
+      handleError(
+        err,
+        "Los resultados de esta elección todavía no están disponibles",
+      );
+    } finally {
+      setCargandoDetalle(false);
     }
   };
 
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="text-lg">Cargando...</div>
+        <div className="flex items-center gap-3 text-gray-600">
+          <svg
+            className="w-5 h-5 animate-spin text-[#04ADBF]"
+            viewBox="0 0 24 24"
+            fill="none"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+            />
+          </svg>
+          Cargando elecciones...
+        </div>
+      </div>
+    );
+  }
+
+  if (vista === "resultados" && resultados) {
+    const maximo = Math.max(...resultados.filas.map((fila) => fila.votos), 1);
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="secondary" onClick={volverAlListado}>
+            Volver
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">
+              Resultados oficiales
+            </h1>
+            <p className="text-sm text-gray-500">{resultados.titulo}</p>
+          </div>
+        </div>
+
+        {error && (
+          <Alert type="error" message={error} onClose={() => setError(null)} />
+        )}
+
+        <Card>
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 pb-4 mb-4">
+            <div>
+              <p className="text-sm text-gray-500">Votos emitidos</p>
+              <p className="text-3xl font-bold text-gray-800">
+                {resultados.totalVotos}
+              </p>
+            </div>
+            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-sky-100 text-sky-800">
+              Publicados por el comité electoral
+            </span>
+          </div>
+
+          {resultados.filas.length === 0 ? (
+            <p className="text-center text-gray-600 py-6">
+              Esta elección no registró votos.
+            </p>
+          ) : (
+            <ul className="space-y-4">
+              {resultados.filas.map((fila, indice) => (
+                <li key={`${fila.id}-${indice}`}>
+                  <div className="flex items-center justify-between mb-1 gap-3">
+                    <div>
+                      <span className="font-semibold text-gray-800">
+                        {fila.nombre}
+                      </span>
+                      {fila.partido && (
+                        <span className="ml-2 text-sm text-gray-500">
+                          {fila.partido}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-sm text-gray-600 whitespace-nowrap">
+                      <span className="font-semibold text-gray-800">
+                        {fila.votos}
+                      </span>{" "}
+                      votos · {fila.porcentaje}%
+                    </div>
+                  </div>
+                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[#04ADBF]"
+                      style={{
+                        width: `${Math.round((fila.votos / maximo) * 100)}%`,
+                      }}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
       </div>
     );
   }
 
   // Vista de detalle de elección
-  if (eleccionSeleccionada) {
+  if (vista === "detalle" && eleccionSeleccionada) {
+    const estado = estadoVisual(eleccionSeleccionada);
+    const abierta = votacionAbierta(eleccionSeleccionada);
+    const puedeVotar = esEstudiante && abierta && !yaVote;
+
     return (
       <div className="space-y-6">
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="secondary"
-            onClick={() => setEleccionSeleccionada(null)}
-          >
-            ← Volver
+        <div className="flex items-start gap-4">
+          <Button variant="secondary" onClick={volverAlListado}>
+            Volver
           </Button>
-          <h1 className="text-3xl font-bold text-gray-800">
-            {eleccionSeleccionada.titulo}
-          </h1>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">
+              {eleccionSeleccionada.titulo}
+            </h1>
+            <span
+              className={`inline-block mt-1 px-3 py-1 rounded-full text-xs font-semibold ${clasesEstado(estado)}`}
+            >
+              {etiquetaEstado(estado)}
+            </span>
+          </div>
         </div>
 
         {error && (
@@ -162,26 +373,51 @@ export default function EleccionesPage() {
         )}
 
         <Card>
-          <div className="flex space-x-4 text-sm text-gray-500">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div>
-              <strong>Fecha:</strong>{" "}
-              {new Date(eleccionSeleccionada.fecha).toLocaleDateString()}
+              <p className="text-gray-500">Apertura de la votación</p>
+              <p className="font-semibold text-gray-800">
+                {formatoFecha(eleccionSeleccionada.fecha_inicio)}{" "}
+                {formatoHora(eleccionSeleccionada.fecha_inicio)}
+              </p>
+            </div>
+            <div>
+              <p className="text-gray-500">Cierre de la votación</p>
+              <p className="font-semibold text-gray-800">
+                {formatoFecha(eleccionSeleccionada.fecha_cierre)}{" "}
+                {formatoHora(eleccionSeleccionada.fecha_cierre)}
+              </p>
             </div>
           </div>
         </Card>
 
         {yaVote && (
-          <Alert type="success" message="Ya has votado en esta elección" />
+          <Alert
+            type="success"
+            message="Ya registraste tu voto en esta elección. Gracias por participar."
+          />
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {eleccionSeleccionada.candidatos?.map((candidato) => {
-            return (
+        {esEstudiante && !abierta && (
+          <Alert
+            type="info"
+            message={
+              estado === "proxima"
+                ? "La votación aún no inicia. Vuelve cuando llegue la fecha de apertura."
+                : "La votación ya finalizó. Los resultados se publicarán cuando el comité electoral los oficialice."
+            }
+          />
+        )}
+
+        {eleccionSeleccionada.candidatos &&
+        eleccionSeleccionada.candidatos.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {eleccionSeleccionada.candidatos.map((candidato) => (
               <Card key={candidato.id}>
                 <div className="text-center mb-4">
-                  <div className="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-3 flex items-center justify-center">
+                  <div className="w-20 h-20 bg-gray-100 rounded-full mx-auto mb-3 flex items-center justify-center">
                     <svg
-                      className="w-12 h-12 text-gray-400"
+                      className="w-10 h-10 text-gray-400"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
@@ -192,32 +428,45 @@ export default function EleccionesPage() {
                       />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-bold text-gray-800">
+                  <h3 className="text-lg font-bold text-gray-800 leading-tight">
                     {candidato.nombre}
                   </h3>
+                  {candidato.partido?.nombre &&
+                    !candidato.nombre
+                      .toLowerCase()
+                      .includes(candidato.partido.nombre.toLowerCase()) && (
+                      <p className="text-sm text-gray-500 mt-1">
+                        {candidato.partido.nombre}
+                      </p>
+                    )}
                 </div>
 
-                {candidato.votos_count !== undefined && (
-                  <div className="text-center py-3 bg-gray-100 rounded-md mb-3">
-                    <div className="text-2xl font-bold text-[#04ADBF]">
-                      {candidato.votos_count}
-                    </div>
-                    <div className="text-sm text-gray-600">Votos</div>
-                  </div>
-                )}
-
-                {!yaVote && user?.role === "estudiante" && votacionAbierta(eleccionSeleccionada) && (
+                {puedeVotar ? (
                   <Button
                     className="w-full"
                     onClick={() => handleVotar(candidato.id)}
                   >
-                    Votar
+                    Votar por esta lista
                   </Button>
+                ) : (
+                  <div className="text-center text-sm text-gray-500 border-t border-gray-100 pt-3">
+                    {yaVote
+                      ? "Voto registrado"
+                      : abierta
+                        ? "Solo los estudiantes pueden votar"
+                        : "Votación no disponible"}
+                  </div>
                 )}
               </Card>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <p className="text-center text-gray-600 py-6">
+              Esta elección todavía no tiene listas registradas.
+            </p>
+          </Card>
+        )}
       </div>
     );
   }
@@ -225,10 +474,17 @@ export default function EleccionesPage() {
   // Vista principal de elecciones
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-800">
-          Elecciones Escolares
+      <div className="flex flex-wrap justify-between items-center gap-3">
+        <h1 className="text-2xl font-bold text-gray-800">
+          Elecciones escolares
         </h1>
+        <Button
+          variant="secondary"
+          onClick={loadElecciones}
+          disabled={cargandoDetalle}
+        >
+          Actualizar
+        </Button>
       </div>
 
       {error && (
@@ -237,108 +493,85 @@ export default function EleccionesPage() {
 
       {elecciones.length === 0 ? (
         <Card>
-          <p className="text-center text-gray-600">
-            No hay elecciones disponibles en este momento.
-          </p>
+          <div className="text-center py-8">
+            <p className="text-gray-700 font-medium">
+              No hay elecciones registradas
+            </p>
+            <p className="text-sm text-gray-500 mt-1">
+              Cuando el comité electoral programe una elección aparecerá en esta
+              sección.
+            </p>
+          </div>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {elecciones.map((eleccion) => {
-            const esActiva = votacionAbierta(eleccion);
-            const esPendiente = eleccion.estado === "pendiente" ||
-              (eleccion.estado === "activa" && !!eleccion.fecha_inicio &&
-                ahora < new Date(eleccion.fecha_inicio).getTime());
+            const estado = estadoVisual(eleccion);
+            const puedeVerResultados =
+              eleccion.estado === "cerrada" &&
+              eleccion.resultados_publicados === true;
 
             return (
               <Card
                 key={eleccion.id}
-                className={!esActiva ? "opacity-75 bg-gray-50" : ""}
+                className={estado !== "activa" ? "bg-gray-50" : ""}
               >
-                <div className="flex justify-between items-start mb-3">
-                  <h3 className="text-xl font-bold text-gray-800">
+                <div className="flex justify-between items-start gap-3 mb-3">
+                  <h3 className="text-lg font-bold text-gray-800 leading-tight">
                     {eleccion.titulo}
                   </h3>
-                  {eleccion.estado && (
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        esActiva
-                          ? "bg-green-100 text-green-800"
-                          : esPendiente
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      {esActiva
-                        ? "Activa"
-                        : esPendiente
-                          ? "Próximamente"
-                          : "Cerrada"}
-                    </span>
-                  )}
+                  <span
+                    className={`shrink-0 px-3 py-1 rounded-full text-xs font-semibold ${clasesEstado(estado)}`}
+                  >
+                    {etiquetaEstado(estado)}
+                  </span>
                 </div>
 
-                <div className="space-y-2 text-sm text-gray-500 mb-4">
+                <div className="space-y-1 text-sm text-gray-600 mb-4">
                   {eleccion.fecha_inicio && eleccion.fecha_cierre ? (
                     <>
-                      <div>
-                        <strong>Inicio:</strong>{" "}
-                        {new Date(eleccion.fecha_inicio).toLocaleDateString(
-                          "es-PE",
-                          {
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric",
-                          },
-                        )}
-                      </div>
-                      <div>
-                        <strong>Cierre:</strong>{" "}
-                        {new Date(eleccion.fecha_cierre).toLocaleDateString(
-                          "es-PE",
-                          {
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric",
-                          },
-                        )}
-                      </div>
+                      <p>
+                        <span className="text-gray-500">Apertura:</span>{" "}
+                        {formatoFecha(eleccion.fecha_inicio)} ·{" "}
+                        {formatoHora(eleccion.fecha_inicio)}
+                      </p>
+                      <p>
+                        <span className="text-gray-500">Cierre:</span>{" "}
+                        {formatoFecha(eleccion.fecha_cierre)} ·{" "}
+                        {formatoHora(eleccion.fecha_cierre)}
+                      </p>
                     </>
                   ) : (
-                    <div>
-                      <strong>Fecha:</strong>{" "}
-                      {new Date(eleccion.fecha).toLocaleDateString()}
-                    </div>
-                  )}
-                  {!esActiva && (
-                    <p className="text-xs text-gray-600 italic mt-2">
-                      {esPendiente
-                        ? "Esta elección aún no está disponible"
-                        : "Esta elección ha finalizado"}
+                    <p>
+                      <span className="text-gray-500">Fecha:</span>{" "}
+                      {formatoFecha(eleccion.fecha)}
                     </p>
                   )}
                 </div>
 
-                <div className="flex space-x-2">
-                  {user?.role === "estudiante" ? (
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    className="flex-1 min-w-[150px]"
+                    variant={estado === "activa" ? "primary" : "secondary"}
+                    onClick={() => handleVerEleccion(eleccion)}
+                  >
+                    {estado === "activa" ? "Ir a votar" : "Ver listas"}
+                  </Button>
+
+                  {puedeVerResultados && (
                     <Button
-                      className="flex-1"
-                      onClick={() => handleVerEleccion(eleccion)}
-                      disabled={!esActiva}
+                      className="flex-1 min-w-[150px]"
+                      onClick={() => handleVerResultados(eleccion)}
+                      disabled={cargandoDetalle}
                     >
-                      {esActiva
-                        ? "Votar"
-                        : esPendiente
-                          ? "Próximamente"
-                          : "Cerrada"}
+                      Ver resultados
                     </Button>
-                  ) : (
-                    <Button
-                      className="flex-1"
-                      variant="secondary"
-                      onClick={() => handleVerResultados(eleccion.id)}
-                    >
-                      Ver Resultados
-                    </Button>
+                  )}
+
+                  {eleccion.estado === "cerrada" && !puedeVerResultados && (
+                    <span className="flex-1 min-w-[150px] flex items-center justify-center text-xs text-gray-500 border border-dashed border-gray-300 rounded-md px-3 py-2 text-center">
+                      Resultados aún no publicados
+                    </span>
                   )}
                 </div>
               </Card>
