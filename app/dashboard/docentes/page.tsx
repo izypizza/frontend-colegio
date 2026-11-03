@@ -9,7 +9,7 @@ import {
   Table,
   Pagination,
 } from "@/src/components/ui";
-import { docenteService } from "@/src/lib/services";
+import { docenteService, userManagementService } from "@/src/lib/services";
 import { Docente } from "@/src/types/models";
 import { useEffect, useState } from "react";
 import { useErrorHandler } from "@/src/hooks/useErrorHandler";
@@ -163,6 +163,39 @@ export default function DocentesPage() {
     }
   };
 
+  const handleToggleActivo = async (item: Docente) => {
+    if (!item.user_id) {
+      setError(
+        "Este docente no tiene cuenta de acceso al sistema, no se puede activar ni desactivar.",
+      );
+      return;
+    }
+
+    const estaActivo = item.user?.is_active !== false;
+    const accion = estaActivo ? "desactivar" : "activar";
+
+    if (
+      !confirm(
+        `¿${estaActivo ? "Desactivar" : "Activar"} la cuenta de ${item.nombre_completo || item.nombres}? ` +
+          (estaActivo
+            ? "No podrá iniciar sesión, pero se conserva todo su historial."
+            : "Podrá volver a iniciar sesión."),
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await userManagementService.toggleActive(item.user_id);
+      handleSuccess(
+        `Cuenta ${estaActivo ? "desactivada" : "activada"} correctamente (${accion} realizada).`,
+      );
+      fetchData();
+    } catch (err) {
+      handleError(err, "No se pudo cambiar el estado de la cuenta");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -208,6 +241,25 @@ export default function DocentesPage() {
         `${item.apellido_paterno} ${item.apellido_materno}, ${item.nombres}`,
     },
     { key: "especialidad", label: "Especialidad" },
+    {
+      key: "estado_cuenta",
+      label: "Cuenta",
+      render: (_value: unknown, item: Docente) => {
+        const estaActivo = item.user?.is_active !== false;
+
+        return (
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-semibold ${
+              estaActivo
+                ? "bg-green-100 text-green-800"
+                : "bg-gray-200 text-gray-700"
+            }`}
+          >
+            {estaActivo ? "Activo" : "Inactivo"}
+          </span>
+        );
+      },
+    },
   ];
 
   return (
@@ -281,6 +333,19 @@ export default function DocentesPage() {
             onView={handleView}
             onEdit={permissions.canEdit ? handleEdit : undefined}
             onDelete={permissions.canDelete ? handleDelete : undefined}
+            extraActions={
+              permissions.canEdit
+                ? (item: Docente) => (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handleToggleActivo(item)}
+                    >
+                      {item.user?.is_active === false ? "Activar" : "Desactivar"}
+                    </Button>
+                  )
+                : undefined
+            }
           />
         </Card>
 

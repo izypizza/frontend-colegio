@@ -9,7 +9,7 @@ import {
   Table,
   Pagination,
 } from "@/src/components/ui";
-import { padreService } from "@/src/lib/services";
+import { padreService, userManagementService } from "@/src/lib/services";
 import { Padre, Estudiante } from "@/src/types/models";
 import { useEffect, useState } from "react";
 import { useErrorHandler } from "@/src/hooks/useErrorHandler";
@@ -147,6 +147,38 @@ export default function PadresPage() {
     }
   };
 
+  const handleToggleActivo = async (item: Padre) => {
+    if (!item.user_id) {
+      setError(
+        "Este padre no tiene cuenta de acceso al sistema, no se puede activar ni desactivar.",
+      );
+      return;
+    }
+
+    const estaActivo = item.user?.is_active !== false;
+
+    if (
+      !confirm(
+        `¿${estaActivo ? "Desactivar" : "Activar"} la cuenta de ${item.nombre_completo || item.nombres}? ` +
+          (estaActivo
+            ? "No podrá iniciar sesión, pero se mantiene el vínculo con sus hijos."
+            : "Podrá volver a iniciar sesión."),
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await userManagementService.toggleActive(item.user_id);
+      handleSuccess(
+        `Cuenta ${estaActivo ? "desactivada" : "activada"} correctamente.`,
+      );
+      fetchData();
+    } catch (err) {
+      handleError(err, "No se pudo cambiar el estado de la cuenta");
+    }
+  };
+
   const handleGestionarEstudiantes = async (padre: Padre) => {
     setPadreSeleccionado(padre);
     setIsEstudiantesModalOpen(true);
@@ -275,6 +307,25 @@ export default function PadresPage() {
         );
       },
     },
+    {
+      key: "estado_cuenta",
+      label: "Cuenta",
+      render: (_value: unknown, item: Padre) => {
+        const estaActivo = item.user?.is_active !== false;
+
+        return (
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-semibold ${
+              estaActivo
+                ? "bg-green-100 text-green-800"
+                : "bg-gray-200 text-gray-700"
+            }`}
+          >
+            {estaActivo ? "Activo" : "Inactivo"}
+          </span>
+        );
+      },
+    },
   ];
 
   const hasSearch = searchTerm.trim() !== "";
@@ -341,6 +392,19 @@ export default function PadresPage() {
           onView={handleView}
           onEdit={permissions.canEdit ? handleEdit : undefined}
           onDelete={permissions.canDelete ? handleDelete : undefined}
+          extraActions={
+            permissions.canEdit
+              ? (item: Padre) => (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleToggleActivo(item)}
+                  >
+                    {item.user?.is_active === false ? "Activar" : "Desactivar"}
+                  </Button>
+                )
+              : undefined
+          }
         />
       </Card>
 

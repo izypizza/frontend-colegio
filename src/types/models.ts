@@ -95,6 +95,7 @@ export interface Docente {
   telefono?: string;
   direccion?: string;
   especialidad?: string;
+  user?: { id: number; is_active: boolean; email?: string };
   created_at: string;
   updated_at: string;
 }
@@ -114,6 +115,7 @@ export interface Padre {
   ocupacion?: string;
   estudiantes?: Estudiante[];
   hijos?: Estudiante[];
+  user?: { id: number; is_active: boolean; email?: string };
   created_at: string;
   updated_at: string;
 }

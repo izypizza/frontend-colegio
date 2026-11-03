@@ -9,7 +9,11 @@ import {
   Table,
   Pagination,
 } from "@/src/components/ui";
-import { estudianteService, seccionService } from "@/src/lib/services";
+import {
+  estudianteService,
+  seccionService,
+  userManagementService,
+} from "@/src/lib/services";
 import { Estudiante, Seccion } from "@/src/types/models";
 import { useEffect, useState } from "react";
 import { useErrorHandler } from "@/src/hooks/useErrorHandler";
@@ -157,6 +161,38 @@ export default function EstudiantesPage() {
     }
   };
 
+  const handleCambiarEstado = async (
+    item: Estudiante,
+    nuevoEstado: "activo" | "suspendido" | "egresado",
+  ) => {
+    const estadoActual = item.estado || "activo";
+    if (nuevoEstado === estadoActual) return;
+
+    const detalle: Record<string, string> = {
+      activo: "Podrá volver a iniciar sesión y figurará en las listas de su sección.",
+      suspendido:
+        "Se desactiva su cuenta y deja de figurar como alumno regular, pero se conserva todo su historial.",
+      egresado:
+        "Se desactiva su cuenta y la de sus padres si no tienen otros hijos activos. El historial queda intacto.",
+    };
+
+    if (
+      !confirm(
+        `¿Cambiar el estado de ${item.nombre_completo || item.nombres} a "${nuevoEstado}"? ${detalle[nuevoEstado]}`,
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await userManagementService.updateEstadoEstudiante(item.id, nuevoEstado);
+      handleSuccess(`Estado actualizado a "${nuevoEstado}".`);
+      fetchData();
+    } catch (err) {
+      handleError(err, "No se pudo cambiar el estado del estudiante");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -218,6 +254,26 @@ export default function EstudiantesPage() {
       key: "seccion",
       label: "Sección",
       render: (value: unknown) => (value as Seccion)?.nombre || "N/A",
+    },
+    {
+      key: "estado",
+      label: "Estado",
+      render: (_value: unknown, item: Estudiante) => {
+        const estado = item.estado || "activo";
+        const estilos: Record<string, string> = {
+          activo: "bg-green-100 text-green-800",
+          suspendido: "bg-amber-100 text-amber-800",
+          egresado: "bg-gray-200 text-gray-700",
+        };
+
+        return (
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-semibold ${estilos[estado]}`}
+          >
+            {estado.charAt(0).toUpperCase() + estado.slice(1)}
+          </span>
+        );
+      },
     },
   ];
 
@@ -295,6 +351,30 @@ export default function EstudiantesPage() {
             onView={handleView}
             onEdit={permissions.canEdit ? handleEdit : undefined}
             onDelete={permissions.canDelete ? handleDelete : undefined}
+            extraActions={
+              permissions.canEdit
+                ? (item: Estudiante) => (
+                    <select
+                      value={item.estado || "activo"}
+                      onChange={(evento) =>
+                        handleCambiarEstado(
+                          item,
+                          evento.target.value as
+                            | "activo"
+                            | "suspendido"
+                            | "egresado",
+                        )
+                      }
+                      className="px-2 py-1 border border-gray-300 rounded-md text-xs text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-[#04ADBF]"
+                      title="Cambiar estado del estudiante"
+                    >
+                      <option value="activo">Activo</option>
+                      <option value="suspendido">Suspendido</option>
+                      <option value="egresado">Egresado</option>
+                    </select>
+                  )
+                : undefined
+            }
           />
 
           {/* Paginación */}

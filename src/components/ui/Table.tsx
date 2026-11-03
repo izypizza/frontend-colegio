@@ -16,6 +16,7 @@ interface TableProps<T> {
   onEdit?: (item: T) => void;
   onDelete?: (item: T) => void;
   onView?: (item: T) => void;
+  extraActions?: (item: T) => React.ReactNode;
 }
 
 export function Table<T extends { id: string | number; uniqueId?: string }>({
@@ -25,6 +26,7 @@ export function Table<T extends { id: string | number; uniqueId?: string }>({
   onEdit,
   onDelete,
   onView,
+  extraActions,
 }: TableProps<T>) {
   if (loading) {
     return (
@@ -55,7 +57,7 @@ export function Table<T extends { id: string | number; uniqueId?: string }>({
                 {column.label}
               </th>
             ))}
-            {(onEdit || onDelete || onView) && (
+            {(onEdit || onDelete || onView || extraActions) && (
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Acciones
               </th>
@@ -83,7 +85,7 @@ export function Table<T extends { id: string | number; uniqueId?: string }>({
                       )}
                 </td>
               ))}
-              {(onEdit || onDelete || onView) && (
+              {(onEdit || onDelete || onView || extraActions) && (
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex justify-end gap-2">
                     {onView && (
@@ -104,6 +106,7 @@ export function Table<T extends { id: string | number; uniqueId?: string }>({
                         Editar
                       </Button>
                     )}
+                    {extraActions?.(item)}
                     {onDelete && (
                       <Button
                         variant="danger"
