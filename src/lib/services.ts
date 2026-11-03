@@ -317,6 +317,27 @@ export const docentePortalService = {
   misAsistencias: async (params?: any) => {
     return await apiClient.get<any>("/docente/mis-asistencias", { params });
   },
+  listaSeccion: async (
+    seccionId: number,
+    materiaId: number,
+    fecha: string,
+  ) => {
+    return await apiClient.get<any>(`/docente/lista-seccion/${seccionId}`, {
+      params: { materia_id: materiaId, fecha },
+    });
+  },
+  llamarLista: async (data: {
+    materia_id: number;
+    seccion_id: number;
+    fecha: string;
+    registros: Array<{
+      estudiante_id: number;
+      estado: string;
+      observaciones?: string | null;
+    }>;
+  }) => {
+    return await apiClient.post<any>("/docente/llamar-lista", data);
+  },
 };
 
 // Portal Estudiante
