@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { ROUTES } from '@/src/config/constants';
-import { AuthProvider, useAuth } from '@/src/features/auth';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { ROUTES } from "@/src/config/constants";
+import { AuthProvider, useAuth } from "@/src/features/auth";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 function HomeContent() {
   const router = useRouter();

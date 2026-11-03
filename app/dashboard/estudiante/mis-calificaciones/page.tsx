@@ -102,7 +102,13 @@ export default function MisCalificacionesPage() {
       setPeriodos(periodosData);
 
       if (Array.isArray(periodosData) && periodosData.length > 0) {
-        setSelectedPeriodo((periodosData.find((periodo: { estado?: string }) => periodo.estado === "activo") ?? periodosData[0]).id);
+        setSelectedPeriodo(
+          (
+            periodosData.find(
+              (periodo: { estado?: string }) => periodo.estado === "activo",
+            ) ?? periodosData[0]
+          ).id,
+        );
       }
     } catch (error) {
       console.error("Error al cargar periodos:", error);
@@ -313,15 +319,19 @@ export default function MisCalificacionesPage() {
                 data?.promedio || 0,
               )}`}
             >
-              {!data?.calificaciones.length ? "—" : data?.promedio
-                ? typeof data.promedio === "number"
-                  ? data.promedio.toFixed(2)
-                  : Number(data.promedio).toFixed(2)
-                : "0.00"}
+              {!data?.calificaciones.length
+                ? "—"
+                : data?.promedio
+                  ? typeof data.promedio === "number"
+                    ? data.promedio.toFixed(2)
+                    : Number(data.promedio).toFixed(2)
+                  : "0.00"}
             </div>
           </div>
           <p className={`text-lg mt-2 ${getNotaColor(data?.promedio || 0)}`}>
-            {data?.calificaciones.length ? getEstadoNota(data.promedio) : "Sin evaluaciones"}
+            {data?.calificaciones.length
+              ? getEstadoNota(data.promedio)
+              : "Sin evaluaciones"}
           </p>
           <div className="mt-4 flex justify-center gap-8 text-sm">
             <div>

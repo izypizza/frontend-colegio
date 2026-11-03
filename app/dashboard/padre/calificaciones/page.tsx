@@ -74,7 +74,13 @@ export default function CalificacionesHijosPage() {
       setPeriodos(periodosData);
 
       if (periodosData.length > 0) {
-        setSelectedPeriodo((periodosData.find((periodo: { estado?: string }) => periodo.estado === "activo") ?? periodosData[0]).id);
+        setSelectedPeriodo(
+          (
+            periodosData.find(
+              (periodo: { estado?: string }) => periodo.estado === "activo",
+            ) ?? periodosData[0]
+          ).id,
+        );
       }
     } catch (error) {
       console.error("Error al cargar periodos:", error);
@@ -99,7 +105,9 @@ export default function CalificacionesHijosPage() {
   const hijosDelPeriodo = hijos.map((hijo) => ({
     ...hijo,
     calificaciones: selectedPeriodo
-      ? (hijo.calificaciones || []).filter((nota) => nota.periodo.id === selectedPeriodo)
+      ? (hijo.calificaciones || []).filter(
+          (nota) => nota.periodo.id === selectedPeriodo,
+        )
       : hijo.calificaciones || [],
   }));
 
@@ -215,7 +223,9 @@ export default function CalificacionesHijosPage() {
                       <p
                         className={`font-bold ${hijo.calificaciones?.length ? `text-4xl ${getNotaColor(promedio)}` : "text-xl text-gray-500"}`}
                       >
-                        {hijo.calificaciones?.length ? promedio.toFixed(2) : "Sin evaluaciones"}
+                        {hijo.calificaciones?.length
+                          ? promedio.toFixed(2)
+                          : "Sin evaluaciones"}
                       </p>
                       <div className="mt-2 flex gap-4 text-xs">
                         <div>

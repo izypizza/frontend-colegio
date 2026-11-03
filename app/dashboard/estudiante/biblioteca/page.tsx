@@ -8,6 +8,7 @@ import { useAuth } from "@/src/features/auth";
 interface Libro {
   id: number;
   titulo: string;
+  tipo?: "fisico" | "digital";
   autor: string;
   isbn: string;
   editorial: string;
@@ -15,6 +16,8 @@ interface Libro {
   cantidad_disponible: number;
   disponible: boolean;
   cantidad_total: number;
+  url_digital?: string | null;
+  formato_digital?: string | null;
   categoria?: {
     id: number;
     nombre: string;
@@ -50,7 +53,9 @@ export default function BibliotecaEstudiantePage() {
       setLoading(true);
 
       const [librosData, prestamosData] = await Promise.all([
-        apiClient.get<Libro[]>("/libros-disponibles", { params: { all: true } }),
+        apiClient.get<Libro[]>("/libros-disponibles", {
+          params: { all: true },
+        }),
         apiClient.get<Prestamo[]>("/mis-prestamos"),
       ]);
 
@@ -73,7 +78,8 @@ export default function BibliotecaEstudiantePage() {
 
       // Verificar si ya tiene un préstamo activo de este libro
       const prestamoActivo = misPrestamos.find(
-        (p) => p.libro_id === libroId && !p.devuelto && p.estado !== "rechazado",
+        (p) =>
+          p.libro_id === libroId && !p.devuelto && p.estado !== "rechazado",
       );
 
       if (prestamoActivo) {
@@ -120,8 +126,12 @@ export default function BibliotecaEstudiantePage() {
     ).values(),
   );
 
-  const prestamosActivos = misPrestamos.filter((p) => !p.devuelto && p.estado !== "rechazado");
-  const prestamosHistoricos = misPrestamos.filter((p) => p.devuelto || p.estado === "rechazado");
+  const prestamosActivos = misPrestamos.filter(
+    (p) => !p.devuelto && p.estado !== "rechazado",
+  );
+  const prestamosHistoricos = misPrestamos.filter(
+    (p) => p.devuelto || p.estado === "rechazado",
+  );
 
   if (loading) {
     return (
@@ -177,11 +187,17 @@ export default function BibliotecaEstudiantePage() {
                 </p>
                 <p className="text-sm font-semibold text-yellow-700">
                   Fecha de devolución:{" "}
-                  {prestamo.fecha_devolucion ? new Date(`${prestamo.fecha_devolucion.split("T")[0]}T00:00:00`).toLocaleDateString("es-PE") : "Sin fecha límite"}
+                  {prestamo.fecha_devolucion
+                    ? new Date(
+                        `${prestamo.fecha_devolucion.split("T")[0]}T00:00:00`,
+                      ).toLocaleDateString("es-PE")
+                    : "Sin fecha límite"}
                 </p>
                 <div className="mt-2">
                   <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">
-                    {prestamo.estado === "pendiente" ? "Pendiente de aprobación" : "Préstamo activo"}
+                    {prestamo.estado === "pendiente"
+                      ? "Pendiente de aprobación"
+                      : "Préstamo activo"}
                   </span>
                 </div>
               </div>
@@ -229,8 +245,17 @@ export default function BibliotecaEstudiantePage() {
               key={libro.id}
               className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
             >
-              <h3 className="font-semibold text-gray-900 text-lg mb-2">
-                {libro.titulo}
+              <h3 className="font-semibold text-gray-900 text-lg mb-2 flex items-start justify-between gap-2">
+                <span>{libro.titulo}</span>
+                <span
+                  className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-semibold ${
+                    libro.tipo === "digital"
+                      ? "bg-sky-100 text-sky-800"
+                      : "bg-gray-100 text-gray-700"
+                  }`}
+                >
+                  {libro.tipo === "digital" ? "Digital" : "Físico"}
+                </span>
               </h3>
               <p className="text-sm text-gray-600 mb-1">
                 <span className="font-medium">Autor:</span> {libro.autor}
@@ -253,7 +278,23 @@ export default function BibliotecaEstudiantePage() {
                 </p>
               )}
               <div className="flex justify-end mt-4">
-                {libro.disponible && libro.cantidad_disponible > 0 ? (
+                {libro.tipo === "digital" ? (
+                  libro.url_digital ? (
+                    <a
+                      href={libro.url_digital}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-[#04ADBF] rounded-lg hover:bg-[#038a9a] transition-colors"
+                    >
+                      Abrir libro
+                      {libro.formato_digital ? ` (${libro.formato_digital})` : ""}
+                    </a>
+                  ) : (
+                    <span className="px-4 py-2 text-sm font-medium text-gray-400 bg-gray-100 rounded-lg">
+                      Enlace no disponible
+                    </span>
+                  )
+                ) : libro.disponible && libro.cantidad_disponible > 0 ? (
                   <Button
                     variant="primary"
                     size="sm"
@@ -327,11 +368,17 @@ export default function BibliotecaEstudiantePage() {
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {prestamo.fecha_devolucion ? new Date(`${prestamo.fecha_devolucion.split("T")[0]}T00:00:00`).toLocaleDateString("es-PE") : "Sin fecha límite"}
+                      {prestamo.fecha_devolucion
+                        ? new Date(
+                            `${prestamo.fecha_devolucion.split("T")[0]}T00:00:00`,
+                          ).toLocaleDateString("es-PE")
+                        : "Sin fecha límite"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
-                        {prestamo.estado === "rechazado" ? "Rechazado" : "Devuelto"}
+                        {prestamo.estado === "rechazado"
+                          ? "Rechazado"
+                          : "Devuelto"}
                       </span>
                     </td>
                   </tr>

@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { Card } from '@/src/components/ui';
-import { docentePortalService } from '@/src/lib/services';
-import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from "react";
+import { Card } from "@/src/components/ui";
+import { docentePortalService } from "@/src/lib/services";
+import { useSearchParams } from "next/navigation";
 
 interface Estudiante {
   id: number;
@@ -24,10 +24,12 @@ interface Estudiante {
 export default function MisEstudiantesPage() {
   const [loading, setLoading] = useState(true);
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
-  const [filteredEstudiantes, setFilteredEstudiantes] = useState<Estudiante[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredEstudiantes, setFilteredEstudiantes] = useState<Estudiante[]>(
+    [],
+  );
+  const [searchTerm, setSearchTerm] = useState("");
   const searchParams = useSearchParams();
-  const seccionId = searchParams.get('seccion');
+  const seccionId = searchParams.get("seccion");
 
   useEffect(() => {
     fetchEstudiantes();
@@ -43,7 +45,7 @@ export default function MisEstudiantesPage() {
       const response = await docentePortalService.misEstudiantes();
       setEstudiantes(response.estudiantes || []);
     } catch (error) {
-      console.error('Error al cargar estudiantes:', error);
+      console.error("Error al cargar estudiantes:", error);
     } finally {
       setLoading(false);
     }
@@ -54,14 +56,15 @@ export default function MisEstudiantesPage() {
 
     // Filtrar por sección si viene en la URL
     if (seccionId) {
-      filtered = filtered.filter(e => e.seccion.id === parseInt(seccionId));
+      filtered = filtered.filter((e) => e.seccion.id === parseInt(seccionId));
     }
 
     // Filtrar por término de búsqueda
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(e => {
-        const nombreCompleto = `${e.nombres} ${e.apellido_paterno} ${e.apellido_materno}`.toLowerCase();
+      filtered = filtered.filter((e) => {
+        const nombreCompleto =
+          `${e.nombres} ${e.apellido_paterno} ${e.apellido_materno}`.toLowerCase();
         return nombreCompleto.includes(term);
       });
     }
@@ -81,15 +84,27 @@ export default function MisEstudiantesPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-800">Mis Estudiantes</h1>
-        <p className="text-gray-600 mt-2">Estudiantes de las secciones donde impartes clases</p>
+        <p className="text-gray-600 mt-2">
+          Estudiantes de las secciones donde impartes clases
+        </p>
       </div>
 
       {/* Buscador */}
       <Card>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <svg
+              className="h-5 w-5 text-gray-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
             </svg>
           </div>
           <input
@@ -105,17 +120,23 @@ export default function MisEstudiantesPage() {
       {/* Resumen */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
-          <h3 className="text-sm font-medium text-gray-500 mb-2">Total Estudiantes</h3>
-          <p className="text-3xl font-bold text-gray-900">{estudiantes.length}</p>
+          <h3 className="text-sm font-medium text-gray-500 mb-2">
+            Total Estudiantes
+          </h3>
+          <p className="text-3xl font-bold text-gray-900">
+            {estudiantes.length}
+          </p>
         </Card>
         <Card>
           <h3 className="text-sm font-medium text-gray-500 mb-2">Mostrando</h3>
-          <p className="text-3xl font-bold text-blue-600">{filteredEstudiantes.length}</p>
+          <p className="text-3xl font-bold text-blue-600">
+            {filteredEstudiantes.length}
+          </p>
         </Card>
         <Card>
           <h3 className="text-sm font-medium text-gray-500 mb-2">Secciones</h3>
           <p className="text-3xl font-bold text-gray-900">
-            {new Set(estudiantes.map(e => e.seccion.id)).size}
+            {new Set(estudiantes.map((e) => e.seccion.id)).size}
           </p>
         </Card>
       </div>
@@ -138,7 +159,9 @@ export default function MisEstudiantesPage() {
               />
             </svg>
             <p className="text-lg">No se encontraron estudiantes</p>
-            <p className="text-sm mt-2">Intenta con otros términos de búsqueda</p>
+            <p className="text-sm mt-2">
+              Intenta con otros términos de búsqueda
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -161,20 +184,22 @@ export default function MisEstudiantesPage() {
                         <div className="flex-shrink-0 h-10 w-10">
                           <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">
                             <span className="text-white font-semibold text-sm">
-                              {estudiante.nombres?.charAt(0) || 'E'}
+                              {estudiante.nombres?.charAt(0) || "E"}
                             </span>
                           </div>
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">
-                            {estudiante.nombres} {estudiante.apellido_paterno} {estudiante.apellido_materno}
+                            {estudiante.nombres} {estudiante.apellido_paterno}{" "}
+                            {estudiante.apellido_materno}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {estudiante.seccion.grado.nombre} - {estudiante.seccion.nombre}
+                        {estudiante.seccion.grado.nombre} -{" "}
+                        {estudiante.seccion.nombre}
                       </div>
                     </td>
                   </tr>

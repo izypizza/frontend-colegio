@@ -65,7 +65,11 @@ export default function PrestamosPage() {
   } = usePagination(50);
 
   const [prestamos, setPrestamos] = useState<Prestamo[]>([]);
-  const [resumen, setResumen] = useState({ prestamos_activos: 0, prestamos_devueltos: 0, prestamos_vencidos: 0 });
+  const [resumen, setResumen] = useState({
+    prestamos_activos: 0,
+    prestamos_devueltos: 0,
+    prestamos_vencidos: 0,
+  });
   const [librosDisponibles, setLibrosDisponibles] = useState<Libro[]>([]);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
@@ -113,9 +117,14 @@ export default function PrestamosPage() {
 
       setResumen(resumenData);
       const disponibles = Array.isArray(librosData)
-        ? librosData.filter((libro: Libro) => libro.disponible && libro.cantidad_disponible > 0)
+        ? librosData.filter(
+            (libro: Libro) => libro.disponible && libro.cantidad_disponible > 0,
+          )
         : librosData?.data
-          ? librosData.data.filter((libro: Libro) => libro.disponible && libro.cantidad_disponible > 0)
+          ? librosData.data.filter(
+              (libro: Libro) =>
+                libro.disponible && libro.cantidad_disponible > 0,
+            )
           : [];
       setLibrosDisponibles(disponibles);
     } catch (err: any) {
@@ -157,7 +166,9 @@ export default function PrestamosPage() {
   };
 
   const handleSolicitud = async (id: number, aprobar: boolean) => {
-    const motivo = aprobar ? null : window.prompt("Motivo del rechazo (máximo 500 caracteres):");
+    const motivo = aprobar
+      ? null
+      : window.prompt("Motivo del rechazo (máximo 500 caracteres):");
     if (!aprobar && !motivo?.trim()) return;
     try {
       if (aprobar) await prestamoLibroService.aprobar(id);
@@ -199,20 +210,26 @@ export default function PrestamosPage() {
       key: "usuario",
       label: "Usuario",
       render: (value: unknown, prestamo: Prestamo) =>
-        prestamo.usuario?.name || prestamo.estudiante?.nombre_completo || "Sin cuenta vinculada",
+        prestamo.usuario?.name ||
+        prestamo.estudiante?.nombre_completo ||
+        "Sin cuenta vinculada",
     },
     {
       key: "fecha_prestamo",
       label: "Fecha Préstamo",
       render: (value: unknown, prestamo: Prestamo) =>
-        new Date(`${prestamo.fecha_prestamo.split("T")[0]}T00:00:00`).toLocaleDateString("es-PE"),
+        new Date(
+          `${prestamo.fecha_prestamo.split("T")[0]}T00:00:00`,
+        ).toLocaleDateString("es-PE"),
     },
     {
       key: "fecha_devolucion",
       label: "Fecha límite",
       render: (value: unknown, prestamo: Prestamo) =>
         prestamo.fecha_devolucion
-          ? new Date(`${prestamo.fecha_devolucion.split("T")[0]}T00:00:00`).toLocaleDateString("es-PE")
+          ? new Date(
+              `${prestamo.fecha_devolucion.split("T")[0]}T00:00:00`,
+            ).toLocaleDateString("es-PE")
           : "Sin fecha límite",
     },
     {
@@ -223,7 +240,11 @@ export default function PrestamosPage() {
         const fechaDevolucion = prestamo.fecha_devolucion
           ? new Date(`${prestamo.fecha_devolucion.split("T")[0]}T23:59:59`)
           : null;
-        const atrasado = prestamo.estado === "aprobado" && !prestamo.devuelto && fechaDevolucion !== null && hoy > fechaDevolucion;
+        const atrasado =
+          prestamo.estado === "aprobado" &&
+          !prestamo.devuelto &&
+          fechaDevolucion !== null &&
+          hoy > fechaDevolucion;
 
         return (
           <span
@@ -235,7 +256,15 @@ export default function PrestamosPage() {
                   : "bg-yellow-100 text-yellow-800"
             }`}
           >
-            {prestamo.devuelto ? "Devuelto" : prestamo.estado === "pendiente" ? "Pendiente" : prestamo.estado === "rechazado" ? "Rechazado" : atrasado ? "Atrasado" : "Activo"}
+            {prestamo.devuelto
+              ? "Devuelto"
+              : prestamo.estado === "pendiente"
+                ? "Pendiente"
+                : prestamo.estado === "rechazado"
+                  ? "Rechazado"
+                  : atrasado
+                    ? "Atrasado"
+                    : "Activo"}
           </span>
         );
       },
@@ -245,10 +274,23 @@ export default function PrestamosPage() {
       label: "Acciones",
       render: (value: unknown, prestamo: Prestamo) => {
         if (prestamo.estado === "pendiente") {
-          return <div className="flex flex-wrap gap-2">
-            <Button size="sm" onClick={() => handleSolicitud(prestamo.id, true)}>Aprobar</Button>
-            <Button size="sm" variant="secondary" onClick={() => handleSolicitud(prestamo.id, false)}>Rechazar</Button>
-          </div>;
+          return (
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                onClick={() => handleSolicitud(prestamo.id, true)}
+              >
+                Aprobar
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => handleSolicitud(prestamo.id, false)}
+              >
+                Rechazar
+              </Button>
+            </div>
+          );
         }
         if (!prestamo.devuelto && prestamo.estado === "aprobado") {
           return (

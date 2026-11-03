@@ -32,7 +32,7 @@ export const LoginForm: React.FC = () => {
 
     const validationErrors = validateLoginForm(
       formData.email,
-      formData.password
+      formData.password,
     );
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);

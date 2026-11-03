@@ -74,8 +74,7 @@ export default function DocenteDashboardPage() {
           porcentaje_asistencia: resumen?.porcentaje_asistencia ?? null,
         },
         asignaciones: asignacionesRespuesta?.asignaciones ?? [],
-        estadisticas_por_materia:
-          estadisticas?.estadisticas_por_materia ?? [],
+        estadisticas_por_materia: estadisticas?.estadisticas_por_materia ?? [],
       });
     } catch (error) {
       console.error("Error al cargar dashboard:", error);

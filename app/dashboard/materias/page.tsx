@@ -17,7 +17,7 @@ export default function MateriasPage() {
   const [formData, setFormData] = useState({ nombre: "" });
 
   // Hooks centralizados
-  const permissions = usePermissions('materias');
+  const permissions = usePermissions("materias");
   const { error, success, handleError, handleSuccess, setError, setSuccess } =
     useErrorHandler();
   const { isOpen, editingItem, openCreate, openEdit, close } =
@@ -103,89 +103,89 @@ export default function MateriasPage() {
       }
     >
       <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">Materias</h1>
-          <p className="text-gray-600 mt-2">
-            Gestión de materias del currículo
-          </p>
-        </div>
-        {permissions.canCreate && (
-          <Button variant="primary" onClick={handleCreateClick}>
-            + Nueva Materia
-          </Button>
-        )}
-      </div>
-
-      {success && (
-        <Alert
-          type="success"
-          message={success}
-          onClose={() => setSuccess(null)}
-        />
-      )}
-
-      {/* Filtro de búsqueda */}
-      <Card>
-        <div className="mb-4">
-          <Input
-            placeholder="Buscar materia..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <div className="text-sm text-gray-600">
-          Mostrando {materiasFiltradas.length} de {materias.length} materias
-        </div>
-      </Card>
-
-      <Card>
-        <Table
-          columns={columns}
-          data={materiasFiltradas}
-          loading={loading}
-          onEdit={permissions.canEdit ? handleEditClick : undefined}
-          onDelete={permissions.canDelete ? handleDelete : undefined}
-        />
-      </Card>
-
-      <Modal
-        isOpen={isOpen}
-        onClose={() => {
-          close();
-          setError(null);
-        }}
-        title={editingItem ? "Editar Materia" : "Nueva Materia"}
-        size="md"
-      >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <Alert
-              type="error"
-              message={error}
-              onClose={() => setError(null)}
-            />
-          )}
-          <Input
-            label="Nombre de la Materia"
-            value={formData.nombre}
-            onChange={(e) =>
-              setFormData({ ...formData, nombre: e.target.value })
-            }
-            required
-            placeholder="Ej: Matemática, Comunicación..."
-          />
-
-          <div className="flex justify-end gap-3 pt-4">
-            <Button variant="secondary" type="button" onClick={close}>
-              Cancelar
-            </Button>
-            <Button variant="primary" type="submit">
-              {editingItem ? "Actualizar" : "Guardar"}
-            </Button>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">Materias</h1>
+            <p className="text-gray-600 mt-2">
+              Gestión de materias del currículo
+            </p>
           </div>
-        </form>
-      </Modal>
+          {permissions.canCreate && (
+            <Button variant="primary" onClick={handleCreateClick}>
+              + Nueva Materia
+            </Button>
+          )}
+        </div>
+
+        {success && (
+          <Alert
+            type="success"
+            message={success}
+            onClose={() => setSuccess(null)}
+          />
+        )}
+
+        {/* Filtro de búsqueda */}
+        <Card>
+          <div className="mb-4">
+            <Input
+              placeholder="Buscar materia..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="text-sm text-gray-600">
+            Mostrando {materiasFiltradas.length} de {materias.length} materias
+          </div>
+        </Card>
+
+        <Card>
+          <Table
+            columns={columns}
+            data={materiasFiltradas}
+            loading={loading}
+            onEdit={permissions.canEdit ? handleEditClick : undefined}
+            onDelete={permissions.canDelete ? handleDelete : undefined}
+          />
+        </Card>
+
+        <Modal
+          isOpen={isOpen}
+          onClose={() => {
+            close();
+            setError(null);
+          }}
+          title={editingItem ? "Editar Materia" : "Nueva Materia"}
+          size="md"
+        >
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <Alert
+                type="error"
+                message={error}
+                onClose={() => setError(null)}
+              />
+            )}
+            <Input
+              label="Nombre de la Materia"
+              value={formData.nombre}
+              onChange={(e) =>
+                setFormData({ ...formData, nombre: e.target.value })
+              }
+              required
+              placeholder="Ej: Matemática, Comunicación..."
+            />
+
+            <div className="flex justify-end gap-3 pt-4">
+              <Button variant="secondary" type="button" onClick={close}>
+                Cancelar
+              </Button>
+              <Button variant="primary" type="submit">
+                {editingItem ? "Actualizar" : "Guardar"}
+              </Button>
+            </div>
+          </form>
+        </Modal>
       </div>
     </PermissionGuard>
   );

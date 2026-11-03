@@ -23,7 +23,7 @@ export default function PeriodosPage() {
   const [filterAnio, setFilterAnio] = useState("");
 
   // Hooks personalizados
-  const permissions = usePermissions('periodos');
+  const permissions = usePermissions("periodos");
   const { error, success, handleError, handleSuccess, setError, setSuccess } =
     useErrorHandler();
   const { isOpen, editingItem, openCreate, openEdit, close } =
@@ -125,13 +125,21 @@ export default function PeriodosPage() {
       key: "fecha_inicio",
       label: "Fecha Inicio",
       render: (value: unknown) =>
-        value ? new Date(`${String(value).split("T")[0]}T00:00:00`).toLocaleDateString("es-PE") : "Sin fecha",
+        value
+          ? new Date(
+              `${String(value).split("T")[0]}T00:00:00`,
+            ).toLocaleDateString("es-PE")
+          : "Sin fecha",
     },
     {
       key: "fecha_fin",
       label: "Fecha Fin",
       render: (value: unknown) =>
-        value ? new Date(`${String(value).split("T")[0]}T00:00:00`).toLocaleDateString("es-PE") : "Sin fecha",
+        value
+          ? new Date(
+              `${String(value).split("T")[0]}T00:00:00`,
+            ).toLocaleDateString("es-PE")
+          : "Sin fecha",
     },
   ];
 
@@ -148,129 +156,131 @@ export default function PeriodosPage() {
       }
     >
       <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">
-            Periodos Académicos
-          </h1>
-          <p className="text-gray-600 mt-2">Gestión de periodos académicos</p>
-        </div>
-        {permissions.canCreate && (
-          <Button variant="primary" onClick={handleCreate}>
-            + Agregar Periodo
-          </Button>
-        )}
-      </div>
-
-      {success && (
-        <Alert
-          type="success"
-          message={success}
-          onClose={() => setSuccess(null)}
-        />
-      )}
-
-      {/* Filtros de búsqueda */}
-      <Card>
-        <div className="flex flex-col md:flex-row gap-4 mb-4">
-          <Input
-            placeholder="Buscar periodo..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1"
-          />
-          <select
-            value={filterAnio}
-            onChange={(e) => setFilterAnio(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Todos los años</option>
-            {aniosUnicos.map((anio) => (
-              <option key={anio} value={anio}>
-                {anio}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="text-sm text-gray-600">
-          Mostrando {periodosFiltradosCompletos.length} de {periodos.length}{" "}
-          periodos
-        </div>
-      </Card>
-
-      <Card>
-        <Table
-          columns={columns}
-          data={periodosFiltradosCompletos}
-          loading={loading}
-          onEdit={permissions.canEdit ? handleEdit : undefined}
-          onDelete={permissions.canDelete ? handleDelete : undefined}
-        />
-      </Card>
-
-      <Modal
-        isOpen={isOpen}
-        onClose={() => {
-          close();
-          setError(null);
-        }}
-        title={editingItem ? "Editar Periodo" : "Nuevo Periodo"}
-        size="lg"
-      >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <Alert
-              type="error"
-              message={error}
-              onClose={() => setError(null)}
-            />
-          )}
-          <Input
-            label="Nombre"
-            value={formData.nombre}
-            onChange={(e) =>
-              setFormData({ ...formData, nombre: e.target.value })
-            }
-            placeholder="Ejemplo: Primer Trimestre, Segundo Bimestre"
-            required
-          />
-          <Input
-            label="Año"
-            type="number"
-            value={formData.anio}
-            onChange={(e) => setFormData({ ...formData, anio: e.target.value })}
-            placeholder="2024"
-            required
-          />
-          <Input
-            label="Fecha Inicio"
-            type="date"
-            value={formData.fecha_inicio}
-            onChange={(e) =>
-              setFormData({ ...formData, fecha_inicio: e.target.value })
-            }
-            required={Boolean(formData.fecha_fin)}
-          />
-          <Input
-            label="Fecha Fin"
-            type="date"
-            value={formData.fecha_fin}
-            onChange={(e) =>
-              setFormData({ ...formData, fecha_fin: e.target.value })
-            }
-            required={Boolean(formData.fecha_inicio)}
-          />
-
-          <div className="flex justify-end gap-3 pt-4">
-            <Button variant="secondary" type="button" onClick={close}>
-              Cancelar
-            </Button>
-            <Button variant="primary" type="submit">
-              {editingItem ? "Actualizar" : "Guardar"}
-            </Button>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">
+              Periodos Académicos
+            </h1>
+            <p className="text-gray-600 mt-2">Gestión de periodos académicos</p>
           </div>
-        </form>
-      </Modal>
+          {permissions.canCreate && (
+            <Button variant="primary" onClick={handleCreate}>
+              + Agregar Periodo
+            </Button>
+          )}
+        </div>
+
+        {success && (
+          <Alert
+            type="success"
+            message={success}
+            onClose={() => setSuccess(null)}
+          />
+        )}
+
+        {/* Filtros de búsqueda */}
+        <Card>
+          <div className="flex flex-col md:flex-row gap-4 mb-4">
+            <Input
+              placeholder="Buscar periodo..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="flex-1"
+            />
+            <select
+              value={filterAnio}
+              onChange={(e) => setFilterAnio(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Todos los años</option>
+              {aniosUnicos.map((anio) => (
+                <option key={anio} value={anio}>
+                  {anio}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="text-sm text-gray-600">
+            Mostrando {periodosFiltradosCompletos.length} de {periodos.length}{" "}
+            periodos
+          </div>
+        </Card>
+
+        <Card>
+          <Table
+            columns={columns}
+            data={periodosFiltradosCompletos}
+            loading={loading}
+            onEdit={permissions.canEdit ? handleEdit : undefined}
+            onDelete={permissions.canDelete ? handleDelete : undefined}
+          />
+        </Card>
+
+        <Modal
+          isOpen={isOpen}
+          onClose={() => {
+            close();
+            setError(null);
+          }}
+          title={editingItem ? "Editar Periodo" : "Nuevo Periodo"}
+          size="lg"
+        >
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <Alert
+                type="error"
+                message={error}
+                onClose={() => setError(null)}
+              />
+            )}
+            <Input
+              label="Nombre"
+              value={formData.nombre}
+              onChange={(e) =>
+                setFormData({ ...formData, nombre: e.target.value })
+              }
+              placeholder="Ejemplo: Primer Trimestre, Segundo Bimestre"
+              required
+            />
+            <Input
+              label="Año"
+              type="number"
+              value={formData.anio}
+              onChange={(e) =>
+                setFormData({ ...formData, anio: e.target.value })
+              }
+              placeholder="2024"
+              required
+            />
+            <Input
+              label="Fecha Inicio"
+              type="date"
+              value={formData.fecha_inicio}
+              onChange={(e) =>
+                setFormData({ ...formData, fecha_inicio: e.target.value })
+              }
+              required={Boolean(formData.fecha_fin)}
+            />
+            <Input
+              label="Fecha Fin"
+              type="date"
+              value={formData.fecha_fin}
+              onChange={(e) =>
+                setFormData({ ...formData, fecha_fin: e.target.value })
+              }
+              required={Boolean(formData.fecha_inicio)}
+            />
+
+            <div className="flex justify-end gap-3 pt-4">
+              <Button variant="secondary" type="button" onClick={close}>
+                Cancelar
+              </Button>
+              <Button variant="primary" type="submit">
+                {editingItem ? "Actualizar" : "Guardar"}
+              </Button>
+            </div>
+          </form>
+        </Modal>
       </div>
     </PermissionGuard>
   );

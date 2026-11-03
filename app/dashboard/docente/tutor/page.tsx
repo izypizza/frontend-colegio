@@ -59,7 +59,7 @@ export default function TutorPage() {
   const [loading, setLoading] = useState(true);
   const [tutorInfo, setTutorInfo] = useState<TutorInfo | null>(null);
   const [activeTab, setActiveTab] = useState<"calificaciones" | "asistencias">(
-    "calificaciones"
+    "calificaciones",
   );
   const [calificaciones, setCalificaciones] = useState<Calificacion[]>([]);
   const [asistencias, setAsistencias] = useState<Asistencia[]>([]);
@@ -96,7 +96,7 @@ export default function TutorPage() {
     try {
       setLoadingData(true);
       const response = await apiClient.get<{ calificaciones: Calificacion[] }>(
-        "/docente/tutor-calificaciones"
+        "/docente/tutor-calificaciones",
       );
       setCalificaciones(response.calificaciones || []);
     } catch (error) {
@@ -110,7 +110,7 @@ export default function TutorPage() {
     try {
       setLoadingData(true);
       const response = await apiClient.get<{ asistencias: Asistencia[] }>(
-        "/docente/tutor-asistencias"
+        "/docente/tutor-asistencias",
       );
       setAsistencias(response.asistencias || []);
     } catch (error) {
@@ -247,7 +247,7 @@ export default function TutorPage() {
               <p className="text-sm text-gray-600">Promedio General</p>
               <p
                 className={`text-3xl font-bold ${getNotaColor(
-                  parseFloat(estadisticas.promedio)
+                  parseFloat(estadisticas.promedio),
                 )}`}
               >
                 {estadisticas.promedio}
@@ -378,7 +378,7 @@ export default function TutorPage() {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span
                               className={`text-lg font-bold ${getNotaColor(
-                                cal.nota
+                                cal.nota,
                               )}`}
                             >
                               {cal.nota.toFixed(2)}
@@ -454,7 +454,7 @@ export default function TutorPage() {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span
                               className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getEstadoColor(
-                                asist.estado
+                                asist.estado,
                               )}`}
                             >
                               {asist.estado}
