@@ -105,11 +105,11 @@ export default function DashboardPage() {
   if (user?.role === UserRole.DOCENTE) {
     return (
       <div className="space-y-6">
-        <div className="bg-gradient-to-r from-blue-600 to-blue-400 rounded-lg p-6 shadow-md text-white">
+        <div className="bg-[#04ADBF] rounded-lg p-6 shadow-md text-white">
           <h1 className="text-3xl font-bold">Portal del Docente</h1>
-          <p className="mt-2 text-blue-50">Bienvenido(a), {user.name}</p>
-          <p className="mt-1 text-sm text-blue-100">
-            Gestiona tus clases, estudiantes y evaluaciones desde aqui
+          <p className="mt-2 text-teal-50">Bienvenido(a), {user.name}</p>
+          <p className="mt-1 text-sm text-teal-100">
+            Gestiona tus clases, estudiantes y evaluaciones desde aquí
           </p>
         </div>
 
@@ -255,10 +255,10 @@ export default function DashboardPage() {
   if (user?.role === UserRole.ESTUDIANTE) {
     return (
       <div className="space-y-6">
-        <div className="bg-gradient-to-r from-green-600 to-green-400 rounded-lg p-6 shadow-md text-white">
+        <div className="bg-[#04ADBF] rounded-lg p-6 shadow-md text-white">
           <h1 className="text-3xl font-bold">Portal del Estudiante</h1>
-          <p className="mt-2 text-green-50">Bienvenido(a), {user.name}</p>
-          <p className="mt-1 text-sm text-green-100">
+          <p className="mt-2 text-teal-50">Bienvenido(a), {user.name}</p>
+          <p className="mt-1 text-sm text-teal-100">
             Consulta tus calificaciones, asistencias y tareas
           </p>
           {stats?.info_personal && (
@@ -362,16 +362,16 @@ export default function DashboardPage() {
   if (user?.role === UserRole.PADRE) {
     return (
       <div className="space-y-6">
-        <div className="bg-gradient-to-r from-purple-600 to-purple-400 rounded-lg p-6 shadow-md text-white">
+        <div className="bg-[#04ADBF] rounded-lg p-6 shadow-md text-white">
           <h1 className="text-3xl font-bold">Portal del Padre de Familia</h1>
-          <p className="mt-2 text-purple-50">Bienvenido(a), {user.name}</p>
-          <p className="mt-1 text-sm text-purple-100">
-            Monitorea el progreso academico de tus hijos
+          <p className="mt-2 text-teal-50">Bienvenido(a), {user.name}</p>
+          <p className="mt-1 text-sm text-teal-100">
+            Monitorea el progreso académico de tus hijos
           </p>
           {stats?.mis_hijos && (
-            <p className="mt-2 text-purple-100">
+            <p className="mt-2 text-teal-100">
               Tienes {stats.mis_hijos}{" "}
-              {stats.mis_hijos === 1 ? "hijo" : "hijos"} registrado(s)
+              {stats.mis_hijos === 1 ? "hijo registrado" : "hijos registrados"}
             </p>
           )}
         </div>
@@ -493,17 +493,17 @@ export default function DashboardPage() {
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#04ADBF] to-blue-500 rounded-lg p-6 shadow-md text-white">
+      <div className="bg-[#04ADBF] rounded-lg p-6 shadow-md text-white">
         <h1 className="text-3xl lg:text-4xl font-bold">
           Bienvenido(a), {user?.name}
         </h1>
-        <p className="mt-2 text-lg text-blue-50">
+        <p className="mt-2 text-lg text-teal-50">
           {user?.role === "admin" &&
             "Gestiona todo el sistema educativo y supervisa las operaciones"}
           {user?.role === "auxiliar" &&
-            "Apoya la administracion y gestion de la institucion educativa"}
+            "Apoya la administración y gestión de la institución educativa"}
         </p>
-        <p className="text-sm text-blue-100 mt-1">
+        <p className="text-sm text-teal-100 mt-1">
           Institución Educativa N° 51006 Túpac Amaru
         </p>
       </div>
