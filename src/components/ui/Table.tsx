@@ -78,10 +78,10 @@ export function Table<T extends { id: string | number; uniqueId?: string }>({
                   {column.render
                     ? column.render(
                         (item as Record<string, unknown>)[column.key],
-                        item
+                        item,
                       )
                     : String(
-                        (item as Record<string, unknown>)[column.key] ?? ""
+                        (item as Record<string, unknown>)[column.key] ?? "",
                       )}
                 </td>
               ))}

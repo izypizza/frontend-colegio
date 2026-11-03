@@ -77,7 +77,9 @@ export default function DashboardPage() {
     const biblioteca = stats?.biblioteca;
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold text-gray-800">Portal de Biblioteca</h1>
+        <h1 className="text-2xl font-bold text-gray-800">
+          Portal de Biblioteca
+        </h1>
         <p className="text-gray-600">Bienvenido(a), {user.name}</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
@@ -93,9 +95,21 @@ export default function DashboardPage() {
           ))}
         </div>
         <div className="flex flex-wrap gap-4">
-          <Link href="/dashboard/biblioteca" className="text-blue-700 underline">Consultar catálogo</Link>
-          <Link href="/dashboard/prestamos" className="text-blue-700 underline">Gestionar préstamos</Link>
-          <Link href="/dashboard/biblioteca/estadisticas" className="text-blue-700 underline">Ver reportes</Link>
+          <Link
+            href="/dashboard/biblioteca"
+            className="text-blue-700 underline"
+          >
+            Consultar catálogo
+          </Link>
+          <Link href="/dashboard/prestamos" className="text-blue-700 underline">
+            Gestionar préstamos
+          </Link>
+          <Link
+            href="/dashboard/biblioteca/estadisticas"
+            className="text-blue-700 underline"
+          >
+            Ver reportes
+          </Link>
         </div>
       </div>
     );
@@ -116,7 +130,7 @@ export default function DashboardPage() {
         {/* Estadísticas rápidas */}
         {stats && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+            <Card className="bg-green-50 border-green-200">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-green-600 font-medium">
@@ -144,7 +158,7 @@ export default function DashboardPage() {
               </div>
             </Card>
 
-            <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+            <Card className="bg-purple-50 border-purple-200">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-purple-600 font-medium">
@@ -172,7 +186,7 @@ export default function DashboardPage() {
               </div>
             </Card>
 
-            <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+            <Card className="bg-orange-50 border-orange-200">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-orange-600 font-medium">
@@ -274,7 +288,7 @@ export default function DashboardPage() {
         {stats && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {stats.calificaciones && (
-              <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+              <Card className="bg-blue-50 border-blue-200">
                 <div className="text-center">
                   <p className="text-sm text-blue-600 font-medium">
                     Mi Promedio
@@ -291,13 +305,15 @@ export default function DashboardPage() {
             )}
 
             {stats.asistencia_mes && (
-              <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+              <Card className="bg-green-50 border-green-200">
                 <div className="text-center">
                   <p className="text-sm text-green-600 font-medium">
                     Asistencia del Mes
                   </p>
                   <p className="text-4xl font-bold text-green-900 my-2">
-                    {stats.asistencia_mes.total > 0 ? `${stats.asistencia_mes.porcentaje}%` : "—"}
+                    {stats.asistencia_mes.total > 0
+                      ? `${stats.asistencia_mes.porcentaje}%`
+                      : "—"}
                   </p>
                   <div className="text-xs text-green-600 space-y-1">
                     <p>• {stats.asistencia_mes.presentes} presentes</p>
@@ -308,7 +324,7 @@ export default function DashboardPage() {
             )}
 
             {stats.calificaciones && (
-              <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+              <Card className="bg-purple-50 border-purple-200">
                 <div className="text-center">
                   <p className="text-sm text-purple-600 font-medium">
                     Mejor Curso
@@ -317,7 +333,9 @@ export default function DashboardPage() {
                     {stats.calificaciones.curso_mejor}
                   </p>
                   <p className="text-4xl font-bold text-purple-900">
-                    {stats.calificaciones.total_cursos > 0 ? stats.calificaciones.mejor_nota : "—"}
+                    {stats.calificaciones.total_cursos > 0
+                      ? stats.calificaciones.mejor_nota
+                      : "—"}
                   </p>
                 </div>
               </Card>
@@ -378,7 +396,7 @@ export default function DashboardPage() {
 
         {/* Resumen General */}
         {stats?.resumen && (
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+          <Card className="bg-blue-50 border-blue-200">
             <div className="text-center">
               <p className="text-sm text-blue-600 font-medium">
                 Promedio General de tus Hijos
@@ -795,7 +813,7 @@ export default function DashboardPage() {
                       {stats.asistencias_hoy.ausentes}
                     </span>
                   </div>
-                  <div className="mt-4 p-4 bg-gradient-to-r from-teal-500 to-blue-500 rounded-lg text-white">
+                  <div className="mt-4 p-4 bg-[#04ADBF] rounded-lg text-white">
                     <p className="text-sm font-medium opacity-90">
                       Porcentaje de Asistencia
                     </p>
@@ -831,7 +849,7 @@ export default function DashboardPage() {
                     </span>
                   </div>
                   <div className="grid grid-cols-2 gap-3 mt-4">
-                    <div className="p-4 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg text-white text-center">
+                    <div className="p-4 bg-green-600 rounded-lg text-white text-center">
                       <p className="text-sm font-medium opacity-90">
                         Aprobados
                       </p>
@@ -839,7 +857,7 @@ export default function DashboardPage() {
                         {stats.calificaciones.aprobados}
                       </p>
                     </div>
-                    <div className="p-4 bg-gradient-to-br from-red-500 to-rose-600 rounded-lg text-white text-center">
+                    <div className="p-4 bg-red-600 rounded-lg text-white text-center">
                       <p className="text-sm font-medium opacity-90">
                         Desaprobados
                       </p>

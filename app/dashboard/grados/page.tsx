@@ -287,7 +287,7 @@ export default function GradosYSeccionesPage() {
     >
       <div className="space-y-6">
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#04ADBF] to-[#038a9a] rounded-xl p-6 text-white">
+        <div className="bg-[#04ADBF] rounded-xl p-6 text-white">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-3xl font-bold mb-2">
@@ -404,7 +404,7 @@ export default function GradosYSeccionesPage() {
                               nivel?.slice(1).toLowerCase()}
                           </span>
                         </div>
-                        <div className="w-16 h-16 bg-gradient-to-br from-[#04ADBF] to-[#038a9a] rounded-full flex items-center justify-center">
+                        <div className="w-16 h-16 bg-[#04ADBF] rounded-full flex items-center justify-center">
                           <svg
                             className="w-8 h-8 text-white"
                             fill="none"
@@ -596,7 +596,7 @@ export default function GradosYSeccionesPage() {
                               </span>
                             )}
                           </div>
-                          <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-indigo-500 rounded-full flex items-center justify-center">
+                          <div className="w-16 h-16 bg-[#04ADBF] rounded-full flex items-center justify-center">
                             <span className="text-2xl font-bold text-white">
                               {seccion.nombre}
                             </span>

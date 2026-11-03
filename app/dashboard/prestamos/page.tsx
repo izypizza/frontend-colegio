@@ -288,7 +288,7 @@ export default function PrestamosPage() {
     >
       <div className="space-y-6">
         <div className="flex flex-wrap justify-between items-center gap-3">
-          <h1 className="text-3xl font-bold text-gray-800">
+          <h1 className="text-2xl font-bold text-gray-800">
             Gestión de Préstamos
           </h1>
           {permissions.canCreate && (

@@ -72,7 +72,7 @@ export default function NotificacionesPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900">Notificaciones</h1>
+        <h1 className="text-2xl font-bold text-gray-800">Notificaciones</h1>
         <Button onClick={marcarTodasLeidas} variant="secondary">
           Marcar todas como leídas
         </Button>

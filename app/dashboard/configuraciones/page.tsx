@@ -200,7 +200,7 @@ export default function ConfiguracionesPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-800">
             {isAdmin
               ? "Configuraciones del Sistema"
               : "Preferencias de Accesibilidad"}

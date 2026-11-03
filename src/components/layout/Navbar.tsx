@@ -21,7 +21,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const isAdmin = user?.role === UserRole.ADMIN;
 
   return (
-    <header className="bg-gradient-to-r from-[#04ADBF] to-[#038a9a] shadow-lg sticky top-0 z-10">
+    <header className="bg-[#04ADBF] shadow-sm sticky top-0 z-10">
       <div className="flex items-center justify-between px-3 sm:px-4 md:px-6 py-3 md:py-4">
         {/* Left side - Menu button + Title mobile */}
         <div className="flex items-center gap-3 flex-1 min-w-0">

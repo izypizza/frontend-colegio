@@ -222,7 +222,7 @@ export default function BibliotecariosPage() {
       <div className="p-6">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Bibliotecarios</h1>
+            <h1 className="text-2xl font-bold text-gray-800">Bibliotecarios</h1>
             <p className="text-gray-600">Gestiona cuentas de bibliotecarios</p>
           </div>
           {permissions.canCreate && (

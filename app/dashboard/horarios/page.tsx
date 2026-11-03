@@ -395,7 +395,7 @@ export default function HorariosPage() {
       <div className="space-y-6 p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Horarios</h1>
+            <h1 className="text-2xl font-bold text-gray-800">Horarios</h1>
             <p className="text-gray-600 mt-2">Gestión de horarios de clases</p>
           </div>
           {permissions.canCreate && (
@@ -469,7 +469,7 @@ export default function HorariosPage() {
               <div className="overflow-x-auto">
                 <table className="min-w-full border-collapse">
                   <thead>
-                    <tr className="bg-gradient-to-r from-blue-600 to-blue-500">
+                    <tr className="bg-[#04ADBF]">
                       <th className="sticky left-0 z-10 bg-blue-600 border border-blue-400 px-2 py-2 text-left text-xs font-bold text-white w-16">
                         HORA
                       </th>
@@ -489,7 +489,7 @@ export default function HorariosPage() {
                         key={hora}
                         className={idx % 2 === 0 ? "bg-gray-50" : "bg-white"}
                       >
-                        <td className="sticky left-0 z-10 border border-gray-300 px-2 py-2 text-xs font-bold text-gray-800 whitespace-nowrap bg-gradient-to-r from-gray-100 to-gray-50">
+                        <td className="sticky left-0 z-10 border border-gray-300 px-2 py-2 text-xs font-bold text-gray-800 whitespace-nowrap bg-gray-100">
                           {hora}
                         </td>
                         {dias.map((dia) => {

@@ -52,7 +52,7 @@ export default function MisHijosPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Mis Hijos</h1>
+        <h1 className="text-2xl font-bold text-gray-800">Mis Hijos</h1>
         <p className="text-gray-600 mt-2">
           Información de tus hijos matriculados
         </p>
@@ -89,7 +89,7 @@ export default function MisHijosPage() {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   {/* Avatar */}
-                  <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mb-4">
+                  <div className="w-20 h-20 bg-[#04ADBF] rounded-full flex items-center justify-center mb-4">
                     <span className="text-white text-2xl font-bold">
                       {hijo.nombre.charAt(0)}
                     </span>

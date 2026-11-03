@@ -133,7 +133,7 @@ export default function ChatPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg p-6 text-white">
+      <div className="bg-[#04ADBF] rounded-lg p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-2">
@@ -196,7 +196,7 @@ export default function ChatPage() {
         <div className="flex justify-end">
           <Button
             onClick={() => setShowModal(true)}
-            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-2 rounded-lg font-medium shadow-lg"
+            className="bg-[#04ADBF] hover:bg-[#038a9a] text-white px-6 py-2 rounded-lg font-medium shadow-sm transition-colors"
           >
             Iniciar Nueva Conversación
           </Button>
@@ -253,7 +253,7 @@ export default function ChatPage() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-start gap-3 flex-1">
                           {/* Avatar */}
-                          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                          <div className="w-12 h-12 bg-[#04ADBF] rounded-full flex items-center justify-center text-white font-bold text-lg">
                             {nombreContacto.charAt(0).toUpperCase()}
                           </div>
 

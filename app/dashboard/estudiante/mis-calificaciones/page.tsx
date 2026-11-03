@@ -278,7 +278,7 @@ export default function MisCalificacionesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Mis Calificaciones</h1>
+        <h1 className="text-2xl font-bold text-gray-800">Mis Calificaciones</h1>
         <p className="text-gray-600 mt-2">
           Revisa tu rendimiento académico por periodo
         </p>

@@ -226,9 +226,7 @@ export default function UsuariosPage() {
 
   const handleRestablecerPassword = async (usuarioSeleccionado: User) => {
     if (String(usuarioSeleccionado.id) === String(user?.id)) {
-      setError(
-        "No puedes restablecer tu propia contraseña desde esta opción.",
-      );
+      setError("No puedes restablecer tu propia contraseña desde esta opción.");
       return;
     }
 
@@ -549,7 +547,7 @@ export default function UsuariosPage() {
       <div className="p-6">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-gray-800">
               Gestión de Usuarios
             </h1>
             <p className="text-gray-600 mt-1">

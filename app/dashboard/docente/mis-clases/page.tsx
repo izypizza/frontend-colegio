@@ -58,7 +58,7 @@ export default function MisClasesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Mis Clases</h1>
+        <h1 className="text-2xl font-bold text-gray-800">Mis Clases</h1>
         <p className="text-gray-600 mt-2">
           Materias que impartes en el periodo actual
         </p>
@@ -94,7 +94,7 @@ export default function MisClasesPage() {
               className="hover:shadow-lg transition-shadow"
             >
               {/* Icono de materia */}
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mb-4">
+              <div className="w-16 h-16 bg-[#04ADBF] rounded-lg flex items-center justify-center mb-4">
                 <svg
                   className="w-8 h-8 text-white"
                   fill="none"

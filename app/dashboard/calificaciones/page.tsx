@@ -37,7 +37,7 @@ import { usePagination } from "@/src/hooks/usePagination";
 export default function CalificacionesPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const permissions = usePermissions('calificaciones');
+  const permissions = usePermissions("calificaciones");
   const { error, success, setError, setSuccess, handleError } =
     useErrorHandler();
   const {
@@ -117,12 +117,12 @@ export default function CalificacionesPage() {
           estudiantesData,
           asignacionesData,
           periodosData,
-        ] = await Promise.all([
+        ] = (await Promise.all([
           docentePortalService.misCalificaciones(),
           docentePortalService.misEstudiantes(),
           docentePortalService.misAsignaciones(),
           periodoService.getAll(),
-        ]) as any[];
+        ])) as any[];
 
         setCalificaciones(calificacionesData.calificaciones || []);
         setEstudiantes(estudiantesData.estudiantes || []);
@@ -136,18 +136,22 @@ export default function CalificacionesPage() {
         });
         const materiasUnicas = Array.from(materiasMap.values());
         setMaterias(materiasUnicas);
-        setPeriodos(Array.isArray(periodosData) ? periodosData : periodosData?.data || []);
+        setPeriodos(
+          Array.isArray(periodosData) ? periodosData : periodosData?.data || [],
+        );
       } else if (user?.role === "estudiante") {
         // Estudiantes ven solo sus propias calificaciones
-        const [calificacionesData, periodosData] = await Promise.all([
+        const [calificacionesData, periodosData] = (await Promise.all([
           estudiantePortalService.misCalificaciones(),
           periodoService.getAll(),
-        ]) as any[];
+        ])) as any[];
 
         setCalificaciones(calificacionesData.calificaciones || []);
         setEstudiantes([]);
         setMaterias([]);
-        setPeriodos(Array.isArray(periodosData) ? periodosData : periodosData?.data || []);
+        setPeriodos(
+          Array.isArray(periodosData) ? periodosData : periodosData?.data || [],
+        );
       } else if (user?.role === "admin" || user?.role === "auxiliar") {
         // Admin/Auxiliar usan endpoints generales con paginación
         const [
@@ -175,7 +179,9 @@ export default function CalificacionesPage() {
             lastPage: calificacionesData.last_page || 1,
           });
         } else {
-          const calificacionesArray = Array.isArray(calificacionesData) ? calificacionesData : (calificacionesData as any)?.data || [];
+          const calificacionesArray = Array.isArray(calificacionesData)
+            ? calificacionesData
+            : (calificacionesData as any)?.data || [];
           setCalificaciones(calificacionesArray);
         }
 
@@ -343,7 +349,13 @@ export default function CalificacionesPage() {
 
   return (
     <PermissionGuard
-      requiredRoles={[UserRole.ADMIN, UserRole.AUXILIAR, UserRole.DOCENTE, UserRole.ESTUDIANTE, UserRole.PADRE]}
+      requiredRoles={[
+        UserRole.ADMIN,
+        UserRole.AUXILIAR,
+        UserRole.DOCENTE,
+        UserRole.ESTUDIANTE,
+        UserRole.PADRE,
+      ]}
       fallback={
         <div className="p-6">
           <Alert
@@ -354,229 +366,233 @@ export default function CalificacionesPage() {
       }
     >
       <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Calificaciones</h1>
-          <p className="text-gray-600 mt-2">
-            Gestión de calificaciones de estudiantes
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">Calificaciones</h1>
+            <p className="text-gray-600 mt-2">
+              Gestión de calificaciones de estudiantes
+            </p>
+          </div>
+          <div className="flex gap-2">
+            {(user?.role === "admin" || user?.role === "auxiliar") && (
+              <Button
+                variant="secondary"
+                onClick={() => setMostrarEstadisticas(!mostrarEstadisticas)}
+              >
+                {mostrarEstadisticas ? "Ocultar" : "Mostrar"} Estadísticas
+              </Button>
+            )}
+            {permissions.canCreate && (
+              <Button variant="primary" onClick={handleCreate}>
+                + Nueva Calificación
+              </Button>
+            )}
+          </div>
         </div>
-        <div className="flex gap-2">
-          {(user?.role === "admin" || user?.role === "auxiliar") && (
-            <Button
-              variant="secondary"
-              onClick={() => setMostrarEstadisticas(!mostrarEstadisticas)}
-            >
-              {mostrarEstadisticas ? "Ocultar" : "Mostrar"} Estadísticas
-            </Button>
-          )}
-          {permissions.canCreate && (
-            <Button variant="primary" onClick={handleCreate}>
-              + Nueva Calificación
-            </Button>
-          )}
-        </div>
-      </div>
 
-      {success && (
-        <Alert
-          type="success"
-          message={success}
-          onClose={() => setSuccess(null)}
-        />
-      )}
-
-      {/* Estadísticas Avanzadas */}
-      {(user?.role === "admin" || user?.role === "auxiliar") &&
-        mostrarEstadisticas && (
-          <>
-            {loadingEstadisticas ? (
-              <Card>
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="mt-4 text-gray-600">Cargando estadísticas...</p>
-                </div>
-              </Card>
-            ) : estadisticas ? (
-              <EstadisticasAvanzadas estadisticas={estadisticas} />
-            ) : null}
-          </>
+        {success && (
+          <Alert
+            type="success"
+            message={success}
+            onClose={() => setSuccess(null)}
+          />
         )}
 
-      {/* Filtros de búsqueda */}
-      <Card>
-        <div className="flex flex-col md:flex-row gap-4 mb-4">
-          <Input
-            placeholder="Buscar por estudiante o materia..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1"
-          />
-          <select
-            value={filterMateria}
-            onChange={(e) => setFilterMateria(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Todas las materias</option>
-            {materias?.map((materia) => (
-              <option key={materia.id} value={materia.id}>
-                {materia.nombre}
-              </option>
-            ))}
-          </select>
-          <select
-            value={filterPeriodo}
-            onChange={(e) => setFilterPeriodo(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Todos los periodos</option>
-            {periodos?.map((periodo) => (
-              <option key={periodo.id} value={periodo.id}>
-                {periodo.nombre} - {periodo.anio}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="text-sm text-gray-600">
-          Mostrando {calificacionesFiltradas.length} de {calificaciones.length}{" "}
-          calificaciones
-        </div>
-      </Card>
-
-      <Card>
-        <Table
-          columns={columns}
-          data={calificacionesFiltradas}
-          loading={loading}
-          onEdit={permissions.canEdit ? handleEdit : undefined}
-          onDelete={permissions.canDelete ? handleDelete : undefined}
-        />
-      </Card>
-
-      {(user?.role === "admin" || user?.role === "auxiliar") && (
-        <Pagination
-          currentPage={currentPage}
-          lastPage={paginationData.lastPage}
-          total={paginationData.total}
-          perPage={perPage}
-          onPageChange={(page) => {
-            setCurrentPage(page);
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          }}
-          onPerPageChange={(newPerPage) => {
-            setPerPage(newPerPage);
-            setCurrentPage(1);
-          }}
-        />
-      )}
-
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => {
-          closeModal();
-          setError(null);
-        }}
-        title={editingItem ? "Editar Calificación" : "Nueva Calificación"}
-        size="lg"
-        footer={
-          <>
-            <Button variant="secondary" onClick={closeModal}>
-              Cancelar
-            </Button>
-            <Button variant="primary" onClick={handleSubmit}>
-              Guardar
-            </Button>
-          </>
-        }
-      >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <Alert
-              type="error"
-              message={error}
-              onClose={() => setError(null)}
-            />
+        {/* Estadísticas Avanzadas */}
+        {(user?.role === "admin" || user?.role === "auxiliar") &&
+          mostrarEstadisticas && (
+            <>
+              {loadingEstadisticas ? (
+                <Card>
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">
+                      Cargando estadísticas...
+                    </p>
+                  </div>
+                </Card>
+              ) : estadisticas ? (
+                <EstadisticasAvanzadas estadisticas={estadisticas} />
+              ) : null}
+            </>
           )}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Estudiante
-            </label>
-            <select
-              value={formData.estudiante_id}
-              onChange={(e) =>
-                setFormData({ ...formData, estudiante_id: e.target.value })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            >
-              <option value="">Seleccionar estudiante</option>
-              {estudiantes?.map((estudiante) => (
-                <option key={estudiante.id} value={estudiante.id}>
-                  {estudiante.nombre_completo ||
-                    `${estudiante.apellido_paterno || ""} ${estudiante.apellido_materno || ""}, ${estudiante.nombres}`}
-                  {estudiante.dni ? ` - DNI ${estudiante.dni}` : ""}
-                </option>
-              ))}
-            </select>
-          </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Materia
-            </label>
+        {/* Filtros de búsqueda */}
+        <Card>
+          <div className="flex flex-col md:flex-row gap-4 mb-4">
+            <Input
+              placeholder="Buscar por estudiante o materia..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="flex-1"
+            />
             <select
-              value={formData.materia_id}
-              onChange={(e) =>
-                setFormData({ ...formData, materia_id: e.target.value })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
+              value={filterMateria}
+              onChange={(e) => setFilterMateria(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Seleccionar materia</option>
+              <option value="">Todas las materias</option>
               {materias?.map((materia) => (
                 <option key={materia.id} value={materia.id}>
                   {materia.nombre}
                 </option>
               ))}
             </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Periodo Académico
-            </label>
             <select
-              value={formData.periodo_academico_id}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  periodo_academico_id: e.target.value,
-                })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
+              value={filterPeriodo}
+              onChange={(e) => setFilterPeriodo(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Seleccionar periodo</option>
+              <option value="">Todos los periodos</option>
               {periodos?.map((periodo) => (
                 <option key={periodo.id} value={periodo.id}>
-                  {periodo.nombre}
+                  {periodo.nombre} - {periodo.anio}
                 </option>
               ))}
             </select>
           </div>
+          <div className="text-sm text-gray-600">
+            Mostrando {calificacionesFiltradas.length} de{" "}
+            {calificaciones.length} calificaciones
+          </div>
+        </Card>
 
-          <Input
-            label="Nota (0-20)"
-            type="number"
-            min="0"
-            max="20"
-            step="0.5"
-            value={formData.nota}
-            onChange={(e) => setFormData({ ...formData, nota: e.target.value })}
-            required
+        <Card>
+          <Table
+            columns={columns}
+            data={calificacionesFiltradas}
+            loading={loading}
+            onEdit={permissions.canEdit ? handleEdit : undefined}
+            onDelete={permissions.canDelete ? handleDelete : undefined}
           />
-        </form>
-      </Modal>
+        </Card>
+
+        {(user?.role === "admin" || user?.role === "auxiliar") && (
+          <Pagination
+            currentPage={currentPage}
+            lastPage={paginationData.lastPage}
+            total={paginationData.total}
+            perPage={perPage}
+            onPageChange={(page) => {
+              setCurrentPage(page);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            onPerPageChange={(newPerPage) => {
+              setPerPage(newPerPage);
+              setCurrentPage(1);
+            }}
+          />
+        )}
+
+        <Modal
+          isOpen={isModalOpen}
+          onClose={() => {
+            closeModal();
+            setError(null);
+          }}
+          title={editingItem ? "Editar Calificación" : "Nueva Calificación"}
+          size="lg"
+          footer={
+            <>
+              <Button variant="secondary" onClick={closeModal}>
+                Cancelar
+              </Button>
+              <Button variant="primary" onClick={handleSubmit}>
+                Guardar
+              </Button>
+            </>
+          }
+        >
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <Alert
+                type="error"
+                message={error}
+                onClose={() => setError(null)}
+              />
+            )}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Estudiante
+              </label>
+              <select
+                value={formData.estudiante_id}
+                onChange={(e) =>
+                  setFormData({ ...formData, estudiante_id: e.target.value })
+                }
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="">Seleccionar estudiante</option>
+                {estudiantes?.map((estudiante) => (
+                  <option key={estudiante.id} value={estudiante.id}>
+                    {estudiante.nombre_completo ||
+                      `${estudiante.apellido_paterno || ""} ${estudiante.apellido_materno || ""}, ${estudiante.nombres}`}
+                    {estudiante.dni ? ` - DNI ${estudiante.dni}` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Materia
+              </label>
+              <select
+                value={formData.materia_id}
+                onChange={(e) =>
+                  setFormData({ ...formData, materia_id: e.target.value })
+                }
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="">Seleccionar materia</option>
+                {materias?.map((materia) => (
+                  <option key={materia.id} value={materia.id}>
+                    {materia.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Periodo Académico
+              </label>
+              <select
+                value={formData.periodo_academico_id}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    periodo_academico_id: e.target.value,
+                  })
+                }
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="">Seleccionar periodo</option>
+                {periodos?.map((periodo) => (
+                  <option key={periodo.id} value={periodo.id}>
+                    {periodo.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <Input
+              label="Nota (0-20)"
+              type="number"
+              min="0"
+              max="20"
+              step="0.5"
+              value={formData.nota}
+              onChange={(e) =>
+                setFormData({ ...formData, nota: e.target.value })
+              }
+              required
+            />
+          </form>
+        </Modal>
       </div>
     </PermissionGuard>
   );

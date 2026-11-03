@@ -169,7 +169,8 @@ export default function EstudiantesPage() {
     if (nuevoEstado === estadoActual) return;
 
     const detalle: Record<string, string> = {
-      activo: "Podrá volver a iniciar sesión y figurará en las listas de su sección.",
+      activo:
+        "Podrá volver a iniciar sesión y figurará en las listas de su sección.",
       suspendido:
         "Se desactiva su cuenta y deja de figurar como alumno regular, pero se conserva todo su historial.",
       egresado:
@@ -337,7 +338,7 @@ export default function EstudiantesPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Estudiantes</h1>
+            <h1 className="text-2xl font-bold text-gray-800">Estudiantes</h1>
             <p className="text-gray-600 mt-2">
               Gestión de estudiantes del colegio
             </p>

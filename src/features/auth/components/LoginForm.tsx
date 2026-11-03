@@ -55,7 +55,7 @@ export const LoginForm: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#e3f2fd] via-[#f0f4ff] to-[#fce4ec] p-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#F2F0CE] p-4">
       <Card className="w-full max-w-md shadow-2xl" shadow="xl">
         {/* Logo */}
         <div className="flex justify-center mb-6">
@@ -225,7 +225,7 @@ export const LoginForm: React.FC = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
+            className="w-full bg-[#04ADBF] hover:bg-[#038a9a] text-white font-semibold py-3 px-4 rounded-lg shadow-sm transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <>

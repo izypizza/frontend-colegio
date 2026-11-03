@@ -13,7 +13,7 @@ interface CardProps {
 export const Card: React.FC<CardProps> = ({
   children,
   className = '',
-  shadow = 'md',
+  shadow = 'sm',
   padding = 'md',
   hover = false,
 }) => {
@@ -32,11 +32,13 @@ export const Card: React.FC<CardProps> = ({
     lg: 'p-6 sm:p-7 md:p-8',
   };
 
-  const hoverStyles = hover ? 'hover:shadow-xl hover:scale-[1.02] transition-all duration-300' : '';
+  const hoverStyles = hover
+    ? 'hover:shadow-md hover:border-gray-300 transition-all duration-200'
+    : '';
 
   return (
     <div
-      className={`bg-white rounded-lg ${shadowStyles[shadow]} ${paddingStyles[padding]} ${hoverStyles} ${className}`}
+      className={`bg-white rounded-lg border border-gray-200 ${shadowStyles[shadow]} ${paddingStyles[padding]} ${hoverStyles} ${className}`}
     >
       {children}
     </div>

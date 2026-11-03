@@ -384,7 +384,7 @@ export const Assistant: React.FC<AssistantProps> = ({
       <button
         onClick={startTour}
         disabled={isRunning}
-        className="fixed bottom-6 right-6 p-4 rounded-full bg-gradient-to-r from-[#04ADBF] to-[#038a9a] text-white shadow-xl hover:shadow-2xl hover:scale-110 transition-all duration-300 z-50 group disabled:opacity-50 disabled:cursor-not-allowed animate-bounce"
+        className="fixed bottom-6 right-6 p-4 rounded-full bg-[#04ADBF] text-white shadow-lg hover:bg-[#038a9a] hover:shadow-xl transition-colors duration-200 z-50 group disabled:opacity-50 disabled:cursor-not-allowed"
         title="Iniciar tour del sistema"
         aria-label="Asistente virtual"
         style={{ animationDuration: "3s" }}

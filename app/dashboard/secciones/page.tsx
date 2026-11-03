@@ -184,7 +184,7 @@ export default function SeccionesPage() {
     >
       <div className="space-y-6">
       {/* Header con estadísticas */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-6 text-white">
+      <div className="bg-[#04ADBF] rounded-xl p-6 text-white">
         <h1 className="text-3xl font-bold mb-2">Gestión de Secciones</h1>
         <p className="text-blue-100">
           Administra las secciones escolares por grado

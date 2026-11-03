@@ -208,7 +208,7 @@ export default function MisAsistenciasPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Mis Asistencias</h1>
+        <h1 className="text-2xl font-bold text-gray-800">Mis Asistencias</h1>
         <p className="text-gray-600 mt-2">
           Revisa tu registro de asistencias y puntualidad
         </p>

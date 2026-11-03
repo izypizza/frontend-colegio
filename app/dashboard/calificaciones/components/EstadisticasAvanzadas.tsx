@@ -138,7 +138,7 @@ export default function EstadisticasAvanzadas({
       {vistaActiva === "resumen" && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card className="bg-gradient-to-br from-blue-50 to-blue-100">
+            <Card className="bg-blue-50 border-blue-200">
               <div className="text-center">
                 <p className="text-sm text-gray-600 mb-2">Promedio General</p>
                 <p className="text-4xl font-bold text-blue-600">
@@ -148,7 +148,7 @@ export default function EstadisticasAvanzadas({
               </div>
             </Card>
 
-            <Card className="bg-gradient-to-br from-purple-50 to-purple-100">
+            <Card className="bg-purple-50 border-purple-200">
               <div className="text-center">
                 <p className="text-sm text-gray-600 mb-2">Total Registradas</p>
                 <p className="text-4xl font-bold text-purple-600">
@@ -158,7 +158,7 @@ export default function EstadisticasAvanzadas({
               </div>
             </Card>
 
-            <Card className="bg-gradient-to-br from-green-50 to-green-100">
+            <Card className="bg-green-50 border-green-200">
               <div className="text-center">
                 <p className="text-sm text-gray-600 mb-2">Aprobados</p>
                 <p className="text-4xl font-bold text-green-600">
@@ -170,7 +170,7 @@ export default function EstadisticasAvanzadas({
               </div>
             </Card>
 
-            <Card className="bg-gradient-to-br from-red-50 to-red-100">
+            <Card className="bg-red-50 border-red-200">
               <div className="text-center">
                 <p className="text-sm text-gray-600 mb-2">Desaprobados</p>
                 <p className="text-4xl font-bold text-red-600">

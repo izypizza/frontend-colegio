@@ -17,12 +17,12 @@ export default function MaintenancePage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#F2F0CE] to-[#FEFCD6]">
+    <div className="min-h-screen flex items-center justify-center bg-[#F2F0CE]">
       <div className="max-w-2xl w-full mx-4">
         <div className="bg-white rounded-2xl shadow-2xl p-8 md:p-12 text-center">
           {/* Icono de mantenimiento */}
           <div className="flex justify-center mb-6">
-            <div className="w-24 h-24 bg-gradient-to-br from-[#04ADBF] to-[#038a9a] rounded-full flex items-center justify-center">
+            <div className="w-24 h-24 bg-[#04ADBF] rounded-full flex items-center justify-center">
               <svg
                 className="w-12 h-12 text-white"
                 fill="none"
@@ -74,7 +74,7 @@ export default function MaintenancePage() {
             </button>
             <button
               onClick={() => window.location.reload()}
-              className="px-6 py-3 bg-gradient-to-r from-[#04ADBF] to-[#038a9a] text-white font-semibold rounded-lg hover:from-[#038a9a] hover:to-[#027080] transition-all duration-300 shadow-lg hover:shadow-xl"
+              className="px-6 py-3 bg-[#04ADBF] text-white font-semibold rounded-lg hover:bg-[#038a9a] transition-colors duration-200 shadow-sm"
             >
               Intentar nuevamente
             </button>

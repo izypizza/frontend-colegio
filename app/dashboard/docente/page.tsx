@@ -102,7 +102,7 @@ export default function DocenteDashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard Docente</h1>
+        <h1 className="text-2xl font-bold text-gray-800">Dashboard Docente</h1>
         <p className="text-gray-600 mt-2">
           Vista general de tus clases y estudiantes
         </p>
@@ -274,7 +274,7 @@ export default function DocenteDashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Link
             href="/dashboard/docente/mis-clases"
-            className="flex items-center p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg hover:from-blue-100 hover:to-blue-200 transition-all group"
+            className="flex items-center p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors group"
           >
             <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mr-4">
               <svg
@@ -301,7 +301,7 @@ export default function DocenteDashboardPage() {
 
           <Link
             href="/dashboard/docente/mis-estudiantes"
-            className="flex items-center p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-lg hover:from-green-100 hover:to-green-200 transition-all group"
+            className="flex items-center p-4 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors group"
           >
             <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center mr-4">
               <svg
@@ -328,7 +328,7 @@ export default function DocenteDashboardPage() {
 
           <Link
             href="/dashboard/calificaciones"
-            className="flex items-center p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg hover:from-purple-100 hover:to-purple-200 transition-all group"
+            className="flex items-center p-4 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors group"
           >
             <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center mr-4">
               <svg

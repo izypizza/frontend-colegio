@@ -699,7 +699,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       >
         <div className="flex flex-col h-full">
           {/* Header con Logo */}
-          <div className="flex items-center justify-between p-4 sm:p-6 border-b bg-gradient-to-r from-[#04ADBF]/5 to-[#F2F0CE]/30">
+          <div className="flex items-center justify-between p-4 sm:p-6 border-b bg-gray-50">
             <div className="flex items-center gap-3 flex-1 min-w-0">
               {/* Logo del Colegio */}
               <div className="flex-shrink-0">

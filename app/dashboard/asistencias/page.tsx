@@ -28,7 +28,7 @@ import { UserRole } from "@/src/types";
 
 export default function AsistenciasPage() {
   const { user } = useAuth();
-  const permissions = usePermissions('asistencias');
+  const permissions = usePermissions("asistencias");
   const { error, success, setError, setSuccess, handleError } =
     useErrorHandler();
   const {
@@ -153,11 +153,11 @@ export default function AsistenciasPage() {
     try {
       setLoading(true);
       const [asistenciasData, estudiantesData, asignacionesData] =
-        await Promise.all([
+        (await Promise.all([
           docentePortalService.misAsistencias(),
           docentePortalService.misEstudiantes(),
           docentePortalService.misAsignaciones(),
-        ]) as any[];
+        ])) as any[];
 
       setAsistencias(
         Array.isArray(asistenciasData.asistencias)
@@ -211,7 +211,9 @@ export default function AsistenciasPage() {
           lastPage: asistenciasData.last_page || 1,
         });
       } else {
-        const asistenciasArray = Array.isArray(asistenciasData) ? asistenciasData : (asistenciasData as any)?.data || [];
+        const asistenciasArray = Array.isArray(asistenciasData)
+          ? asistenciasData
+          : (asistenciasData as any)?.data || [];
         setAsistencias(asistenciasArray);
         setPaginationData({
           total: Array.isArray(asistenciasArray) ? asistenciasArray.length : 0,
@@ -609,7 +611,13 @@ export default function AsistenciasPage() {
 
   return (
     <PermissionGuard
-      requiredRoles={[UserRole.ADMIN, UserRole.AUXILIAR, UserRole.DOCENTE, UserRole.ESTUDIANTE, UserRole.PADRE]}
+      requiredRoles={[
+        UserRole.ADMIN,
+        UserRole.AUXILIAR,
+        UserRole.DOCENTE,
+        UserRole.ESTUDIANTE,
+        UserRole.PADRE,
+      ]}
       fallback={
         <div className="p-6">
           <Alert
@@ -620,425 +628,428 @@ export default function AsistenciasPage() {
       }
     >
       <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Asistencias</h1>
-          <p className="text-gray-600 mt-2">
-            Gestión de asistencias de estudiantes
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">Asistencias</h1>
+            <p className="text-gray-600 mt-2">
+              Gestión de asistencias de estudiantes
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <Button variant="secondary" onClick={handleExportExcel}>
+              Exportar Excel
+            </Button>
+            <Button variant="primary" onClick={handleCreate}>
+              + Registrar Asistencia
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-3">
-          <Button variant="secondary" onClick={handleExportExcel}>
-            Exportar Excel
-          </Button>
-          <Button variant="primary" onClick={handleCreate}>
-            + Registrar Asistencia
-          </Button>
-        </div>
-      </div>
 
-      {error && (
-        <Alert type="error" message={error} onClose={() => setError(null)} />
-      )}
-      {success && (
-        <Alert
-          type="success"
-          message={success}
-          onClose={() => setSuccess(null)}
-        />
-      )}
+        {error && (
+          <Alert type="error" message={error} onClose={() => setError(null)} />
+        )}
+        {success && (
+          <Alert
+            type="success"
+            message={success}
+            onClose={() => setSuccess(null)}
+          />
+        )}
 
-      {/* Filtros de búsqueda */}
-      <Card>
-        <div className="space-y-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <Input
-              placeholder="Buscar por estudiante o materia..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex-1"
-            />
-            <select
-              value={filterMateria}
-              onChange={(e) => setFilterMateria(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Todas las materias</option>
-              {materias?.map((materia) => (
-                <option key={materia.id} value={materia.id}>
-                  {materia.nombre}
-                </option>
-              ))}
-            </select>
-            <select
-              value={filterEstado}
-              onChange={(e) => setFilterEstado(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Todos los estados</option>
-              <option value="presente">Presente</option>
-              <option value="tarde">Llegó Tarde</option>
-              <option value="ausente">Ausente</option>
-            </select>
+        {/* Filtros de búsqueda */}
+        <Card>
+          <div className="space-y-4">
+            <div className="flex flex-col md:flex-row gap-4">
+              <Input
+                placeholder="Buscar por estudiante o materia..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="flex-1"
+              />
+              <select
+                value={filterMateria}
+                onChange={(e) => setFilterMateria(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Todas las materias</option>
+                {materias?.map((materia) => (
+                  <option key={materia.id} value={materia.id}>
+                    {materia.nombre}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={filterEstado}
+                onChange={(e) => setFilterEstado(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Todos los estados</option>
+                <option value="presente">Presente</option>
+                <option value="tarde">Llegó Tarde</option>
+                <option value="ausente">Ausente</option>
+              </select>
+            </div>
+
+            {/* Filtros de fecha */}
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Año
+                </label>
+                <select
+                  value={filterAnio}
+                  onChange={(e) => setFilterAnio(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value={currentYear}>{currentYear} (Actual)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Mes
+                </label>
+                <select
+                  value={filterMes}
+                  onChange={(e) => setFilterMes(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Todos los meses</option>
+                  <option value="1">Enero</option>
+                  <option value="2">Febrero</option>
+                  <option value="3">Marzo</option>
+                  <option value="4">Abril</option>
+                  <option value="5">Mayo</option>
+                  <option value="6">Junio</option>
+                  <option value="7">Julio</option>
+                  <option value="8">Agosto</option>
+                  <option value="9">Septiembre</option>
+                  <option value="10">Octubre</option>
+                  <option value="11">Noviembre</option>
+                  <option value="12">Diciembre</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Día
+                </label>
+                <select
+                  value={filterDia}
+                  onChange={(e) => setFilterDia(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Todos los días</option>
+                  {Array.from({ length: 31 }, (_, i) => i + 1).map((dia) => (
+                    <option key={dia} value={dia.toString()}>
+                      {dia}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-end">
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setFilterMes("");
+                    setFilterDia("");
+                    setFilterAnio(currentYear.toString());
+                    setFilterMateria("");
+                    setFilterEstado("");
+                    setSearchTerm("");
+                  }}
+                  className="w-full"
+                >
+                  Limpiar Filtros
+                </Button>
+              </div>
+            </div>
           </div>
 
-          {/* Filtros de fecha */}
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Año
-              </label>
-              <select
-                value={filterAnio}
-                onChange={(e) => setFilterAnio(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value={currentYear}>{currentYear} (Actual)</option>
-              </select>
-            </div>
+          <div className="text-sm text-gray-600 mt-4">
+            Mostrando {asistenciasFiltradas.length} de {asistencias.length}{" "}
+            registros {filterAnio && `del año ${filterAnio}`}
+          </div>
+        </Card>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Mes
-              </label>
-              <select
-                value={filterMes}
-                onChange={(e) => setFilterMes(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Todos los meses</option>
-                <option value="1">Enero</option>
-                <option value="2">Febrero</option>
-                <option value="3">Marzo</option>
-                <option value="4">Abril</option>
-                <option value="5">Mayo</option>
-                <option value="6">Junio</option>
-                <option value="7">Julio</option>
-                <option value="8">Agosto</option>
-                <option value="9">Septiembre</option>
-                <option value="10">Octubre</option>
-                <option value="11">Noviembre</option>
-                <option value="12">Diciembre</option>
-              </select>
-            </div>
+        <Card>
+          <Table
+            columns={columns}
+            data={asistenciasFiltradas}
+            loading={loading}
+          />
+        </Card>
 
+        {(user?.role === "admin" || user?.role === "auxiliar") && (
+          <Pagination
+            currentPage={currentPage}
+            lastPage={paginationData.lastPage}
+            total={paginationData.total}
+            perPage={perPage}
+            onPageChange={(page) => {
+              setCurrentPage(page);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            onPerPageChange={(newPerPage) => {
+              setPerPage(newPerPage);
+              setCurrentPage(1);
+            }}
+          />
+        )}
+
+        <Modal
+          isOpen={isModalOpen}
+          onClose={() => {
+            closeModal();
+            setError(null);
+          }}
+          title={editingItem ? "Editar Asistencia" : "Nueva Asistencia"}
+          footer={
+            <>
+              <Button variant="secondary" onClick={closeModal}>
+                Cancelar
+              </Button>
+              <Button variant="primary" onClick={handleSubmit}>
+                Guardar
+              </Button>
+            </>
+          }
+        >
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <Alert
+                type="error"
+                message={error}
+                onClose={() => setError(null)}
+              />
+            )}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Día
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Estudiante
               </label>
               <select
-                value={filterDia}
-                onChange={(e) => setFilterDia(e.target.value)}
+                value={formData.estudiante_id}
+                onChange={(e) =>
+                  setFormData({ ...formData, estudiante_id: e.target.value })
+                }
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
               >
-                <option value="">Todos los días</option>
-                {Array.from({ length: 31 }, (_, i) => i + 1).map((dia) => (
-                  <option key={dia} value={dia.toString()}>
-                    {dia}
+                <option value="">Seleccionar estudiante</option>
+                {estudiantes?.map((estudiante) => (
+                  <option key={estudiante.id} value={estudiante.id}>
+                    {estudiante.nombre_completo ||
+                      `${estudiante.apellido_paterno || ""} ${estudiante.apellido_materno || ""}, ${estudiante.nombres}`}
+                    {estudiante.dni ? ` - DNI ${estudiante.dni}` : ""}
                   </option>
                 ))}
               </select>
             </div>
 
-            <div className="flex items-end">
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  setFilterMes("");
-                  setFilterDia("");
-                  setFilterAnio(currentYear.toString());
-                  setFilterMateria("");
-                  setFilterEstado("");
-                  setSearchTerm("");
-                }}
-                className="w-full"
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Materia
+              </label>
+              <select
+                value={formData.materia_id}
+                onChange={(e) =>
+                  setFormData({ ...formData, materia_id: e.target.value })
+                }
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
               >
-                Limpiar Filtros
+                <option value="">Seleccionar materia</option>
+                {materias?.map((materia) => (
+                  <option key={materia.id} value={materia.id}>
+                    {materia.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <Input
+              label="Fecha"
+              type="date"
+              value={formData.fecha}
+              onChange={(e) =>
+                setFormData({ ...formData, fecha: e.target.value })
+              }
+              required
+            />
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Estado
+              </label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="estado"
+                    value="presente"
+                    checked={formData.estado === "presente"}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        estado: e.target.value as
+                          | "presente"
+                          | "tarde"
+                          | "ausente",
+                      })
+                    }
+                    className="w-4 h-4 text-blue-600"
+                  />
+                  <span>Presente</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="estado"
+                    value="tarde"
+                    checked={formData.estado === "tarde"}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        estado: e.target.value as
+                          | "presente"
+                          | "tarde"
+                          | "ausente",
+                      })
+                    }
+                    className="w-4 h-4 text-yellow-600"
+                  />
+                  <span>Llegó Tarde</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="estado"
+                    value="ausente"
+                    checked={formData.estado === "ausente"}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        estado: e.target.value as
+                          | "presente"
+                          | "tarde"
+                          | "ausente",
+                      })
+                    }
+                    className="w-4 h-4 text-red-600"
+                  />
+                  <span>Ausente</span>
+                </label>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Observaciones (opcional)
+              </label>
+              <textarea
+                value={formData.observaciones}
+                onChange={(e) =>
+                  setFormData({ ...formData, observaciones: e.target.value })
+                }
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                rows={3}
+                maxLength={500}
+                placeholder="Agregar observaciones sobre la asistencia..."
+              />
+              <p className="text-sm text-gray-500 mt-1">
+                {formData.observaciones.length}/500 caracteres
+              </p>
+            </div>
+          </form>
+        </Modal>
+
+        <Modal
+          isOpen={asistenciaAJustificar !== null}
+          onClose={cerrarJustificacion}
+          title="Justificar falta o tardanza"
+          footer={
+            <>
+              <Button variant="secondary" onClick={cerrarJustificacion}>
+                Cancelar
               </Button>
-            </div>
-          </div>
-        </div>
-
-        <div className="text-sm text-gray-600 mt-4">
-          Mostrando {asistenciasFiltradas.length} de {asistencias.length}{" "}
-          registros {filterAnio && `del año ${filterAnio}`}
-        </div>
-      </Card>
-
-      <Card>
-        <Table
-          columns={columns}
-          data={asistenciasFiltradas}
-          loading={loading}
-        />
-      </Card>
-
-      {(user?.role === "admin" || user?.role === "auxiliar") && (
-        <Pagination
-          currentPage={currentPage}
-          lastPage={paginationData.lastPage}
-          total={paginationData.total}
-          perPage={perPage}
-          onPageChange={(page) => {
-            setCurrentPage(page);
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          }}
-          onPerPageChange={(newPerPage) => {
-            setPerPage(newPerPage);
-            setCurrentPage(1);
-          }}
-        />
-      )}
-
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => {
-          closeModal();
-          setError(null);
-        }}
-        title={editingItem ? "Editar Asistencia" : "Nueva Asistencia"}
-        footer={
-          <>
-            <Button variant="secondary" onClick={closeModal}>
-              Cancelar
-            </Button>
-            <Button variant="primary" onClick={handleSubmit}>
-              Guardar
-            </Button>
-          </>
-        }
-      >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <Alert
-              type="error"
-              message={error}
-              onClose={() => setError(null)}
-            />
-          )}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Estudiante
-            </label>
-            <select
-              value={formData.estudiante_id}
-              onChange={(e) =>
-                setFormData({ ...formData, estudiante_id: e.target.value })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            >
-              <option value="">Seleccionar estudiante</option>
-              {estudiantes?.map((estudiante) => (
-                <option key={estudiante.id} value={estudiante.id}>
-                  {estudiante.nombre_completo ||
-                    `${estudiante.apellido_paterno || ""} ${estudiante.apellido_materno || ""}, ${estudiante.nombres}`}
-                  {estudiante.dni ? ` - DNI ${estudiante.dni}` : ""}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Materia
-            </label>
-            <select
-              value={formData.materia_id}
-              onChange={(e) =>
-                setFormData({ ...formData, materia_id: e.target.value })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            >
-              <option value="">Seleccionar materia</option>
-              {materias?.map((materia) => (
-                <option key={materia.id} value={materia.id}>
-                  {materia.nombre}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <Input
-            label="Fecha"
-            type="date"
-            value={formData.fecha}
-            onChange={(e) =>
-              setFormData({ ...formData, fecha: e.target.value })
-            }
-            required
-          />
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Estado
-            </label>
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="estado"
-                  value="presente"
-                  checked={formData.estado === "presente"}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      estado: e.target.value as
-                        | "presente"
-                        | "tarde"
-                        | "ausente",
-                    })
-                  }
-                  className="w-4 h-4 text-blue-600"
-                />
-                <span>Presente</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="estado"
-                  value="tarde"
-                  checked={formData.estado === "tarde"}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      estado: e.target.value as
-                        | "presente"
-                        | "tarde"
-                        | "ausente",
-                    })
-                  }
-                  className="w-4 h-4 text-yellow-600"
-                />
-                <span>Llegó Tarde</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="estado"
-                  value="ausente"
-                  checked={formData.estado === "ausente"}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      estado: e.target.value as
-                        | "presente"
-                        | "tarde"
-                        | "ausente",
-                    })
-                  }
-                  className="w-4 h-4 text-red-600"
-                />
-                <span>Ausente</span>
-              </label>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Observaciones (opcional)
-            </label>
-            <textarea
-              value={formData.observaciones}
-              onChange={(e) =>
-                setFormData({ ...formData, observaciones: e.target.value })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              rows={3}
-              maxLength={500}
-              placeholder="Agregar observaciones sobre la asistencia..."
-            />
-            <p className="text-sm text-gray-500 mt-1">
-              {formData.observaciones.length}/500 caracteres
-            </p>
-          </div>
-        </form>
-      </Modal>
-
-      <Modal
-        isOpen={asistenciaAJustificar !== null}
-        onClose={cerrarJustificacion}
-        title="Justificar falta o tardanza"
-        footer={
-          <>
-            <Button variant="secondary" onClick={cerrarJustificacion}>
-              Cancelar
-            </Button>
-            {asistenciaAJustificar?.justificada && (
+              {asistenciaAJustificar?.justificada && (
+                <Button
+                  variant="danger"
+                  onClick={() => guardarJustificacion(false)}
+                  disabled={guardandoJustificacion}
+                >
+                  Retirar justificación
+                </Button>
+              )}
               <Button
-                variant="danger"
-                onClick={() => guardarJustificacion(false)}
+                variant="primary"
+                onClick={() => guardarJustificacion(true)}
                 disabled={guardandoJustificacion}
               >
-                Retirar justificación
+                {guardandoJustificacion
+                  ? "Guardando..."
+                  : "Guardar justificación"}
               </Button>
+            </>
+          }
+        >
+          <div className="space-y-4">
+            {errorJustificacion && (
+              <Alert
+                type="error"
+                message={errorJustificacion}
+                onClose={() => setErrorJustificacion(null)}
+              />
             )}
-            <Button
-              variant="primary"
-              onClick={() => guardarJustificacion(true)}
-              disabled={guardandoJustificacion}
-            >
-              {guardandoJustificacion ? "Guardando..." : "Guardar justificación"}
-            </Button>
-          </>
-        }
-      >
-        <div className="space-y-4">
-          {errorJustificacion && (
-            <Alert
-              type="error"
-              message={errorJustificacion}
-              onClose={() => setErrorJustificacion(null)}
-            />
-          )}
 
-          {asistenciaAJustificar && (
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm">
-              <p className="font-semibold text-gray-800">
-                {(asistenciaAJustificar.estudiante as any)?.nombre_completo ||
-                  (asistenciaAJustificar.estudiante as any)?.nombres ||
-                  "Estudiante"}
+            {asistenciaAJustificar && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm">
+                <p className="font-semibold text-gray-800">
+                  {(asistenciaAJustificar.estudiante as any)?.nombre_completo ||
+                    (asistenciaAJustificar.estudiante as any)?.nombres ||
+                    "Estudiante"}
+                </p>
+                <p className="text-gray-600">
+                  {(asistenciaAJustificar.materia as any)?.nombre || "Materia"}{" "}
+                  ·{" "}
+                  {new Date(asistenciaAJustificar.fecha).toLocaleDateString(
+                    "es-PE",
+                    { day: "2-digit", month: "long", year: "numeric" },
+                  )}
+                </p>
+                <p className="text-gray-600 mt-1">
+                  Estado registrado:{" "}
+                  <span className="font-semibold">
+                    {asistenciaAJustificar.estado === "tarde"
+                      ? "Llegó tarde"
+                      : "Ausente"}
+                  </span>
+                </p>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Motivo de la justificación
+              </label>
+              <textarea
+                value={motivoJustificacion}
+                onChange={(e) => setMotivoJustificacion(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#04ADBF]"
+                rows={3}
+                maxLength={500}
+                placeholder="Ejemplo: cita médica en el Hospital Regional, permiso por trámite en la UGEL..."
+              />
+              <p className="text-sm text-gray-500 mt-1">
+                {motivoJustificacion.length}/500 caracteres
               </p>
-              <p className="text-gray-600">
-                {(asistenciaAJustificar.materia as any)?.nombre || "Materia"} ·{" "}
-                {new Date(asistenciaAJustificar.fecha).toLocaleDateString(
-                  "es-PE",
-                  { day: "2-digit", month: "long", year: "numeric" },
-                )}
-              </p>
-              <p className="text-gray-600 mt-1">
-                Estado registrado:{" "}
-                <span className="font-semibold">
-                  {asistenciaAJustificar.estado === "tarde"
-                    ? "Llegó tarde"
-                    : "Ausente"}
-                </span>
+              <p className="text-xs text-gray-500 mt-2">
+                Queda registrado quién justificó y en qué momento.
               </p>
             </div>
-          )}
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Motivo de la justificación
-            </label>
-            <textarea
-              value={motivoJustificacion}
-              onChange={(e) => setMotivoJustificacion(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#04ADBF]"
-              rows={3}
-              maxLength={500}
-              placeholder="Ejemplo: cita médica en el Hospital Regional, permiso por trámite en la UGEL..."
-            />
-            <p className="text-sm text-gray-500 mt-1">
-              {motivoJustificacion.length}/500 caracteres
-            </p>
-            <p className="text-xs text-gray-500 mt-2">
-              Queda registrado quién justificó y en qué momento.
-            </p>
           </div>
-        </div>
-      </Modal>
+        </Modal>
       </div>
     </PermissionGuard>
   );

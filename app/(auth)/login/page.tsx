@@ -15,7 +15,7 @@ function LoginContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#F2F0CE] to-[#FEFCD6]">
+      <div className="min-h-screen flex items-center justify-center bg-[#F2F0CE]">
         <div className="text-center">
           <div className="animate-spin inline-block">
             <div className="w-12 h-12 border-4 border-[#04ADBF] border-t-transparent rounded-full"></div>
