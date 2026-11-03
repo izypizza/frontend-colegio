@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card } from "@/src/components/ui";
-import { docentePortalService } from "@/src/lib/services";
+import { dashboardService, docentePortalService } from "@/src/lib/services";
 import {
   BarChart,
   Bar,
@@ -11,24 +11,36 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-  LineChart,
-  Line,
 } from "recharts";
 import Link from "next/link";
+
+interface EstadisticaMateria {
+  materia_id: number;
+  materia: string;
+  estudiantes: number;
+  promedio: number | null;
+  porcentaje_asistencia: number | null;
+}
 
 interface DashboardData {
   resumen: {
     total_asignaciones: number;
     total_estudiantes: number;
-    promedio_general: number;
-    porcentaje_asistencia: number;
+    promedio_general: number | null;
+    porcentaje_asistencia: number | null;
   };
   asignaciones: any[];
-  estadisticas_por_materia: any[];
+  estadisticas_por_materia: EstadisticaMateria[];
+}
+
+interface EstadisticasDocente {
+  resumen?: {
+    total_asignaciones: number;
+    total_estudiantes: number;
+    promedio_general: number | null;
+    porcentaje_asistencia: number | null;
+  };
+  estadisticas_por_materia?: EstadisticaMateria[];
 }
 
 export default function DocenteDashboardPage() {
@@ -42,32 +54,42 @@ export default function DocenteDashboardPage() {
   const fetchDashboard = async () => {
     try {
       setLoading(true);
-      // Simulación de datos - reemplazar con llamada real al API
-      const response = (await docentePortalService.misAsignaciones()) as {
-        asignaciones?: any[];
-      };
+      const [asignacionesRespuesta, estadisticasRespuesta] = await Promise.all([
+        docentePortalService.misAsignaciones(),
+        dashboardService.getStats(),
+      ]);
 
-      // Simular datos del dashboard
-      const mockData: DashboardData = {
+      const estadisticas =
+        estadisticasRespuesta as unknown as EstadisticasDocente;
+      const resumen = estadisticas?.resumen;
+
+      setData({
         resumen: {
-          total_asignaciones: response?.asignaciones?.length || 0,
-          total_estudiantes: Math.floor(Math.random() * 100) + 50,
-          promedio_general: parseFloat((Math.random() * 5 + 13).toFixed(2)),
-          porcentaje_asistencia: parseFloat(
-            (Math.random() * 10 + 85).toFixed(1),
-          ),
+          total_asignaciones:
+            resumen?.total_asignaciones ??
+            asignacionesRespuesta?.asignaciones?.length ??
+            0,
+          total_estudiantes: resumen?.total_estudiantes ?? 0,
+          promedio_general: resumen?.promedio_general ?? null,
+          porcentaje_asistencia: resumen?.porcentaje_asistencia ?? null,
         },
-        asignaciones: response?.asignaciones || [],
-        estadisticas_por_materia: [],
-      };
-
-      setData(mockData);
+        asignaciones: asignacionesRespuesta?.asignaciones ?? [],
+        estadisticas_por_materia:
+          estadisticas?.estadisticas_por_materia ?? [],
+      });
     } catch (error) {
       console.error("Error al cargar dashboard:", error);
     } finally {
       setLoading(false);
     }
   };
+
+  const formatear = (valor: number | null | undefined, decimales = 2) =>
+    valor === null || valor === undefined ? "—" : valor.toFixed(decimales);
+
+  const materiasConPromedio = (data?.estadisticas_por_materia ?? []).filter(
+    (item) => item.promedio !== null,
+  );
 
   if (loading) {
     return (
@@ -149,7 +171,7 @@ export default function DocenteDashboardPage() {
                 Promedio General
               </p>
               <p className="text-3xl font-bold text-purple-600 mt-2">
-                {data?.resumen.promedio_general.toFixed(2) || "0.00"}
+                {formatear(data?.resumen.promedio_general)}
               </p>
               <p className="text-xs text-gray-500 mt-1">De tus estudiantes</p>
             </div>
@@ -182,7 +204,7 @@ export default function DocenteDashboardPage() {
                     : "text-orange-600"
                 }`}
               >
-                {data?.resumen.porcentaje_asistencia.toFixed(1) || "0"}%
+                {formatear(data?.resumen.porcentaje_asistencia, 1)}%
               </p>
               <p className="text-xs text-gray-500 mt-1">Promedio de clases</p>
             </div>
@@ -214,6 +236,35 @@ export default function DocenteDashboardPage() {
           </div>
         </Card>
       </div>
+
+      {/* Rendimiento por materia */}
+      <Card>
+        <h2 className="text-xl font-bold text-gray-900 mb-4">
+          Promedio por materia
+        </h2>
+        {materiasConPromedio.length > 0 ? (
+          <div className="h-72 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={materiasConPromedio.map((item) => ({
+                  materia: item.materia,
+                  promedio: item.promedio,
+                }))}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="materia" />
+                <YAxis domain={[0, 20]} />
+                <Tooltip />
+                <Bar dataKey="promedio" fill="#7c3aed" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        ) : (
+          <p className="text-center text-gray-500 py-8">
+            Aún no hay calificaciones registradas en tus materias
+          </p>
+        )}
+      </Card>
 
       {/* Acciones rápidas */}
       <Card>
