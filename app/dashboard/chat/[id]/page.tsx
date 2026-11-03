@@ -19,19 +19,39 @@ export default function ChatMensajesPage() {
   const [sending, setSending] = useState(false);
   const [otroParticipante, setOtroParticipante] = useState<string>("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const contenedorMensajesRef = useRef<HTMLDivElement>(null);
+  const ultimoIdRef = useRef(0);
 
   useEffect(() => {
-    fetchMensajes();
-    const interval = setInterval(fetchMensajes, 5000); // Refrescar cada 5 segundos
-    return () => clearInterval(interval);
+    let activo = true;
+    let intervalo: number | undefined;
+
+    const iniciar = async () => {
+      await fetchMensajes();
+      if (!activo) return;
+      intervalo = window.setInterval(consultarNuevos, 4000);
+    };
+
+    iniciar();
+
+    return () => {
+      activo = false;
+      if (intervalo) window.clearInterval(intervalo);
+    };
   }, [conversacionId]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [mensajes]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const estaCercaDelFinal = () => {
+    const contenedor = contenedorMensajesRef.current;
+    if (!contenedor) return true;
+
+    const distanciaAlFinal =
+      contenedor.scrollHeight - contenedor.scrollTop - contenedor.clientHeight;
+
+    return distanciaAlFinal < 120;
   };
 
   const fetchMensajes = async () => {
@@ -40,21 +60,66 @@ export default function ChatMensajesPage() {
       const response = (await chatService.getMensajes(conversacionId)) as {
         data: any[];
       };
-      setMensajes(response.data);
+      const lista = response.data ?? [];
+
+      setMensajes(lista);
+      ultimoIdRef.current = lista.reduce(
+        (maximo: number, item: any) => Math.max(maximo, item.id),
+        0,
+      );
 
       // Detectar el otro participante (el primer mensaje que no sea del usuario actual)
-      if (response.data.length > 0 && !otroParticipante) {
-        const otroMensaje = response.data.find(
+      if (lista.length > 0 && !otroParticipante) {
+        const otroMensaje = lista.find(
           (m: any) => String(m.user_id) !== String(user?.id),
         );
         if (otroMensaje?.user?.name) {
           setOtroParticipante(otroMensaje.user.name);
         }
       }
+
+      window.setTimeout(scrollToBottom, 60);
     } catch (error) {
       console.error("Error al cargar mensajes:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const consultarNuevos = async () => {
+    if (document.visibilityState !== "visible") return;
+
+    try {
+      const response = (await chatService.getMensajes(
+        conversacionId,
+        ultimoIdRef.current,
+      )) as { data: any[] };
+
+      const nuevos = response.data ?? [];
+      if (nuevos.length === 0) return;
+
+      const debeBajar = estaCercaDelFinal();
+
+      setMensajes((previos) => [...previos, ...nuevos]);
+      ultimoIdRef.current = nuevos.reduce(
+        (maximo: number, item: any) => Math.max(maximo, item.id),
+        ultimoIdRef.current,
+      );
+
+      if (!otroParticipante) {
+        const otroMensaje = nuevos.find(
+          (m: any) => String(m.user_id) !== String(user?.id),
+        );
+        if (otroMensaje?.user?.name) {
+          setOtroParticipante(otroMensaje.user.name);
+        }
+      }
+
+      if (debeBajar) {
+        window.setTimeout(scrollToBottom, 60);
+      }
+    } catch (error) {
+      console.error("Error al consultar mensajes nuevos:", error);
     }
   };
 
@@ -233,7 +298,10 @@ export default function ChatMensajesPage() {
 
       <Card className="flex-1 flex flex-col">
         {/* Mensajes */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+        <div
+          ref={contenedorMensajesRef}
+          className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"
+        >
           {mensajes.length === 0 ? (
             <div className="text-center py-12">
               <svg

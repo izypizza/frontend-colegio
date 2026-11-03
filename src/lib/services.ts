@@ -446,9 +446,10 @@ export const chatService = {
   crearConversacion: async (data: any) => {
     return await apiClient.post("/chat/conversaciones", data);
   },
-  getMensajes: async (conversacionId: number) => {
+  getMensajes: async (conversacionId: number, afterId?: number) => {
     return await apiClient.get<any>(
       `/chat/conversaciones/${conversacionId}/mensajes`,
+      { params: afterId ? { after_id: afterId } : undefined },
     );
   },
   enviarMensaje: async (conversacionId: number, data: { mensaje: string }) => {
