@@ -42,7 +42,12 @@ npm run build
 npm start
 ```
 
-5. Calidad: `npm run lint`
+5. Calidad:
+
+```
+npm run lint      # ESLint (quedan avisos previos de any en algunos modulos)
+npm run build     # verificacion de TypeScript y compilacion de todas las rutas
+```
 
 ## Credenciales de prueba
 
@@ -77,6 +82,18 @@ Usuarios adicionales: `docente{n}@colegio.pe`, `padre{n}@colegio.pe`, `estudiant
 - Los permisos por módulo/acción se definen en `src/lib/permissions.ts` (`MODULE_PERMISSIONS`) y **deben coincidir** con el backend (`PermissionMiddleware`).
 - `PermissionGuard` y `RoleGuard` protegen páginas; los hooks `usePermissions`, `useAuth` controlan acciones visibles.
 
+## Datos reales
+
+- Todos los indicadores provienen del backend; **no hay cifras simuladas** en el frontend.
+- El dashboard docente consume `GET /api/dashboard/stats` (resumen y estadísticas por materia) y `GET /api/docente/mis-asignaciones`.
+- Si un valor no existe se muestra `—`, nunca un cero inventado.
+
+## Verificación
+
+- `npm run build` compila todas las rutas con TypeScript en modo estricto.
+- El tour guiado (Shepherd.js) se adapta a los módulos activos y al rol del usuario.
+- Los errores de la API se muestran dentro del modal o de la vista donde ocurren.
+
 ## Asistente / Tour
 
 - Botón flotante (Shepherd.js) en el dashboard.
@@ -110,5 +127,6 @@ src/
 
 - Las rutas protegidas envían el header `Authorization: Bearer <token>` emitido por el backend (Sanctum).
 - Si ves 401/403: revisa expiración de token y permisos de rol; el sidebar se ajusta al rol.
+- El backend filtra por rol: un docente solo recibe los estudiantes de sus secciones y sus calificaciones.
 - Para CORS/CSRF: asegura `SANCTUM_STATEFUL_DOMAINS=localhost:3000` y `FRONTEND_URL=http://localhost:3000` en el backend.
 - Repositorio: https://github.com/izypizza/frontend-colegio
