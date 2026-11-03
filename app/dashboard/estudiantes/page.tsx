@@ -239,21 +239,59 @@ export default function EstudiantesPage() {
     { key: "id", label: "ID" },
     {
       key: "nombre_completo",
-      label: "Nombre Completo",
-      render: (value: unknown, item: Estudiante) =>
-        item.nombre_completo ||
-        `${item.apellido_paterno} ${item.apellido_materno}, ${item.nombres}`,
-    },
-    {
-      key: "fecha_nacimiento",
-      label: "Fecha de Nacimiento",
-      render: (value: unknown) =>
-        new Date(value as string).toLocaleDateString(),
+      label: "Estudiante",
+      render: (value: unknown, item: Estudiante) => (
+        <div>
+          <div className="font-medium">
+            {item.nombre_completo ||
+              `${item.apellido_paterno} ${item.apellido_materno}, ${item.nombres}`}
+          </div>
+          <div className="text-sm text-gray-500">
+            {item.dni ? `DNI: ${item.dni}` : "Sin DNI"}
+          </div>
+        </div>
+      ),
     },
     {
       key: "seccion",
-      label: "Sección",
-      render: (value: unknown) => (value as Seccion)?.nombre || "N/A",
+      label: "Grado y Sección",
+      render: (value: unknown, item: Estudiante) => {
+        const seccion = (value as Seccion) || item.seccion;
+        if (!seccion) return "Sin sección";
+
+        return (
+          <div>
+            <div className="font-medium">
+              {seccion.grado?.nombre || "Sin grado"}
+            </div>
+            <div className="text-sm text-gray-500">
+              Sección {seccion.nombre}
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      key: "apoderado",
+      label: "Apoderado",
+      render: (_value: unknown, item: Estudiante) => {
+        const apoderado = item.padres?.[0];
+        if (!apoderado) {
+          return <span className="text-sm text-gray-500">Sin apoderado</span>;
+        }
+
+        return (
+          <div>
+            <div className="font-medium">
+              {apoderado.nombre_completo ||
+                `${apoderado.apellido_paterno} ${apoderado.apellido_materno}, ${apoderado.nombres}`}
+            </div>
+            <div className="text-sm text-gray-500">
+              {apoderado.telefono || "Sin teléfono"}
+            </div>
+          </div>
+        );
+      },
     },
     {
       key: "estado",

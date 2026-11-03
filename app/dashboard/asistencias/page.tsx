@@ -394,9 +394,10 @@ export default function AsistenciasPage() {
   // Filtrado de asistencias
   const asistenciasFiltradas = asistencias.filter((asistencia) => {
     const estudianteNombre =
-      (asistencia.estudiante?.nombres || "") +
+      (asistencia.estudiante?.nombre_completo ||
+        `${asistencia.estudiante?.apellido_paterno || ""} ${asistencia.estudiante?.apellido_materno || ""} ${asistencia.estudiante?.nombres || ""}`) +
       " " +
-      (asistencia.estudiante?.apellido_paterno || "");
+      (asistencia.estudiante?.dni || "");
     const materiaNombre = asistencia.materia?.nombre || "";
 
     const matchesSearch =
@@ -435,9 +436,13 @@ export default function AsistenciasPage() {
       label: "Estudiante",
       render: (value: unknown) => {
         const estudiante = value as Estudiante;
+        const nombreCompleto =
+          estudiante?.nombre_completo ||
+          `${estudiante?.apellido_paterno || ""} ${estudiante?.apellido_materno || ""}, ${estudiante?.nombres || ""}`.trim();
+
         return (
           <div>
-            <div className="font-medium">{estudiante?.nombres || "N/A"}</div>
+            <div className="font-medium">{nombreCompleto || "N/A"}</div>
             {estudiante?.dni && (
               <div className="text-sm text-gray-500">DNI: {estudiante.dni}</div>
             )}
@@ -826,7 +831,9 @@ export default function AsistenciasPage() {
               <option value="">Seleccionar estudiante</option>
               {estudiantes?.map((estudiante) => (
                 <option key={estudiante.id} value={estudiante.id}>
-                  {estudiante.nombres}
+                  {estudiante.nombre_completo ||
+                    `${estudiante.apellido_paterno || ""} ${estudiante.apellido_materno || ""}, ${estudiante.nombres}`}
+                  {estudiante.dni ? ` - DNI ${estudiante.dni}` : ""}
                 </option>
               ))}
             </select>

@@ -293,7 +293,21 @@ export default function CalificacionesPage() {
     {
       key: "estudiante",
       label: "Estudiante",
-      render: (value: unknown) => (value as Estudiante)?.nombres || "N/A",
+      render: (value: unknown) => {
+        const estudiante = value as Estudiante;
+        const nombreCompleto =
+          estudiante?.nombre_completo ||
+          `${estudiante?.apellido_paterno || ""} ${estudiante?.apellido_materno || ""}, ${estudiante?.nombres || ""}`.trim();
+
+        return (
+          <div>
+            <div className="font-medium">{nombreCompleto || "N/A"}</div>
+            {estudiante?.dni && (
+              <div className="text-sm text-gray-500">DNI: {estudiante.dni}</div>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: "materia",
@@ -498,7 +512,9 @@ export default function CalificacionesPage() {
               <option value="">Seleccionar estudiante</option>
               {estudiantes?.map((estudiante) => (
                 <option key={estudiante.id} value={estudiante.id}>
-                  {estudiante.nombres}
+                  {estudiante.nombre_completo ||
+                    `${estudiante.apellido_paterno || ""} ${estudiante.apellido_materno || ""}, ${estudiante.nombres}`}
+                  {estudiante.dni ? ` - DNI ${estudiante.dni}` : ""}
                 </option>
               ))}
             </select>
