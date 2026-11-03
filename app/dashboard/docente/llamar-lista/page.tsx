@@ -40,13 +40,26 @@ const opcionesEstado: Array<{
   etiqueta: string;
   claseActiva: string;
 }> = [
-  { valor: "presente", etiqueta: "Presente", claseActiva: "bg-green-600 text-white border-green-600" },
-  { valor: "tarde", etiqueta: "Tarde", claseActiva: "bg-amber-500 text-white border-amber-500" },
-  { valor: "ausente", etiqueta: "Ausente", claseActiva: "bg-red-600 text-white border-red-600" },
+  {
+    valor: "presente",
+    etiqueta: "Presente",
+    claseActiva: "bg-green-600 text-white border-green-600",
+  },
+  {
+    valor: "tarde",
+    etiqueta: "Tarde",
+    claseActiva: "bg-amber-500 text-white border-amber-500",
+  },
+  {
+    valor: "ausente",
+    etiqueta: "Ausente",
+    claseActiva: "bg-red-600 text-white border-red-600",
+  },
 ];
 
 export default function LlamarListaPage() {
-  const { error, success, setError, setSuccess, handleError } = useErrorHandler();
+  const { error, success, setError, setSuccess, handleError } =
+    useErrorHandler();
 
   const [asignaciones, setAsignaciones] = useState<Asignacion[]>([]);
   const [cargandoAsignaciones, setCargandoAsignaciones] = useState(true);
@@ -54,7 +67,9 @@ export default function LlamarListaPage() {
   const [fecha, setFecha] = useState(hoyEnFormato());
   const [estudiantes, setEstudiantes] = useState<EstudianteLista[]>([]);
   const [marcas, setMarcas] = useState<Record<number, EstadoAsistencia>>({});
-  const [observaciones, setObservaciones] = useState<Record<number, string>>({});
+  const [observaciones, setObservaciones] = useState<Record<number, string>>(
+    {},
+  );
   const [yaRegistrada, setYaRegistrada] = useState(false);
   const [nombreSeccion, setNombreSeccion] = useState("");
   const [cargandoLista, setCargandoLista] = useState(false);
@@ -71,7 +86,12 @@ export default function LlamarListaPage() {
   }, [asignaciones]);
 
   const asignacionActiva = useMemo(
-    () => opciones.find((asignacion) => `${asignacion.materia_id}-${asignacion.seccion_id}` === claveSeleccionada) ?? null,
+    () =>
+      opciones.find(
+        (asignacion) =>
+          `${asignacion.materia_id}-${asignacion.seccion_id}` ===
+          claveSeleccionada,
+      ) ?? null,
     [opciones, claveSeleccionada],
   );
 
@@ -118,7 +138,8 @@ export default function LlamarListaPage() {
 
         lista.forEach((estudiante) => {
           marcasIniciales[estudiante.id] = estudiante.estado ?? "presente";
-          observacionesIniciales[estudiante.id] = estudiante.observaciones ?? "";
+          observacionesIniciales[estudiante.id] =
+            estudiante.observaciones ?? "";
         });
 
         setEstudiantes(lista);
@@ -179,7 +200,8 @@ export default function LlamarListaPage() {
 
       const partes: string[] = [];
       if (resultado?.creados) partes.push(`${resultado.creados} nuevos`);
-      if (resultado?.actualizados) partes.push(`${resultado.actualizados} corregidos`);
+      if (resultado?.actualizados)
+        partes.push(`${resultado.actualizados} corregidos`);
 
       setSuccess(
         `Asistencia guardada: ${partes.join(" y ") || `${estudiantes.length} registros`}.`,
@@ -197,8 +219,8 @@ export default function LlamarListaPage() {
       <div>
         <h1 className="text-2xl font-bold text-gray-800">Llamar lista</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Registra la asistencia de tu clase. Todos aparecen como presentes y solo
-          marcas las excepciones.
+          Registra la asistencia de tu clase. Todos aparecen como presentes y
+          solo marcas las excepciones.
         </p>
       </div>
 
@@ -206,7 +228,11 @@ export default function LlamarListaPage() {
         <Alert type="error" message={error} onClose={() => setError(null)} />
       )}
       {success && (
-        <Alert type="success" message={success} onClose={() => setSuccess(null)} />
+        <Alert
+          type="success"
+          message={success}
+          onClose={() => setSuccess(null)}
+        />
       )}
 
       <Card>
@@ -222,7 +248,9 @@ export default function LlamarListaPage() {
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#04ADBF]"
             >
               <option value="">
-                {cargandoAsignaciones ? "Cargando cursos..." : "Selecciona un curso"}
+                {cargandoAsignaciones
+                  ? "Cargando cursos..."
+                  : "Selecciona un curso"}
               </option>
               {opciones.map((asignacion) => (
                 <option
@@ -278,22 +306,28 @@ export default function LlamarListaPage() {
                   {asignacionActiva.materia?.nombre} · {nombreSeccion}
                 </p>
                 <p className="text-sm text-gray-500">
-                  {estudiantes.length} estudiantes · {resumen.presentes} presentes ·{" "}
-                  {resumen.tarde} tarde · {resumen.ausentes} ausentes
+                  {estudiantes.length} estudiantes · {resumen.presentes}{" "}
+                  presentes · {resumen.tarde} tarde · {resumen.ausentes}{" "}
+                  ausentes
                 </p>
               </div>
               <div className="flex gap-2">
                 <Button variant="secondary" onClick={marcarTodosPresentes}>
                   Todos presentes
                 </Button>
-                <Button onClick={guardar} disabled={guardando || estudiantes.length === 0}>
+                <Button
+                  onClick={guardar}
+                  disabled={guardando || estudiantes.length === 0}
+                >
                   {guardando ? "Guardando..." : "Guardar asistencia"}
                 </Button>
               </div>
             </div>
 
             {cargandoLista ? (
-              <p className="text-center text-gray-500 py-6">Cargando estudiantes...</p>
+              <p className="text-center text-gray-500 py-6">
+                Cargando estudiantes...
+              </p>
             ) : estudiantes.length === 0 ? (
               <p className="text-center text-gray-600 py-6">
                 Esta sección no tiene estudiantes matriculados.
@@ -314,8 +348,8 @@ export default function LlamarListaPage() {
                         </span>
                         <div className="min-w-0">
                           <p className="font-medium text-gray-800 truncate">
-                            {estudiante.apellido_paterno} {estudiante.apellido_materno},{" "}
-                            {estudiante.nombres}
+                            {estudiante.apellido_paterno}{" "}
+                            {estudiante.apellido_materno}, {estudiante.nombres}
                           </p>
                           {estudiante.dni && (
                             <p className="text-xs text-gray-500">
@@ -331,7 +365,9 @@ export default function LlamarListaPage() {
                             <button
                               key={opcion.valor}
                               type="button"
-                              onClick={() => marcar(estudiante.id, opcion.valor)}
+                              onClick={() =>
+                                marcar(estudiante.id, opcion.valor)
+                              }
                               className={`px-3 py-1.5 text-xs font-semibold border-r last:border-r-0 border-gray-200 transition-colors ${
                                 estadoActual === opcion.valor
                                   ? opcion.claseActiva

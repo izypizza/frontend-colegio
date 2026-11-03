@@ -172,6 +172,15 @@ export const asignacionService = new CrudService<AsignacionDocenteMateria>(
 export const horarioService = new CrudService<Horario>("/horarios");
 export const asistenciaService = new CrudService<Asistencia>("/asistencias");
 
+export const asistenciaJustificacionService = {
+  justificar: async (id: number, justificada: boolean, motivo?: string) => {
+    return await apiClient.put<any>(`/asistencias/${id}/justificar`, {
+      justificada,
+      motivo: motivo ?? null,
+    });
+  },
+};
+
 // Calificacion Service with extra methods
 class CalificacionServiceExtended extends CrudService<Calificacion> {
   async estadisticasAvanzadas(periodo_id?: number): Promise<any> {
@@ -194,8 +203,14 @@ export const prestamoLibroService = {
     return await apiClient.get<any>("/prestamos", { params });
   },
   aprobar: (id: number) => apiClient.post(`/prestamos/${id}/aprobar`),
-  rechazar: (id: number, motivo: string) => apiClient.post(`/prestamos/${id}/rechazar`, { motivo }),
-  reportes: () => apiClient.get<{ prestamos_activos: number; prestamos_devueltos: number; prestamos_vencidos: number }>("/biblioteca/reportes"),
+  rechazar: (id: number, motivo: string) =>
+    apiClient.post(`/prestamos/${id}/rechazar`, { motivo }),
+  reportes: () =>
+    apiClient.get<{
+      prestamos_activos: number;
+      prestamos_devueltos: number;
+      prestamos_vencidos: number;
+    }>("/biblioteca/reportes"),
   create: async (data: any) => {
     return await apiClient.post("/prestamos", data);
   },
@@ -317,11 +332,7 @@ export const docentePortalService = {
   misAsistencias: async (params?: any) => {
     return await apiClient.get<any>("/docente/mis-asistencias", { params });
   },
-  listaSeccion: async (
-    seccionId: number,
-    materiaId: number,
-    fecha: string,
-  ) => {
+  listaSeccion: async (seccionId: number, materiaId: number, fecha: string) => {
     return await apiClient.get<any>(`/docente/lista-seccion/${seccionId}`, {
       params: { materia_id: materiaId, fecha },
     });

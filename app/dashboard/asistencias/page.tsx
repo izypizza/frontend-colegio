@@ -11,6 +11,7 @@ import {
 } from "@/src/components/ui";
 import {
   asistenciaService,
+  asistenciaJustificacionService,
   estudianteService,
   materiaService,
   docentePortalService,
@@ -48,6 +49,9 @@ export default function AsistenciasPage() {
   const rolesAutorizados = ["admin", "auxiliar", "docente"];
   const tieneAcceso = user && rolesAutorizados.includes(user.role);
 
+  const esAdministrador = user?.role === "admin";
+  const puedeJustificar = user?.role === "admin" || user?.role === "auxiliar";
+
   const [asistencias, setAsistencias] = useState<Asistencia[]>([]);
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [materias, setMaterias] = useState<Materia[]>([]);
@@ -63,6 +67,14 @@ export default function AsistenciasPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterMateria, setFilterMateria] = useState("");
   const [filterEstado, setFilterEstado] = useState("");
+
+  const [asistenciaAJustificar, setAsistenciaAJustificar] =
+    useState<Asistencia | null>(null);
+  const [motivoJustificacion, setMotivoJustificacion] = useState("");
+  const [errorJustificacion, setErrorJustificacion] = useState<string | null>(
+    null,
+  );
+  const [guardandoJustificacion, setGuardandoJustificacion] = useState(false);
 
   // Filtros de fecha optimizados
   const currentYear = new Date().getFullYear();
@@ -287,6 +299,52 @@ export default function AsistenciasPage() {
     }
   };
 
+  const abrirJustificacion = (asistencia: Asistencia) => {
+    setAsistenciaAJustificar(asistencia);
+    setMotivoJustificacion(asistencia.motivo_justificacion ?? "");
+    setErrorJustificacion(null);
+  };
+
+  const cerrarJustificacion = () => {
+    setAsistenciaAJustificar(null);
+    setMotivoJustificacion("");
+    setErrorJustificacion(null);
+  };
+
+  const guardarJustificacion = async (justificada: boolean) => {
+    if (!asistenciaAJustificar) return;
+
+    if (justificada && motivoJustificacion.trim().length === 0) {
+      setErrorJustificacion("Escribe el motivo de la justificación.");
+      return;
+    }
+
+    try {
+      setGuardandoJustificacion(true);
+      setErrorJustificacion(null);
+
+      await asistenciaJustificacionService.justificar(
+        asistenciaAJustificar.id,
+        justificada,
+        motivoJustificacion.trim(),
+      );
+
+      setSuccess(
+        justificada
+          ? "La falta quedó registrada como justificada."
+          : "Se retiró la justificación de la falta.",
+      );
+      cerrarJustificacion();
+      refreshData();
+    } catch (err: any) {
+      setErrorJustificacion(
+        err?.message || "No se pudo guardar la justificación.",
+      );
+    } finally {
+      setGuardandoJustificacion(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -418,11 +476,21 @@ export default function AsistenciasPage() {
           ausente: "Ausente",
         };
         return (
-          <span
-            className={`px-3 py-1 rounded-full text-xs font-semibold ${badgeStyles[estado]}`}
-          >
-            {labels[estado]}
-          </span>
+          <div className="flex flex-col gap-1">
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-semibold w-fit ${badgeStyles[estado]}`}
+            >
+              {labels[estado]}
+            </span>
+            {asistencia.justificada && (
+              <span
+                className="px-3 py-1 rounded-full text-xs font-semibold w-fit bg-sky-100 text-sky-800"
+                title={asistencia.motivo_justificacion ?? undefined}
+              >
+                Justificada
+              </span>
+            )}
+          </div>
         );
       },
     },
@@ -430,7 +498,7 @@ export default function AsistenciasPage() {
       key: "acciones",
       label: "Acciones",
       render: (_value: unknown, asistencia: Asistencia) => (
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button
             variant="secondary"
             size="sm"
@@ -438,13 +506,26 @@ export default function AsistenciasPage() {
           >
             Editar
           </Button>
-          <Button
-            variant="danger"
-            size="sm"
-            onClick={() => handleDelete(asistencia)}
-          >
-            Eliminar
-          </Button>
+
+          {puedeJustificar && asistencia.estado !== "presente" && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => abrirJustificacion(asistencia)}
+            >
+              {asistencia.justificada ? "Justificación" : "Justificar"}
+            </Button>
+          )}
+
+          {esAdministrador && (
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => handleDelete(asistencia)}
+            >
+              Eliminar
+            </Button>
+          )}
         </div>
       ),
     },
@@ -866,6 +947,90 @@ export default function AsistenciasPage() {
             </p>
           </div>
         </form>
+      </Modal>
+
+      <Modal
+        isOpen={asistenciaAJustificar !== null}
+        onClose={cerrarJustificacion}
+        title="Justificar falta o tardanza"
+        footer={
+          <>
+            <Button variant="secondary" onClick={cerrarJustificacion}>
+              Cancelar
+            </Button>
+            {asistenciaAJustificar?.justificada && (
+              <Button
+                variant="danger"
+                onClick={() => guardarJustificacion(false)}
+                disabled={guardandoJustificacion}
+              >
+                Retirar justificación
+              </Button>
+            )}
+            <Button
+              variant="primary"
+              onClick={() => guardarJustificacion(true)}
+              disabled={guardandoJustificacion}
+            >
+              {guardandoJustificacion ? "Guardando..." : "Guardar justificación"}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          {errorJustificacion && (
+            <Alert
+              type="error"
+              message={errorJustificacion}
+              onClose={() => setErrorJustificacion(null)}
+            />
+          )}
+
+          {asistenciaAJustificar && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm">
+              <p className="font-semibold text-gray-800">
+                {(asistenciaAJustificar.estudiante as any)?.nombre_completo ||
+                  (asistenciaAJustificar.estudiante as any)?.nombres ||
+                  "Estudiante"}
+              </p>
+              <p className="text-gray-600">
+                {(asistenciaAJustificar.materia as any)?.nombre || "Materia"} ·{" "}
+                {new Date(asistenciaAJustificar.fecha).toLocaleDateString(
+                  "es-PE",
+                  { day: "2-digit", month: "long", year: "numeric" },
+                )}
+              </p>
+              <p className="text-gray-600 mt-1">
+                Estado registrado:{" "}
+                <span className="font-semibold">
+                  {asistenciaAJustificar.estado === "tarde"
+                    ? "Llegó tarde"
+                    : "Ausente"}
+                </span>
+              </p>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Motivo de la justificación
+            </label>
+            <textarea
+              value={motivoJustificacion}
+              onChange={(e) => setMotivoJustificacion(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#04ADBF]"
+              rows={3}
+              maxLength={500}
+              placeholder="Ejemplo: cita médica en el Hospital Regional, permiso por trámite en la UGEL..."
+            />
+            <p className="text-sm text-gray-500 mt-1">
+              {motivoJustificacion.length}/500 caracteres
+            </p>
+            <p className="text-xs text-gray-500 mt-2">
+              Queda registrado quién justificó y en qué momento.
+            </p>
+          </div>
+        </div>
       </Modal>
       </div>
     </PermissionGuard>

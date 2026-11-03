@@ -196,6 +196,10 @@ export interface Asistencia {
   materia_id: number;
   fecha: string;
   estado: "presente" | "tarde" | "ausente";
+  justificada?: boolean;
+  motivo_justificacion?: string | null;
+  justificado_por?: number | null;
+  justificado_at?: string | null;
   observaciones?: string;
   presente?: boolean; // Computed field para compatibilidad
   estudiante?: Estudiante;
