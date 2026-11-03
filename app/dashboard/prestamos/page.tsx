@@ -12,6 +12,7 @@ import { useErrorHandler } from "@/src/hooks/useErrorHandler";
 import { useModalState } from "@/src/hooks/useModalState";
 import { usePagination } from "@/src/hooks/usePagination";
 import { usePermissions } from "@/src/hooks/usePermissions";
+import { useAutoRefresh } from "@/src/hooks/useAutoRefresh";
 import { PermissionGuard } from "@/src/components/auth";
 import { UserRole } from "@/src/types";
 import { useAuth } from "@/src/features/auth";
@@ -102,9 +103,16 @@ export default function PrestamosPage() {
     loadData();
   }, [currentPage, perPage, user]);
 
-  const loadData = async () => {
+  useAutoRefresh(() => loadData(true), {
+    intervaloMs: 20000,
+    activo: Boolean(user && ["admin", "bibliotecario"].includes(user.role)),
+  });
+
+  const loadData = async (silencioso = false) => {
     try {
-      setLoading(true);
+      if (!silencioso) {
+        setLoading(true);
+      }
       const [prestamosData, librosData, resumenData] = (await Promise.all([
         prestamoLibroService.getAll({ page: currentPage, per_page: perPage }),
         libroService.getAll({ all: true }),
@@ -144,9 +152,13 @@ export default function PrestamosPage() {
           : [];
       setLibrosDisponibles(disponibles);
     } catch (err: any) {
-      handleError(err, "Error al cargar los datos");
+      if (!silencioso) {
+        handleError(err, "Error al cargar los datos");
+      }
     } finally {
-      setLoading(false);
+      if (!silencioso) {
+        setLoading(false);
+      }
     }
   };
 

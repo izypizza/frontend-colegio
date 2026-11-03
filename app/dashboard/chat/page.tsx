@@ -6,6 +6,7 @@ import { chatService, padrePortalService } from "@/src/lib/services";
 import { ChatConversacion } from "@/src/types/models";
 import Link from "next/link";
 import { useAuth } from "@/src/features/auth";
+import { useAutoRefresh } from "@/src/hooks/useAutoRefresh";
 
 export default function ChatPage() {
   const { user } = useAuth();
@@ -19,19 +20,25 @@ export default function ChatPage() {
   const [selectedDocente, setSelectedDocente] = useState<number | null>(null);
   const [creating, setCreating] = useState(false);
 
-  const fetchConversaciones = useCallback(async () => {
+  const fetchConversaciones = useCallback(async (silencioso = false) => {
     try {
-      setLoading(true);
-      setError(null);
+      if (!silencioso) {
+        setLoading(true);
+        setError(null);
+      }
       const response = (await chatService.getConversaciones()) as {
         data: ChatConversacion[];
       };
       setConversaciones(response.data || []);
     } catch (err: any) {
-      setError(err.message || "Error al cargar conversaciones");
+      if (!silencioso) {
+        setError(err.message || "Error al cargar conversaciones");
+      }
       console.error("Error al cargar conversaciones:", err);
     } finally {
-      setLoading(false);
+      if (!silencioso) {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -105,6 +112,11 @@ export default function ChatPage() {
       fetchHijos();
     }
   }, [user?.role, fetchConversaciones, fetchHijos]);
+
+  useAutoRefresh(() => fetchConversaciones(true), {
+    intervaloMs: 20000,
+    activo: Boolean(user),
+  });
 
   if (loading) {
     return (

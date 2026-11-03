@@ -22,6 +22,7 @@ import { useAuth } from "@/src/features/auth";
 import { useErrorHandler } from "@/src/hooks/useErrorHandler";
 import { useModalState } from "@/src/hooks/useModalState";
 import { usePagination } from "@/src/hooks/usePagination";
+import { useAutoRefresh } from "@/src/hooks/useAutoRefresh";
 import { usePermissions } from "@/src/hooks/usePermissions";
 import { PermissionGuard } from "@/src/components/auth";
 import { UserRole } from "@/src/types";
@@ -149,9 +150,11 @@ export default function AsistenciasPage() {
       handleError(err, "Error al exportar el archivo");
     }
   };
-  const loadDocenteData = async () => {
+  const loadDocenteData = async (silencioso = false) => {
     try {
-      setLoading(true);
+      if (!silencioso) {
+        setLoading(true);
+      }
       const [asistenciasData, estudiantesData, asignacionesData] =
         (await Promise.all([
           docentePortalService.misAsistencias(),
@@ -183,15 +186,21 @@ export default function AsistenciasPage() {
         lastPage: 1,
       });
     } catch (err: any) {
-      handleError(err, "Error al cargar los datos del docente");
+      if (!silencioso) {
+        handleError(err, "Error al cargar los datos del docente");
+      }
     } finally {
-      setLoading(false);
+      if (!silencioso) {
+        setLoading(false);
+      }
     }
   };
 
-  const loadAdminData = async () => {
+  const loadAdminData = async (silencioso = false) => {
     try {
-      setLoading(true);
+      if (!silencioso) {
+        setLoading(true);
+      }
       const [asistenciasData, estudiantesData, materiasData] =
         await Promise.all([
           asistenciaService.getAll({ page: currentPage, per_page: perPage }),
@@ -230,20 +239,29 @@ export default function AsistenciasPage() {
         Array.isArray(materiasData) ? materiasData : materiasData?.data || [],
       );
     } catch (err: any) {
-      handleError(err, "Error al cargar los datos");
+      if (!silencioso) {
+        handleError(err, "Error al cargar los datos");
+      }
     } finally {
-      setLoading(false);
+      if (!silencioso) {
+        setLoading(false);
+      }
     }
   };
 
-  const refreshData = async () => {
+  const refreshData = async (silencioso = false) => {
     if (!user) return;
     if (user.role === "docente") {
-      await loadDocenteData();
+      await loadDocenteData(silencioso);
     } else {
-      await loadAdminData();
+      await loadAdminData(silencioso);
     }
   };
+
+  useAutoRefresh(() => refreshData(true), {
+    intervaloMs: 20000,
+    activo: Boolean(user),
+  });
 
   useEffect(() => {
     if (!user) return;

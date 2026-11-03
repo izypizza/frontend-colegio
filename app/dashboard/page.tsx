@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { dashboardService } from "@/src/lib/services";
 import { useAuth } from "@/src/features/auth";
 import { UserRole } from "@/src/types";
+import { useAutoRefresh } from "@/src/hooks/useAutoRefresh";
 import Link from "next/link";
 
 export default function DashboardPage() {
@@ -13,24 +14,35 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const loadStats = async () => {
-      try {
+  const loadStats = async (silencioso = false) => {
+    try {
+      if (!silencioso) {
         setError(null);
-        const data = await dashboardService.getStats();
-        setStats(data);
-      } catch (error: any) {
-        console.error("Error al cargar estadísticas:", error);
+      }
+      const data = await dashboardService.getStats();
+      setStats(data);
+    } catch (error: any) {
+      console.error("Error al cargar estadísticas:", error);
+      if (!silencioso) {
         setError(
           error.message || "Error al cargar las estadísticas del sistema",
         );
-      } finally {
+      }
+    } finally {
+      if (!silencioso) {
         setLoading(false);
       }
-    };
+    }
+  };
 
+  useEffect(() => {
     loadStats();
   }, []);
+
+  useAutoRefresh(() => loadStats(true), {
+    intervaloMs: 45000,
+    activo: Boolean(user),
+  });
 
   if (loading) {
     return (

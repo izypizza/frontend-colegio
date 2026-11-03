@@ -82,153 +82,157 @@ export default function EstadisticasBibliotecaPage() {
           </h1>
         </div>
 
-      {/* Estadísticas Generales */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <div className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Total de Libros</p>
-                <p className="text-3xl font-bold text-blue-600">
-                  {stats.total_libros}
-                </p>
+        {/* Estadísticas Generales */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card>
+            <div className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Total de Libros</p>
+                  <p className="text-3xl font-bold text-blue-600">
+                    {stats.total_libros}
+                  </p>
+                </div>
+                <div className="text-4xl">[Libros]</div>
               </div>
-              <div className="text-4xl">[Libros]</div>
+              <div className="mt-4 text-sm text-gray-500">
+                {stats.libros_fisicos} físicos • {stats.libros_digitales}{" "}
+                digitales
+              </div>
             </div>
-            <div className="mt-4 text-sm text-gray-500">
-              {stats.libros_fisicos} físicos • {stats.libros_digitales}{" "}
-              digitales
-            </div>
-          </div>
-        </Card>
+          </Card>
 
-        <Card>
-          <div className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Préstamos Activos</p>
-                <p className="text-3xl font-bold text-green-600">
-                  {stats.prestamos_activos}
-                </p>
+          <Card>
+            <div className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Préstamos Activos</p>
+                  <p className="text-3xl font-bold text-green-600">
+                    {stats.prestamos_activos}
+                  </p>
+                </div>
+                <div className="text-4xl">[OK]</div>
               </div>
-              <div className="text-4xl">[OK]</div>
+              <div className="mt-4 text-sm text-gray-500">
+                De {stats.total_prestamos} totales
+              </div>
             </div>
-            <div className="mt-4 text-sm text-gray-500">
-              De {stats.total_prestamos} totales
-            </div>
-          </div>
-        </Card>
+          </Card>
 
+          <Card>
+            <div className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Pendientes</p>
+                  <p className="text-3xl font-bold text-yellow-600">
+                    {stats.prestamos_pendientes}
+                  </p>
+                </div>
+                <div className="p-3 bg-amber-100 rounded-full">
+                  <svg
+                    className="w-7 h-7 text-amber-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <div className="mt-4 text-sm text-gray-500">
+                Esperan aprobación
+              </div>
+            </div>
+          </Card>
+
+          <Card>
+            <div className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Vencidos</p>
+                  <p className="text-3xl font-bold text-red-600">
+                    {stats.prestamos_vencidos}
+                  </p>
+                </div>
+                <div className="text-4xl">[!]</div>
+              </div>
+              <div className="mt-4 text-sm text-gray-500">
+                Requieren atención
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* Libros Más Prestados */}
         <Card>
           <div className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Pendientes</p>
-                <p className="text-3xl font-bold text-yellow-600">
-                  {stats.prestamos_pendientes}
-                </p>
-              </div>
-              <div className="p-3 bg-amber-100 rounded-full">
-                <svg
-                  className="w-7 h-7 text-amber-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+            <h2 className="text-xl font-bold text-gray-900 mb-4">
+              Libros Más Prestados
+            </h2>
+            <div className="space-y-4">
+              {stats.libros_mas_prestados.map((libro, index) => (
+                <div
+                  key={libro.id}
+                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-            </div>
-            <div className="mt-4 text-sm text-gray-500">Esperan aprobación</div>
-          </div>
-        </Card>
-
-        <Card>
-          <div className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Vencidos</p>
-                <p className="text-3xl font-bold text-red-600">
-                  {stats.prestamos_vencidos}
-                </p>
-              </div>
-              <div className="text-4xl">[!]</div>
-            </div>
-            <div className="mt-4 text-sm text-gray-500">Requieren atención</div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Libros Más Prestados */}
-      <Card>
-        <div className="p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">
-            Libros Más Prestados
-          </h2>
-          <div className="space-y-4">
-            {stats.libros_mas_prestados.map((libro, index) => (
-              <div
-                key={libro.id}
-                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
-              >
-                <div className="flex items-center space-x-4">
-                  <span className="text-2xl font-bold text-gray-400">
-                    #{index + 1}
-                  </span>
-                  <div>
-                    <p className="font-semibold text-gray-900">
-                      {libro.titulo}
+                  <div className="flex items-center space-x-4">
+                    <span className="text-2xl font-bold text-gray-400">
+                      #{index + 1}
+                    </span>
+                    <div>
+                      <p className="font-semibold text-gray-900">
+                        {libro.titulo}
+                      </p>
+                      <p className="text-sm text-gray-600">{libro.autor}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-blue-600">
+                      {libro.total_prestamos}
                     </p>
-                    <p className="text-sm text-gray-600">{libro.autor}</p>
+                    <p className="text-xs text-gray-500">préstamos</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-blue-600">
-                    {libro.total_prestamos}
-                  </p>
-                  <p className="text-xs text-gray-500">préstamos</p>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
+        </Card>
+
+        {/* Resumen Adicional */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card>
+            <div className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Usuarios Activos
+              </h3>
+              <p className="text-4xl font-bold text-purple-600">
+                {stats.estudiantes_activos}
+              </p>
+              <p className="text-sm text-gray-500 mt-2">
+                Estudiantes con préstamos activos
+              </p>
+            </div>
+          </Card>
+
+          <Card>
+            <div className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Categorías
+              </h3>
+              <p className="text-4xl font-bold text-indigo-600">
+                {stats.categorias_count}
+              </p>
+              <p className="text-sm text-gray-500 mt-2">
+                Categorías de libros disponibles
+              </p>
+            </div>
+          </Card>
         </div>
-      </Card>
-
-      {/* Resumen Adicional */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <div className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Usuarios Activos
-            </h3>
-            <p className="text-4xl font-bold text-purple-600">
-              {stats.estudiantes_activos}
-            </p>
-            <p className="text-sm text-gray-500 mt-2">
-              Estudiantes con préstamos activos
-            </p>
-          </div>
-        </Card>
-
-        <Card>
-          <div className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Categorías
-            </h3>
-            <p className="text-4xl font-bold text-indigo-600">
-              {stats.categorias_count}
-            </p>
-            <p className="text-sm text-gray-500 mt-2">
-              Categorías de libros disponibles
-            </p>
-          </div>
-        </Card>
-      </div>
       </div>
     </PermissionGuard>
   );

@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { notificacionService } from "@/src/lib/services";
 import { Notificacion } from "@/src/types/models";
+import { useAutoRefresh } from "@/src/hooks/useAutoRefresh";
 
 export const NotificationBell: React.FC = () => {
   const [notificaciones, setNotificaciones] = useState<Notificacion[]>([]);
@@ -12,9 +13,9 @@ export const NotificationBell: React.FC = () => {
 
   useEffect(() => {
     fetchNotificaciones();
-    const interval = setInterval(fetchNotificaciones, 30000);
-    return () => clearInterval(interval);
   }, []);
+
+  useAutoRefresh(() => fetchNotificaciones(), { intervaloMs: 20000 });
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
