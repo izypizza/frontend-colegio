@@ -6,6 +6,7 @@ import { ROUTES } from "@/src/config/constants";
 import { AuthProvider, useAuth, useRequireAuth } from "@/src/features/auth";
 import { ThemeProvider } from "@/src/contexts/ThemeContext";
 import { useAssistantPreference } from "@/src/hooks/useAssistantPreference";
+import { useSystemKeepAlive } from "@/src/hooks/useSystemWakeUp";
 import { useRouter } from "next/navigation";
 import "@/src/components/ui/shepherd-styles.css";
 
@@ -14,6 +15,7 @@ function DashboardLayoutWrapper({ children }: { children: React.ReactNode }) {
   const { loading } = useRequireAuth();
   const router = useRouter();
   const { assistantEnabled, isLoaded } = useAssistantPreference();
+  useSystemKeepAlive();
 
   const handleLogout = () => {
     logout();

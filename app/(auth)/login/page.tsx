@@ -1,9 +1,17 @@
-'use client';
+"use client";
 
-import { AuthProvider, LoginForm, useRedirectIfAuth } from '@/src/features/auth';
+import {
+  AuthProvider,
+  LoginForm,
+  useRedirectIfAuth,
+} from "@/src/features/auth";
+import { SystemStatusBanner } from "@/src/components/ui";
+import { useSystemWakeUp } from "@/src/hooks/useSystemWakeUp";
 
 function LoginContent() {
   const { loading } = useRedirectIfAuth();
+  const { estado, intentoActual, totalIntentos, reintentar } =
+    useSystemWakeUp();
 
   if (loading) {
     return (
@@ -18,7 +26,17 @@ function LoginContent() {
     );
   }
 
-  return <LoginForm />;
+  return (
+    <>
+      <SystemStatusBanner
+        estado={estado}
+        intentoActual={intentoActual}
+        totalIntentos={totalIntentos}
+        onRetry={reintentar}
+      />
+      <LoginForm />
+    </>
+  );
 }
 
 export default function LoginPage() {
