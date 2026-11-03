@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/src/components/ui/Card";
 import { apiClient } from "@/src/lib/api-client";
+import { PermissionGuard } from "@/src/components/auth";
+import { UserRole } from "@/src/types";
 
 interface EstadisticasBiblioteca {
   total_libros: number;
@@ -63,12 +65,22 @@ export default function EstadisticasBibliotecaPage() {
   if (!stats) return null;
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-800">
-          Estadísticas de Biblioteca
-        </h1>
-      </div>
+    <PermissionGuard
+      requiredRoles={[UserRole.ADMIN, UserRole.BIBLIOTECARIO]}
+      fallback={
+        <div className="p-6">
+          <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded">
+            No tiene permisos para ver los reportes de biblioteca.
+          </div>
+        </div>
+      }
+    >
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-800">
+            Estadísticas de Biblioteca
+          </h1>
+        </div>
 
       {/* Estadísticas Generales */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -116,7 +128,21 @@ export default function EstadisticasBibliotecaPage() {
                   {stats.prestamos_pendientes}
                 </p>
               </div>
-              <div className="text-4xl">⏳</div>
+              <div className="p-3 bg-amber-100 rounded-full">
+                <svg
+                  className="w-7 h-7 text-amber-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
             </div>
             <div className="mt-4 text-sm text-gray-500">Esperan aprobación</div>
           </div>
@@ -203,6 +229,7 @@ export default function EstadisticasBibliotecaPage() {
           </div>
         </Card>
       </div>
-    </div>
+      </div>
+    </PermissionGuard>
   );
 }

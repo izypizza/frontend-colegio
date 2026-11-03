@@ -15,6 +15,18 @@ import { usePermissions } from "@/src/hooks/usePermissions";
 import { PermissionGuard } from "@/src/components/auth";
 import { UserRole } from "@/src/types";
 import { useAuth } from "@/src/features/auth";
+import { useRouter } from "next/navigation";
+
+const prestamoEstaAtrasado = (prestamo: Prestamo): boolean => {
+  if (prestamo.estado !== "aprobado" || prestamo.devuelto) return false;
+  if (!prestamo.fecha_devolucion) return false;
+
+  const fechaLimite = new Date(
+    `${prestamo.fecha_devolucion.split("T")[0]}T23:59:59`,
+  );
+
+  return new Date() > fechaLimite;
+};
 
 interface Prestamo {
   id: number;
@@ -23,7 +35,7 @@ interface Prestamo {
   fecha_prestamo: string;
   fecha_devolucion: string | null;
   devuelto: boolean;
-  estado: "pendiente" | "aprobado" | "rechazado";
+  estado: "pendiente" | "aprobado" | "rechazado" | "devuelto";
   estudiante?: { nombre_completo: string };
   libro?: {
     id: number;
@@ -48,6 +60,7 @@ interface Libro {
 export default function PrestamosPage() {
   const { user } = useAuth();
   const permissions = usePermissions("prestamos");
+  const router = useRouter();
   const { error, success, setError, setSuccess, handleError } =
     useErrorHandler();
   const {
@@ -65,6 +78,9 @@ export default function PrestamosPage() {
   } = usePagination(50);
 
   const [prestamos, setPrestamos] = useState<Prestamo[]>([]);
+  const [filtroEstado, setFiltroEstado] = useState(
+    "todos" as "todos" | "activos" | "atrasados" | "pendientes" | "devueltos",
+  );
   const [resumen, setResumen] = useState({
     prestamos_activos: 0,
     prestamos_devueltos: 0,
@@ -188,6 +204,16 @@ export default function PrestamosPage() {
     });
   };
 
+  const prestamosFiltrados = prestamos.filter((prestamo) => {
+    if (filtroEstado === "todos") return true;
+    if (filtroEstado === "activos") {
+      return prestamo.estado === "aprobado" && !prestamo.devuelto;
+    }
+    if (filtroEstado === "atrasados") return prestamoEstaAtrasado(prestamo);
+    if (filtroEstado === "pendientes") return prestamo.estado === "pendiente";
+    return prestamo.devuelto || prestamo.estado === "devuelto";
+  });
+
   const handleCloseModal = () => {
     closeModal();
     resetForm();
@@ -236,15 +262,7 @@ export default function PrestamosPage() {
       key: "estado",
       label: "Estado",
       render: (value: unknown, prestamo: Prestamo) => {
-        const hoy = new Date();
-        const fechaDevolucion = prestamo.fecha_devolucion
-          ? new Date(`${prestamo.fecha_devolucion.split("T")[0]}T23:59:59`)
-          : null;
-        const atrasado =
-          prestamo.estado === "aprobado" &&
-          !prestamo.devuelto &&
-          fechaDevolucion !== null &&
-          hoy > fechaDevolucion;
+        const atrasado = prestamoEstaAtrasado(prestamo);
 
         return (
           <span
@@ -381,7 +399,41 @@ export default function PrestamosPage() {
 
         {/* Tabla de préstamos */}
         <Card>
-          <Table columns={columns} data={prestamos} />
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <div>
+              <h2 className="text-lg font-bold text-gray-800">
+                Historial de préstamos
+              </h2>
+              <p className="text-sm text-gray-500">
+                Mostrando {prestamosFiltrados.length} de {prestamos.length}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <select
+                value={filtroEstado}
+                onChange={(evento) =>
+                  setFiltroEstado(evento.target.value as typeof filtroEstado)
+                }
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#04ADBF]"
+              >
+                <option value="todos">Todos los préstamos</option>
+                <option value="activos">Solo activos</option>
+                <option value="atrasados">Solo atrasados</option>
+                <option value="pendientes">Solo solicitudes pendientes</option>
+                <option value="devueltos">Solo devueltos</option>
+              </select>
+              <Button
+                variant="secondary"
+                onClick={() =>
+                  router.push("/dashboard/biblioteca/estadisticas")
+                }
+              >
+                Ver reportes
+              </Button>
+            </div>
+          </div>
+
+          <Table columns={columns} data={prestamosFiltrados} />
         </Card>
 
         <Pagination

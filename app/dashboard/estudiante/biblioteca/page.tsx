@@ -287,7 +287,9 @@ export default function BibliotecaEstudiantePage() {
                       className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-[#04ADBF] rounded-lg hover:bg-[#038a9a] transition-colors"
                     >
                       Abrir libro
-                      {libro.formato_digital ? ` (${libro.formato_digital})` : ""}
+                      {libro.formato_digital
+                        ? ` (${libro.formato_digital})`
+                        : ""}
                     </a>
                   ) : (
                     <span className="px-4 py-2 text-sm font-medium text-gray-400 bg-gray-100 rounded-lg">
