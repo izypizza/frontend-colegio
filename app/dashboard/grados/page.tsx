@@ -286,60 +286,50 @@ export default function GradosYSeccionesPage() {
       }
     >
       <div className="space-y-6">
-        {/* Header */}
-        <div className="bg-[#04ADBF] rounded-xl p-6 text-white">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">
-                {viewMode === "grados"
-                  ? "Grados y Secciones"
-                  : `Secciones de ${selectedGrado?.nombre}`}
-              </h1>
-              <p className="text-[#FEFCD6]">
-                {viewMode === "grados"
-                  ? "Gestiona la estructura académica de tu institución"
-                  : "Administra las secciones del grado seleccionado"}
-              </p>
-            </div>
-            {viewMode === "secciones" && (
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  setViewMode("grados");
-                  setSelectedGrado(null);
-                }}
-              >
-                Volver a Grados
-              </Button>
-            )}
+        {/* Encabezado */}
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">
+              {viewMode === "grados"
+                ? "Grados y secciones"
+                : `Secciones de ${selectedGrado?.nombre}`}
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              {viewMode === "grados"
+                ? "Estructura académica de la institución"
+                : "Administra las secciones del grado seleccionado"}
+            </p>
           </div>
+          {viewMode === "secciones" && (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setViewMode("grados");
+                setSelectedGrado(null);
+              }}
+            >
+              Volver a grados
+            </Button>
+          )}
+        </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-6">
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <div className="text-sm text-[#FEFCD6]">Grados</div>
-              <div className="text-3xl font-bold">{stats.totalGrados}</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <div className="text-sm text-[#FEFCD6]">Primaria</div>
-              <div className="text-3xl font-bold">{stats.primaria}</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <div className="text-sm text-[#FEFCD6]">Secundaria</div>
-              <div className="text-3xl font-bold">{stats.secundaria}</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <div className="text-sm text-[#FEFCD6]">Secciones</div>
-              <div className="text-3xl font-bold">{stats.totalSecciones}</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <div className="text-sm text-[#FEFCD6]">Estudiantes</div>
-              <div className="text-3xl font-bold">{stats.totalEstudiantes}</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <div className="text-sm text-[#FEFCD6]">Capacidad</div>
-              <div className="text-3xl font-bold">{stats.capacidadTotal}</div>
-            </div>
-          </div>
+        {/* Resumen general */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {[
+            { etiqueta: "Grados", valor: stats.totalGrados },
+            { etiqueta: "Primaria", valor: stats.primaria },
+            { etiqueta: "Secundaria", valor: stats.secundaria },
+            { etiqueta: "Secciones", valor: stats.totalSecciones },
+            { etiqueta: "Estudiantes", valor: stats.totalEstudiantes },
+            { etiqueta: "Capacidad", valor: stats.capacidadTotal },
+          ].map((indicador) => (
+            <Card key={indicador.etiqueta}>
+              <p className="text-sm text-gray-500">{indicador.etiqueta}</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">
+                {indicador.valor}
+              </p>
+            </Card>
+          ))}
         </div>
 
         {/* Alertas */}

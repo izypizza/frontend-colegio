@@ -177,9 +177,7 @@ export default function EstadisticasBibliotecaPage() {
                 <p className="text-3xl font-bold text-gray-900 mt-1">
                   {stats.prestamos_pendientes}
                 </p>
-                <p className="text-xs text-gray-500 mt-2">
-                  Esperan aprobación
-                </p>
+                <p className="text-xs text-gray-500 mt-2">Esperan aprobación</p>
               </div>
               <div className="p-2.5 bg-amber-100 rounded-lg shrink-0">
                 <svg

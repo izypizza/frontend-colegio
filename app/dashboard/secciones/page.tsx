@@ -31,7 +31,7 @@ export default function SeccionesPage() {
   const [formData, setFormData] = useState({
     nombre: "",
     grado_id: "",
-    capacidad: "",
+    capacidad_maxima: "",
     turno: "",
   });
 
@@ -81,7 +81,12 @@ export default function SeccionesPage() {
   };
 
   const handleCreate = () => {
-    setFormData({ nombre: "", grado_id: "", capacidad: "", turno: "Mañana" });
+    setFormData({
+      nombre: "",
+      grado_id: "",
+      capacidad_maxima: "",
+      turno: "Mañana",
+    });
     openCreate();
   };
 
@@ -89,7 +94,7 @@ export default function SeccionesPage() {
     setFormData({
       nombre: item.nombre,
       grado_id: item.grado_id?.toString() || "",
-      capacidad: item.capacidad?.toString() || "",
+      capacidad_maxima: item.capacidad_maxima?.toString() || "",
       turno: item.turno || "Mañana",
     });
     openEdit(item);
@@ -114,8 +119,8 @@ export default function SeccionesPage() {
       const data = {
         nombre: formData.nombre,
         grado_id: parseInt(formData.grado_id),
-        capacidad: formData.capacidad
-          ? parseInt(formData.capacidad)
+        capacidad_maxima: formData.capacidad_maxima
+          ? parseInt(formData.capacidad_maxima)
           : undefined,
         turno: formData.turno,
       };
@@ -160,7 +165,10 @@ export default function SeccionesPage() {
       grado: grado.nombre,
       cantidad: secciones.filter((s) => s.grado_id === grado.id).length,
     })),
-    capacidadTotal: secciones.reduce((sum, s) => sum + (s.capacidad || 0), 0),
+      capacidadTotal: secciones.reduce(
+        (sum, s) => sum + (s.capacidad_maxima || 0),
+        0,
+      ),
   };
 
   if (loading)
@@ -183,27 +191,36 @@ export default function SeccionesPage() {
       }
     >
       <div className="space-y-6">
-        {/* Header con estadísticas */}
-        <div className="bg-[#04ADBF] rounded-xl p-6 text-white">
-          <h1 className="text-3xl font-bold mb-2">Gestión de Secciones</h1>
-          <p className="text-blue-100">
+        {/* Encabezado */}
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">
+            Gestión de secciones
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">
             Administra las secciones escolares por grado
           </p>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <div className="text-sm text-blue-100">Total Secciones</div>
-              <div className="text-3xl font-bold">{stats.total}</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <div className="text-sm text-blue-100">Capacidad Total</div>
-              <div className="text-3xl font-bold">{stats.capacidadTotal}</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <div className="text-sm text-blue-100">Grados Activos</div>
-              <div className="text-3xl font-bold">{grados.length}</div>
-            </div>
-          </div>
+        {/* Resumen general */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Card>
+            <p className="text-sm text-gray-500">Total de secciones</p>
+            <p className="text-2xl font-bold text-gray-900 mt-1">
+              {stats.total}
+            </p>
+          </Card>
+          <Card>
+            <p className="text-sm text-gray-500">Capacidad total</p>
+            <p className="text-2xl font-bold text-gray-900 mt-1">
+              {stats.capacidadTotal}
+            </p>
+          </Card>
+          <Card>
+            <p className="text-sm text-gray-500">Grados con secciones</p>
+            <p className="text-2xl font-bold text-gray-900 mt-1">
+              {grados.length}
+            </p>
+          </Card>
         </div>
 
         {/* Alertas */}
@@ -321,7 +338,7 @@ export default function SeccionesPage() {
                     <div className="bg-gray-50 rounded-lg p-3">
                       <div className="text-xs text-gray-600">Capacidad</div>
                       <div className="text-lg font-bold text-gray-900">
-                        {seccion.capacidad || "N/A"}
+                        {seccion.capacidad_maxima || "N/A"}
                       </div>
                     </div>
                     <div className="bg-gray-50 rounded-lg p-3">
@@ -450,7 +467,7 @@ export default function SeccionesPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {seccion.capacidad || "N/A"}
+                          {seccion.capacidad_maxima || "N/A"}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -549,9 +566,9 @@ export default function SeccionesPage() {
             <Input
               label="Capacidad"
               type="number"
-              value={formData.capacidad}
+              value={formData.capacidad_maxima}
               onChange={(e) =>
-                setFormData({ ...formData, capacidad: e.target.value })
+                setFormData({ ...formData, capacidad_maxima: e.target.value })
               }
               placeholder="Número máximo de estudiantes"
             />
