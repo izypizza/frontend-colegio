@@ -519,6 +519,132 @@ export default function DashboardPage() {
     );
   }
 
+  // Panel compacto para el auxiliar: solo lo que necesita en el día a día
+  if (user?.role === UserRole.AUXILIAR) {
+    const asistenciaHoy = stats?.asistencias_hoy;
+    const calificacionesPeriodo = stats?.calificaciones;
+
+    const indicadores = [
+      {
+        titulo: "Estudiantes",
+        valor: stats?.estudiantes ?? 0,
+        detalle: `${stats?.secciones ?? 0} secciones`,
+      },
+      {
+        titulo: "Asistencia de hoy",
+        valor: `${asistenciaHoy?.porcentaje_asistencia ?? 0}%`,
+        detalle: `${asistenciaHoy?.presentes ?? 0} presentes`,
+      },
+      {
+        titulo: "Calificaciones",
+        valor: calificacionesPeriodo?.total_calificaciones ?? 0,
+        detalle: `${calificacionesPeriodo?.aprobados ?? 0} aprobadas`,
+      },
+      {
+        titulo: "Tardanzas de hoy",
+        valor: asistenciaHoy?.tardes ?? 0,
+        detalle: `${asistenciaHoy?.ausentes ?? 0} ausentes`,
+      },
+    ];
+
+    const accesos = [
+      {
+        titulo: "Asistencias",
+        descripcion: "Registrar y justificar",
+        href: "/dashboard/asistencias",
+        trazo:
+          "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
+      },
+      {
+        titulo: "Calificaciones",
+        descripcion: "Consultar notas",
+        href: "/dashboard/calificaciones",
+        trazo:
+          "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z",
+      },
+      {
+        titulo: "Estudiantes",
+        descripcion: "Fichas y apoderados",
+        href: "/dashboard/estudiantes",
+        trazo:
+          "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z",
+      },
+      {
+        titulo: "Horarios",
+        descripcion: "Consulta de aulas",
+        href: "/dashboard/horarios",
+        trazo:
+          "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z",
+      },
+    ];
+
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">
+            Hola, {user.name}
+          </h1>
+          <p className="text-sm text-gray-500">
+            Panel del auxiliar · I.E. N° 51006 Túpac Amaru
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          {indicadores.map((indicador) => (
+            <Card key={indicador.titulo}>
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                {indicador.titulo}
+              </p>
+              <p className="mt-2 text-2xl sm:text-3xl font-bold text-gray-900">
+                {indicador.valor}
+              </p>
+              <p className="mt-1 text-xs text-gray-500">{indicador.detalle}</p>
+            </Card>
+          ))}
+        </div>
+
+        <div>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">
+            Tareas rápidas
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            {accesos.map((acceso) => (
+              <Link key={acceso.href} href={acceso.href}>
+                <Card className="hover:shadow-md transition-shadow h-full">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 bg-teal-50 rounded-lg text-[#04ADBF]">
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d={acceso.trazo}
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-800">
+                        {acceso.titulo}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {acceso.descripcion}
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Dashboard para admin/auxiliar
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -528,10 +654,7 @@ export default function DashboardPage() {
           Bienvenido(a), {user?.name}
         </h1>
         <p className="mt-2 text-lg text-teal-50">
-          {user?.role === "admin" &&
-            "Gestiona todo el sistema educativo y supervisa las operaciones"}
-          {user?.role === "auxiliar" &&
-            "Apoya la administración y gestión de la institución educativa"}
+          Gestiona todo el sistema educativo y supervisa las operaciones
         </p>
         <p className="text-sm text-teal-100 mt-1">
           Institución Educativa N° 51006 Túpac Amaru
