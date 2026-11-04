@@ -163,7 +163,17 @@ export const gradoService = new CrudService<Grado>("/grados");
 export const seccionService = new CrudService<Seccion>("/secciones");
 export const materiaService = new CrudService<Materia>("/materias");
 export const periodoService = new CrudService<PeriodoAcademico>("/periodos");
-export const periodoAcademicoService = new CrudService<PeriodoAcademico>(
+class PeriodoAcademicoServiceExtended extends CrudService<PeriodoAcademico> {
+  async activar(id: number): Promise<any> {
+    return await apiClient.post<any>(`/periodos/${id}/activar`, {});
+  }
+
+  async generarAnio(anio: number): Promise<any> {
+    return await apiClient.post<any>("/periodos/generar-anio", { anio });
+  }
+}
+
+export const periodoAcademicoService = new PeriodoAcademicoServiceExtended(
   "/periodos",
 );
 export const asignacionService = new CrudService<AsignacionDocenteMateria>(

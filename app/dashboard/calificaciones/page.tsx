@@ -34,6 +34,15 @@ import { UserRole } from "@/src/types";
 import { useModalState } from "@/src/hooks/useModalState";
 import { usePagination } from "@/src/hooks/usePagination";
 
+const obtenerPeriodosVigentes = (datos: unknown): PeriodoAcademico[] => {
+  const lista = (Array.isArray(datos)
+    ? datos
+    : (datos as { data?: PeriodoAcademico[] })?.data || []) as PeriodoAcademico[];
+  const anioActual = new Date().getFullYear();
+
+  return lista.filter((periodo) => !periodo.anio || periodo.anio <= anioActual);
+};
+
 export default function CalificacionesPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -136,9 +145,7 @@ export default function CalificacionesPage() {
         });
         const materiasUnicas = Array.from(materiasMap.values());
         setMaterias(materiasUnicas);
-        setPeriodos(
-          Array.isArray(periodosData) ? periodosData : periodosData?.data || [],
-        );
+        setPeriodos(obtenerPeriodosVigentes(periodosData));
       } else if (user?.role === "estudiante") {
         // Estudiantes ven solo sus propias calificaciones
         const [calificacionesData, periodosData] = (await Promise.all([
@@ -149,9 +156,7 @@ export default function CalificacionesPage() {
         setCalificaciones(calificacionesData.calificaciones || []);
         setEstudiantes([]);
         setMaterias([]);
-        setPeriodos(
-          Array.isArray(periodosData) ? periodosData : periodosData?.data || [],
-        );
+        setPeriodos(obtenerPeriodosVigentes(periodosData));
       } else if (user?.role === "admin" || user?.role === "auxiliar") {
         // Admin/Auxiliar usan endpoints generales con paginación
         const [
@@ -193,9 +198,7 @@ export default function CalificacionesPage() {
         setMaterias(
           Array.isArray(materiasData) ? materiasData : materiasData?.data || [],
         );
-        setPeriodos(
-          Array.isArray(periodosData) ? periodosData : periodosData?.data || [],
-        );
+        setPeriodos(obtenerPeriodosVigentes(periodosData));
       } else {
         handleError(null, "No tiene permisos para ver calificaciones");
       }

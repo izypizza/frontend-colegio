@@ -80,6 +80,48 @@ export default function PeriodosPage() {
     }
   };
 
+  const handleActivar = async (item: PeriodoAcademico) => {
+    if (
+      !confirm(
+        `¿Activar "${item.nombre}"? Se desactivará el periodo que esté activo en este momento.`,
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const respuesta = await periodoAcademicoService.activar(item.id);
+      handleSuccess(respuesta.message || "Periodo activado correctamente");
+      fetchData();
+    } catch (err) {
+      handleError(err, "No se pudo activar el periodo");
+    }
+  };
+
+  const handleGenerarAnio = async () => {
+    const anioTexto = window.prompt(
+      "¿Para qué año deseas generar los cuatro bimestres?",
+      new Date().getFullYear().toString(),
+    );
+
+    if (!anioTexto) return;
+
+    const anio = Number(anioTexto);
+
+    if (!Number.isInteger(anio) || anio < 2000 || anio > 2100) {
+      setError("Ingresa un año válido entre 2000 y 2100.");
+      return;
+    }
+
+    try {
+      const respuesta = await periodoAcademicoService.generarAnio(anio);
+      handleSuccess(respuesta.message || `Periodos de ${anio} creados.`);
+      fetchData();
+    } catch (err) {
+      handleError(err, "No se pudieron generar los periodos");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -141,6 +183,21 @@ export default function PeriodosPage() {
             ).toLocaleDateString("es-PE")
           : "Sin fecha",
     },
+    {
+      key: "estado",
+      label: "Estado",
+      render: (_value: unknown, item: PeriodoAcademico) => (
+        <span
+          className={`px-3 py-1 rounded-full text-xs font-semibold ${
+            item.estado === "activo"
+              ? "bg-green-100 text-green-800"
+              : "bg-gray-100 text-gray-700"
+          }`}
+        >
+          {item.estado === "activo" ? "Activo" : "Inactivo"}
+        </span>
+      ),
+    },
   ];
 
   return (
@@ -163,11 +220,18 @@ export default function PeriodosPage() {
             </h1>
             <p className="text-gray-600 mt-2">Gestión de periodos académicos</p>
           </div>
-          {permissions.canCreate && (
-            <Button variant="primary" onClick={handleCreate}>
-              + Agregar Periodo
-            </Button>
-          )}
+          <div className="flex flex-wrap gap-2">
+            {permissions.canCreate && (
+              <Button variant="secondary" onClick={handleGenerarAnio}>
+                Generar año
+              </Button>
+            )}
+            {permissions.canCreate && (
+              <Button variant="primary" onClick={handleCreate}>
+                + Agregar Periodo
+              </Button>
+            )}
+          </div>
         </div>
 
         {success && (
@@ -213,6 +277,24 @@ export default function PeriodosPage() {
             loading={loading}
             onEdit={permissions.canEdit ? handleEdit : undefined}
             onDelete={permissions.canDelete ? handleDelete : undefined}
+            extraActions={
+              permissions.canEdit
+                ? (item: PeriodoAcademico) =>
+                    item.estado !== "activo" ? (
+                      <Button
+                        variant="success"
+                        size="sm"
+                        onClick={() => handleActivar(item)}
+                      >
+                        Activar
+                      </Button>
+                    ) : (
+                      <span className="px-2 py-1 text-xs text-gray-500">
+                        En curso
+                      </span>
+                    )
+                : undefined
+            }
           />
         </Card>
 
