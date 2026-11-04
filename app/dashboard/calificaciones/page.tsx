@@ -35,9 +35,11 @@ import { useModalState } from "@/src/hooks/useModalState";
 import { usePagination } from "@/src/hooks/usePagination";
 
 const obtenerPeriodosVigentes = (datos: unknown): PeriodoAcademico[] => {
-  const lista = (Array.isArray(datos)
-    ? datos
-    : (datos as { data?: PeriodoAcademico[] })?.data || []) as PeriodoAcademico[];
+  const lista = (
+    Array.isArray(datos)
+      ? datos
+      : (datos as { data?: PeriodoAcademico[] })?.data || []
+  ) as PeriodoAcademico[];
   const anioActual = new Date().getFullYear();
 
   return lista.filter((periodo) => !periodo.anio || periodo.anio <= anioActual);

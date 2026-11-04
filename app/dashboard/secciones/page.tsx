@@ -165,10 +165,10 @@ export default function SeccionesPage() {
       grado: grado.nombre,
       cantidad: secciones.filter((s) => s.grado_id === grado.id).length,
     })),
-      capacidadTotal: secciones.reduce(
-        (sum, s) => sum + (s.capacidad_maxima || 0),
-        0,
-      ),
+    capacidadTotal: secciones.reduce(
+      (sum, s) => sum + (s.capacidad_maxima || 0),
+      0,
+    ),
   };
 
   if (loading)
