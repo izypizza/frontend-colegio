@@ -1,17 +1,21 @@
 import { apiClient } from "@/src/lib/api-client";
 import {
+  AnioEscolar,
   AsignacionDocenteMateria,
   Asistencia,
   Calificacion,
   DashboardStats,
   Docente,
   Estudiante,
+  EstadisticasMatricula,
   Grado,
   Horario,
   Materia,
+  Matricula,
   Padre,
   PeriodoAcademico,
   Seccion,
+  VacanteSeccion,
 } from "@/src/types/models";
 
 // Generic CRUD service
@@ -188,6 +192,113 @@ export const asistenciaJustificacionService = {
       justificada,
       motivo: motivo ?? null,
     });
+  },
+};
+
+class MatriculaServiceExtended {
+  async listar(filtros: {
+    anio_escolar_id?: number;
+    seccion_id?: number;
+    grado_id?: number;
+    estado?: string;
+    buscar?: string;
+    page?: number;
+    per_page?: number;
+  }): Promise<{
+    data: Matricula[];
+    total: number;
+    current_page: number;
+    last_page: number;
+  }> {
+    const parametros = new URLSearchParams();
+
+    Object.entries(filtros).forEach(([clave, valor]) => {
+      if (valor !== undefined && valor !== null && valor !== "") {
+        parametros.append(clave, String(valor));
+      }
+    });
+
+    const consulta = parametros.toString();
+
+    return await apiClient.get(consulta ? `/matriculas?${consulta}` : "/matriculas");
+  }
+
+  async matricular(datos: {
+    estudiante_id: number;
+    anio_escolar_id: number;
+    seccion_id: number;
+    tipo?: string;
+    observacion?: string;
+  }): Promise<{ message: string; matricula: Matricula }> {
+    return await apiClient.post("/matriculas", datos);
+  }
+
+  async actualizar(
+    id: number,
+    datos: {
+      seccion_id?: number;
+      estado?: string;
+      observacion?: string;
+    },
+  ): Promise<{ message: string; matricula: Matricula }> {
+    return await apiClient.put(`/matriculas/${id}`, datos);
+  }
+
+  async estudiantesSinMatricula(
+    anioEscolarId: number,
+    buscar?: string,
+  ): Promise<Estudiante[]> {
+    const parametros = new URLSearchParams({
+      anio_escolar_id: String(anioEscolarId),
+    });
+
+    if (buscar) {
+      parametros.append("buscar", buscar);
+    }
+
+    return await apiClient.get(
+      `/matriculas/estudiantes-sin-matricula?${parametros.toString()}`,
+    );
+  }
+
+  async vacantes(
+    anioEscolarId: number,
+    gradoId?: number,
+  ): Promise<{
+    anio_escolar_id: number;
+    anio: number;
+    secciones: VacanteSeccion[];
+    totales: { capacidad: number; ocupadas: number; disponibles: number };
+  }> {
+    const parametros = new URLSearchParams({
+      anio_escolar_id: String(anioEscolarId),
+    });
+
+    if (gradoId) {
+      parametros.append("grado_id", String(gradoId));
+    }
+
+    return await apiClient.get(`/matriculas/vacantes?${parametros.toString()}`);
+  }
+
+  async estadisticas(anioEscolarId?: number): Promise<EstadisticasMatricula> {
+    const consulta = anioEscolarId
+      ? `?anio_escolar_id=${anioEscolarId}`
+      : "";
+
+    return await apiClient.get(`/matriculas/estadisticas${consulta}`);
+  }
+}
+
+export const matriculaService = new MatriculaServiceExtended();
+
+export const anioEscolarService = {
+  listar: async (): Promise<AnioEscolar[]> => {
+    const respuesta = await apiClient.get<
+      AnioEscolar[] | { data: AnioEscolar[] }
+    >("/anios-escolares");
+
+    return Array.isArray(respuesta) ? respuesta : respuesta.data;
   },
 };
 

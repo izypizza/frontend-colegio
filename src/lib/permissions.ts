@@ -71,6 +71,14 @@ export const MODULE_PERMISSIONS: Record<string, Record<string, UserRole[]>> = {
     delete: [UserRole.ADMIN],
   },
 
+  // Matrículas
+  matriculas: {
+    view: [UserRole.ADMIN, UserRole.AUXILIAR],
+    create: [UserRole.ADMIN, UserRole.AUXILIAR],
+    edit: [UserRole.ADMIN, UserRole.AUXILIAR],
+    delete: [UserRole.ADMIN],
+  },
+
   // Usuarios
   usuarios: {
     view: [UserRole.ADMIN],

@@ -150,6 +150,71 @@ export interface Materia {
   updated_at: string;
 }
 
+// Año escolar
+export interface AnioEscolar {
+  id: number;
+  anio: number;
+  estado: "planificacion" | "abierto" | "cerrado";
+  fecha_inicio: string | null;
+  fecha_fin: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Matrícula
+export type EstadoMatricula =
+  | "matriculado"
+  | "retirado"
+  | "trasladado"
+  | "culminado";
+
+export type TipoMatricula =
+  | "regular"
+  | "repite"
+  | "traslado_externo"
+  | "reincorporacion";
+
+export interface Matricula {
+  id: number;
+  estudiante_id: number;
+  anio_escolar_id: number;
+  seccion_id: number;
+  estado: EstadoMatricula;
+  tipo: TipoMatricula;
+  origen: "migracion" | "sistema";
+  fecha_matricula: string;
+  observacion?: string | null;
+  registrado_por?: number | null;
+  estudiante?: Estudiante;
+  anioEscolar?: AnioEscolar;
+  seccion?: Seccion;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VacanteSeccion {
+  seccion_id: number;
+  seccion: string;
+  grado: string | null;
+  nivel: string | null;
+  capacidad: number;
+  ocupadas: number;
+  disponibles: number;
+}
+
+export interface EstadisticasMatricula {
+  anio_escolar_id: number | null;
+  anio: number | null;
+  estado_anio?: string;
+  totales: {
+    matriculados: number;
+    retirados: number;
+    trasladados: number;
+    culminados: number;
+    total: number;
+  };
+}
+
 // Periodo Académico
 export interface PeriodoAcademico {
   id: number;
