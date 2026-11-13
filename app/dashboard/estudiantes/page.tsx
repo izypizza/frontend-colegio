@@ -537,7 +537,8 @@ export default function EstudiantesPage() {
                 <option value="">Seleccionar sección</option>
                 {secciones?.map((seccion) => (
                   <option key={seccion.id} value={seccion.id}>
-                    {seccion.nombre} - {seccion.grado?.nombre}
+                    {seccion.nombre} - {seccion.grado?.nombre} · máx.{" "}
+                    {seccion.capacidad_maxima ?? 40}
                   </option>
                 ))}
               </select>

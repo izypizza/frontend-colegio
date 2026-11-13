@@ -1,5 +1,28 @@
 import { useState } from "react";
 
+const obtenerMensajeDeValidacion = (errores: unknown): string | null => {
+  if (!errores || typeof errores !== "object") {
+    return null;
+  }
+
+  for (const lista of Object.values(errores as Record<string, unknown>)) {
+    if (Array.isArray(lista)) {
+      const primero = lista.find(
+        (mensaje) => typeof mensaje === "string" && mensaje.trim() !== "",
+      );
+      if (typeof primero === "string") {
+        return primero;
+      }
+    }
+
+    if (typeof lista === "string" && lista.trim() !== "") {
+      return lista;
+    }
+  }
+
+  return null;
+};
+
 /**
  * Hook para manejo centralizado de errores y mensajes de éxito
  * Reemplaza el código duplicado en 15+ páginas
@@ -14,7 +37,10 @@ export function useErrorHandler() {
   ) => {
     console.error(err);
     const message =
-      err?.response?.data?.message || err?.message || defaultMessage;
+      obtenerMensajeDeValidacion(err?.response?.data?.errors) ||
+      err?.response?.data?.message ||
+      err?.message ||
+      defaultMessage;
     setError(message);
     setSuccess(null);
   };
