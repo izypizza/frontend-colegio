@@ -183,6 +183,61 @@ export const periodoAcademicoService = new PeriodoAcademicoServiceExtended(
 export const asignacionService = new CrudService<AsignacionDocenteMateria>(
   "/asignaciones",
 );
+
+export interface CursoAsignadoAnual {
+  id: string;
+  docente_id: number;
+  docente: string;
+  materia_id: number;
+  materia: string;
+  seccion_id: number;
+  seccion: string;
+  grado: string;
+  anio: number;
+  bimestres: number;
+  bimestres_del_anio: number;
+  es_tutor: boolean;
+}
+
+export const asignacionAnualService = {
+  listar: async (
+    anio: number,
+  ): Promise<{
+    anio: number;
+    bimestres_del_anio: number;
+    cursos: CursoAsignadoAnual[];
+  }> => {
+    return await apiClient.get(`/asignaciones/anual?anio=${anio}`);
+  },
+
+  asignar: async (datos: {
+    docente_id: number;
+    materia_id: number;
+    seccion_id: number;
+    anio: number;
+    es_tutor?: boolean;
+  }): Promise<{ message: string; creados: number; existentes: number }> => {
+    return await apiClient.post("/asignaciones/anual", datos);
+  },
+
+  quitar: async (datos: {
+    docente_id: number;
+    materia_id: number;
+    seccion_id: number;
+    anio: number;
+  }): Promise<{ message: string; eliminadas: number }> => {
+    const parametros = new URLSearchParams({
+      docente_id: String(datos.docente_id),
+      materia_id: String(datos.materia_id),
+      seccion_id: String(datos.seccion_id),
+      anio: String(datos.anio),
+    });
+
+    return await apiClient.delete(
+      `/asignaciones/anual?${parametros.toString()}`,
+    );
+  },
+};
 export const horarioService = new CrudService<Horario>("/horarios");
 export const asistenciaService = new CrudService<Asistencia>("/asistencias");
 
