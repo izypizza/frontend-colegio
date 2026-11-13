@@ -629,13 +629,7 @@ export default function AsistenciasPage() {
 
   return (
     <PermissionGuard
-      requiredRoles={[
-        UserRole.ADMIN,
-        UserRole.AUXILIAR,
-        UserRole.DOCENTE,
-        UserRole.ESTUDIANTE,
-        UserRole.PADRE,
-      ]}
+      requiredRoles={[UserRole.ADMIN, UserRole.AUXILIAR]}
       fallback={
         <div className="p-6">
           <Alert

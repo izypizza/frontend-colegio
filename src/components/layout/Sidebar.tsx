@@ -245,7 +245,7 @@ const menuItems: MenuItem[] = [
   {
     label: "Asistencias",
     href: "/dashboard/asistencias",
-    roles: [UserRole.ADMIN, UserRole.AUXILIAR, UserRole.DOCENTE],
+    roles: [UserRole.ADMIN, UserRole.AUXILIAR],
     modulo: "asistencias",
     icon: (
       <svg

@@ -12,6 +12,7 @@ import {
 } from "@/src/components/ui";
 import { padreService, userManagementService } from "@/src/lib/services";
 import { Padre, Estudiante } from "@/src/types/models";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useErrorHandler } from "@/src/hooks/useErrorHandler";
 import { useModalState } from "@/src/hooks/useModalState";
@@ -441,27 +442,35 @@ export default function PadresPage() {
             onDelete={permissions.canDelete ? handleDelete : undefined}
             extraActions={
               permissions.canEdit
-                ? (item: Padre) => (
-                    <>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handleToggleActivo(item)}
+                ? (item: Padre) =>
+                    item.user_id ? (
+                      <>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleToggleActivo(item)}
+                        >
+                          {item.user?.is_active === false
+                            ? "Activar"
+                            : "Desactivar"}
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleRestablecerPassword(item)}
+                          disabled={restableciendoCargando}
+                        >
+                          Contraseña
+                        </Button>
+                      </>
+                    ) : (
+                      <Link
+                        href="/dashboard/usuarios"
+                        className="text-xs font-medium text-[#04ADBF] hover:underline"
                       >
-                        {item.user?.is_active === false
-                          ? "Activar"
-                          : "Desactivar"}
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handleRestablecerPassword(item)}
-                        disabled={restableciendoCargando}
-                      >
-                        Contraseña
-                      </Button>
-                    </>
-                  )
+                        Sin cuenta · asignar
+                      </Link>
+                    )
                 : undefined
             }
           />

@@ -851,38 +851,38 @@ export default function DashboardPage() {
               </Card>
             )}
 
-            {stats.calificaciones && (
-              <Card className="hover:shadow-lg transition-shadow">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-500 font-medium uppercase tracking-wider">
-                      Promedio General
-                    </p>
-                    <p className="text-4xl font-bold text-gray-900 mt-2">
-                      {stats.calificaciones.promedio_general}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      {stats.calificaciones.aprobados} aprobados
-                    </p>
-                  </div>
-                  <div className="p-4 bg-indigo-100 rounded-2xl">
-                    <svg
-                      className="w-10 h-10 text-indigo-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                      />
-                    </svg>
-                  </div>
+            <Card className="hover:shadow-lg transition-shadow">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500 font-medium uppercase tracking-wider">
+                    Promedio General
+                  </p>
+                  <p className="text-4xl font-bold text-gray-900 mt-2">
+                    {stats.calificaciones?.promedio_general ?? "—"}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    {stats.calificaciones
+                      ? `${stats.calificaciones.aprobados} aprobados`
+                      : "Sin periodo activo"}
+                  </p>
                 </div>
-              </Card>
-            )}
+                <div className="p-4 bg-indigo-100 rounded-2xl">
+                  <svg
+                    className="w-10 h-10 text-indigo-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </Card>
 
             <Card className="hover:shadow-lg transition-shadow">
               <div className="flex items-center justify-between">

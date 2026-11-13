@@ -300,6 +300,12 @@ export const anioEscolarService = {
 
     return Array.isArray(respuesta) ? respuesta : respuesta.data;
   },
+
+  crear: async (
+    anio: number,
+  ): Promise<{ message: string; anio_escolar: AnioEscolar }> => {
+    return await apiClient.post("/anios-escolares", { anio });
+  },
 };
 
 // Calificacion Service with extra methods

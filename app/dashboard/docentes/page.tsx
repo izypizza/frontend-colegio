@@ -19,6 +19,7 @@ import { usePagination } from "@/src/hooks/usePagination";
 import { useFilteredData } from "@/src/hooks/useFilteredData";
 import { useRestablecerPassword } from "@/src/hooks/useRestablecerPassword";
 import { useAuth } from "@/src/features/auth";
+import Link from "next/link";
 import { PermissionGuard } from "@/src/components/auth";
 import { UserRole } from "@/src/types";
 import { usePermissions } from "@/src/hooks/usePermissions";
@@ -364,27 +365,35 @@ export default function DocentesPage() {
             onDelete={permissions.canDelete ? handleDelete : undefined}
             extraActions={
               permissions.canEdit
-                ? (item: Docente) => (
-                    <>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handleToggleActivo(item)}
+                ? (item: Docente) =>
+                    item.user_id ? (
+                      <>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleToggleActivo(item)}
+                        >
+                          {item.user?.is_active === false
+                            ? "Activar"
+                            : "Desactivar"}
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleRestablecerPassword(item)}
+                          disabled={restableciendoCargando}
+                        >
+                          Contraseña
+                        </Button>
+                      </>
+                    ) : (
+                      <Link
+                        href="/dashboard/usuarios"
+                        className="text-xs font-medium text-[#04ADBF] hover:underline"
                       >
-                        {item.user?.is_active === false
-                          ? "Activar"
-                          : "Desactivar"}
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handleRestablecerPassword(item)}
-                        disabled={restableciendoCargando}
-                      >
-                        Contraseña
-                      </Button>
-                    </>
-                  )
+                        Sin cuenta · asignar
+                      </Link>
+                    )
                 : undefined
             }
           />

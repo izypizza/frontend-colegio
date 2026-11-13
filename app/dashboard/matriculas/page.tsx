@@ -75,6 +75,7 @@ export default function MatriculasPage() {
 
   const [anios, setAnios] = useState<AnioEscolar[]>([]);
   const [anioSeleccionado, setAnioSeleccionado] = useState<number | null>(null);
+  const [cargandoAnios, setCargandoAnios] = useState(true);
   const [secciones, setSecciones] = useState<Seccion[]>([]);
   const [vacantes, setVacantes] = useState<VacanteSeccion[]>([]);
   const [matriculas, setMatriculas] = useState<Matricula[]>([]);
@@ -114,8 +115,22 @@ export default function MatriculasPage() {
       }
     } catch (err) {
       handleError(err, "No se pudieron cargar los años escolares");
+    } finally {
+      setCargandoAnios(false);
     }
   }, [handleError]);
+
+  const crearAnioActual = async () => {
+    const anio = new Date().getFullYear();
+
+    try {
+      const respuesta = await anioEscolarService.crear(anio);
+      handleSuccess(respuesta.message);
+      await cargarAnios();
+    } catch (err) {
+      handleError(err, "No se pudo crear el año escolar");
+    }
+  };
 
   const cargarSecciones = useCallback(async () => {
     try {
@@ -417,12 +432,37 @@ export default function MatriculasPage() {
               ))}
             </select>
             {permissions.canCreate && (
-              <Button variant="primary" onClick={abrirModalMatricula}>
+              <Button
+                variant="primary"
+                onClick={abrirModalMatricula}
+                disabled={!anioSeleccionado}
+              >
                 + Matricular alumno
               </Button>
             )}
           </div>
         </div>
+
+        {!cargandoAnios && anios.length === 0 && (
+          <Card>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-gray-800">
+                  Todavía no hay un año escolar registrado
+                </p>
+                <p className="text-sm text-gray-500">
+                  Crea el año en curso para poder matricular y calcular
+                  vacantes.
+                </p>
+              </div>
+              {permissions.canCreate && (
+                <Button variant="primary" onClick={crearAnioActual}>
+                  Crear año {new Date().getFullYear()}
+                </Button>
+              )}
+            </div>
+          </Card>
+        )}
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
