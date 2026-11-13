@@ -12,11 +12,7 @@ import {
   materiaService,
   seccionService,
 } from "@/src/lib/services";
-import type {
-  Docente,
-  Materia,
-  Seccion,
-} from "@/src/types/models";
+import type { Docente, Materia, Seccion } from "@/src/types/models";
 import type { CursoAsignadoAnual } from "@/src/lib/services";
 
 export default function AsignacionesPage() {
@@ -147,8 +143,7 @@ export default function AsignacionesPage() {
   const cursosCompletos = useMemo(
     () =>
       cursos.filter(
-        (curso) =>
-          bimestresDelAnio > 0 && curso.bimestres >= bimestresDelAnio,
+        (curso) => bimestresDelAnio > 0 && curso.bimestres >= bimestresDelAnio,
       ).length,
     [cursos, bimestresDelAnio],
   );
