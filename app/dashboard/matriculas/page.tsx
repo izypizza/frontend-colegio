@@ -219,9 +219,8 @@ export default function MatriculasPage() {
     setModalAbierto(true);
 
     try {
-      const lista = await matriculaService.estudiantesSinMatricula(
-        anioSeleccionado,
-      );
+      const lista =
+        await matriculaService.estudiantesSinMatricula(anioSeleccionado);
       setEstudiantesDisponibles(lista);
     } catch (err) {
       handleError(err, "No se pudo cargar la lista de estudiantes");
@@ -289,9 +288,13 @@ export default function MatriculasPage() {
     }
   };
 
-  const cambiarEstado = async (matricula: Matricula, estado: EstadoMatricula) => {
+  const cambiarEstado = async (
+    matricula: Matricula,
+    estado: EstadoMatricula,
+  ) => {
     const mensajes: Record<string, string> = {
-      retirado: "¿Registrar el retiro de este estudiante? Conserva su historial.",
+      retirado:
+        "¿Registrar el retiro de este estudiante? Conserva su historial.",
       matriculado: "¿Reactivar la matrícula de este estudiante?",
       trasladado: "¿Marcar la matrícula como traslado externo?",
       culminado: "¿Marcar la matrícula como culminada?",
@@ -618,9 +621,7 @@ export default function MatriculasPage() {
                         <Button
                           variant="secondary"
                           size="sm"
-                          onClick={() =>
-                            cambiarEstado(matricula, "culminado")
-                          }
+                          onClick={() => cambiarEstado(matricula, "culminado")}
                         >
                           Culminar
                         </Button>
@@ -737,7 +738,10 @@ export default function MatriculasPage() {
               label="Observación (opcional)"
               value={formulario.observacion}
               onChange={(evento) =>
-                setFormulario({ ...formulario, observacion: evento.target.value })
+                setFormulario({
+                  ...formulario,
+                  observacion: evento.target.value,
+                })
               }
               placeholder="Matrícula condicional, documentación pendiente..."
             />

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 const obtenerMensajeDeValidacion = (errores: unknown): string | null => {
   if (!errores || typeof errores !== "object") {
@@ -31,32 +31,35 @@ export function useErrorHandler() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const handleError = (
-    err: any,
-    defaultMessage: string = "Ha ocurrido un error",
-  ) => {
-    console.error(err);
-    const message =
-      obtenerMensajeDeValidacion(err?.response?.data?.errors) ||
-      err?.response?.data?.message ||
-      err?.message ||
-      defaultMessage;
-    setError(message);
-    setSuccess(null);
-  };
+  const handleError = useCallback(
+    (err: any, defaultMessage: string = "Ha ocurrido un error") => {
+      console.error(err);
+      const message =
+        obtenerMensajeDeValidacion(err?.response?.data?.errors) ||
+        err?.response?.data?.message ||
+        err?.message ||
+        defaultMessage;
+      setError(message);
+      setSuccess(null);
+    },
+    [],
+  );
 
-  const handleSuccess = (message: string, callback?: () => void) => {
-    setSuccess(message);
-    setError(null);
-    if (callback) {
-      callback();
-    }
-  };
+  const handleSuccess = useCallback(
+    (message: string, callback?: () => void) => {
+      setSuccess(message);
+      setError(null);
+      if (callback) {
+        callback();
+      }
+    },
+    [],
+  );
 
-  const clearMessages = () => {
+  const clearMessages = useCallback(() => {
     setError(null);
     setSuccess(null);
-  };
+  }, []);
 
   return {
     error,

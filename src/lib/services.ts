@@ -220,7 +220,9 @@ class MatriculaServiceExtended {
 
     const consulta = parametros.toString();
 
-    return await apiClient.get(consulta ? `/matriculas?${consulta}` : "/matriculas");
+    return await apiClient.get(
+      consulta ? `/matriculas?${consulta}` : "/matriculas",
+    );
   }
 
   async matricular(datos: {
@@ -282,9 +284,7 @@ class MatriculaServiceExtended {
   }
 
   async estadisticas(anioEscolarId?: number): Promise<EstadisticasMatricula> {
-    const consulta = anioEscolarId
-      ? `?anio_escolar_id=${anioEscolarId}`
-      : "";
+    const consulta = anioEscolarId ? `?anio_escolar_id=${anioEscolarId}` : "";
 
     return await apiClient.get(`/matriculas/estadisticas${consulta}`);
   }
