@@ -69,6 +69,34 @@ const formularioInicial: FormularioMatricula = {
   observacion: "",
 };
 
+interface FormularioPersona {
+  dni: string;
+  nombres: string;
+  apellido_paterno: string;
+  apellido_materno: string;
+  fecha_nacimiento: string;
+  telefono: string;
+  direccion: string;
+  apoderado_dni: string;
+  apoderado_nombres: string;
+  apoderado_apellido_paterno: string;
+  apoderado_apellido_materno: string;
+}
+
+const personaInicial: FormularioPersona = {
+  dni: "",
+  nombres: "",
+  apellido_paterno: "",
+  apellido_materno: "",
+  fecha_nacimiento: "",
+  telefono: "",
+  direccion: "",
+  apoderado_dni: "",
+  apoderado_nombres: "",
+  apoderado_apellido_paterno: "",
+  apoderado_apellido_materno: "",
+};
+
 export default function MatriculasPage() {
   const permissions = usePermissions("matriculas");
   const { error, success, handleError, handleSuccess } = useErrorHandler();
@@ -94,6 +122,10 @@ export default function MatriculasPage() {
   const [ultimaPagina, setUltimaPagina] = useState(1);
 
   const [modalAbierto, setModalAbierto] = useState(false);
+  const [modoRegistro, setModoRegistro] = useState<"nuevo" | "existente">(
+    "nuevo",
+  );
+  const [persona, setPersona] = useState<FormularioPersona>(personaInicial);
   const [formulario, setFormulario] =
     useState<FormularioMatricula>(formularioInicial);
   const [errorFormulario, setErrorFormulario] = useState<string | null>(null);
@@ -215,6 +247,8 @@ export default function MatriculasPage() {
       ...formularioInicial,
       anio_escolar_id: String(anioSeleccionado),
     });
+    setPersona(personaInicial);
+    setModoRegistro("nuevo");
     setErrorFormulario(null);
     setModalAbierto(true);
 
@@ -231,23 +265,70 @@ export default function MatriculasPage() {
     evento.preventDefault();
     setErrorFormulario(null);
 
-    if (!formulario.estudiante_id || !formulario.seccion_id) {
-      setErrorFormulario("Selecciona el estudiante y la sección de destino.");
+    if (!formulario.seccion_id) {
+      setErrorFormulario("Selecciona la sección de destino.");
       return;
     }
 
     setGuardando(true);
 
     try {
-      const respuesta = await matriculaService.matricular({
-        estudiante_id: Number(formulario.estudiante_id),
-        anio_escolar_id: Number(formulario.anio_escolar_id),
-        seccion_id: Number(formulario.seccion_id),
-        tipo: formulario.tipo,
-        observacion: formulario.observacion.trim() || undefined,
-      });
+      if (modoRegistro === "nuevo") {
+        if (
+          !persona.dni ||
+          !persona.nombres ||
+          !persona.apellido_paterno ||
+          !persona.apellido_materno ||
+          !persona.fecha_nacimiento
+        ) {
+          setErrorFormulario(
+            "Completa DNI, nombres, apellidos y fecha de nacimiento.",
+          );
+          setGuardando(false);
+          return;
+        }
 
-      handleSuccess(respuesta.message);
+        const respuesta = await matriculaService.registroCompleto({
+          dni: persona.dni,
+          nombres: persona.nombres,
+          apellido_paterno: persona.apellido_paterno,
+          apellido_materno: persona.apellido_materno,
+          fecha_nacimiento: persona.fecha_nacimiento,
+          anio_escolar_id: Number(formulario.anio_escolar_id),
+          seccion_id: Number(formulario.seccion_id),
+          tipo: formulario.tipo,
+          observacion: formulario.observacion.trim() || undefined,
+          telefono: persona.telefono || undefined,
+          direccion: persona.direccion || undefined,
+          apoderado: persona.apoderado_dni
+            ? {
+                dni: persona.apoderado_dni,
+                nombres: persona.apoderado_nombres || undefined,
+                apellido_paterno: persona.apoderado_apellido_paterno || undefined,
+                apellido_materno: persona.apoderado_apellido_materno || undefined,
+              }
+            : undefined,
+        });
+
+        handleSuccess(respuesta.message);
+      } else {
+        if (!formulario.estudiante_id) {
+          setErrorFormulario("Selecciona el estudiante.");
+          setGuardando(false);
+          return;
+        }
+
+        const respuesta = await matriculaService.matricular({
+          estudiante_id: Number(formulario.estudiante_id),
+          anio_escolar_id: Number(formulario.anio_escolar_id),
+          seccion_id: Number(formulario.seccion_id),
+          tipo: formulario.tipo,
+          observacion: formulario.observacion.trim() || undefined,
+        });
+
+        handleSuccess(respuesta.message);
+      }
+
       setModalAbierto(false);
       await refrescar();
     } catch (err) {
@@ -662,35 +743,190 @@ export default function MatriculasPage() {
               </div>
             )}
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Estudiante sin matrícula
-              </label>
-              <select
-                value={formulario.estudiante_id}
-                onChange={(evento) =>
-                  setFormulario({
-                    ...formulario,
-                    estudiante_id: evento.target.value,
-                  })
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#04ADBF]"
-                required
+            <div className="flex gap-2 border-b border-gray-200">
+              <button
+                type="button"
+                onClick={() => setModoRegistro("nuevo")}
+                className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                  modoRegistro === "nuevo"
+                    ? "border-[#04ADBF] text-[#04ADBF]"
+                    : "border-transparent text-gray-500 hover:text-gray-700"
+                }`}
               >
-                <option value="">Seleccionar estudiante</option>
-                {estudiantesDisponibles.map((estudiante) => (
-                  <option key={estudiante.id} value={estudiante.id}>
-                    {estudiante.apellido_paterno} {estudiante.apellido_materno},{" "}
-                    {estudiante.nombres} · DNI {estudiante.dni}
-                  </option>
-                ))}
-              </select>
-              {estudiantesDisponibles.length === 0 && (
-                <p className="mt-2 text-xs text-gray-500">
-                  Todos los estudiantes ya tienen matrícula en este año.
-                </p>
-              )}
+                Alumno nuevo
+              </button>
+              <button
+                type="button"
+                onClick={() => setModoRegistro("existente")}
+                className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                  modoRegistro === "existente"
+                    ? "border-[#04ADBF] text-[#04ADBF]"
+                    : "border-transparent text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                Alumno ya registrado
+              </button>
             </div>
+
+            {modoRegistro === "nuevo" ? (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Input
+                    label="DNI del estudiante"
+                    value={persona.dni}
+                    onChange={(evento) =>
+                      setPersona({ ...persona, dni: evento.target.value })
+                    }
+                    placeholder="70123456"
+                    maxLength={8}
+                    required
+                  />
+                  <Input
+                    label="Fecha de nacimiento"
+                    type="date"
+                    value={persona.fecha_nacimiento}
+                    onChange={(evento) =>
+                      setPersona({
+                        ...persona,
+                        fecha_nacimiento: evento.target.value,
+                      })
+                    }
+                    required
+                  />
+                  <Input
+                    label="Nombres"
+                    value={persona.nombres}
+                    onChange={(evento) =>
+                      setPersona({ ...persona, nombres: evento.target.value })
+                    }
+                    required
+                  />
+                  <Input
+                    label="Apellido paterno"
+                    value={persona.apellido_paterno}
+                    onChange={(evento) =>
+                      setPersona({
+                        ...persona,
+                        apellido_paterno: evento.target.value,
+                      })
+                    }
+                    required
+                  />
+                  <Input
+                    label="Apellido materno"
+                    value={persona.apellido_materno}
+                    onChange={(evento) =>
+                      setPersona({
+                        ...persona,
+                        apellido_materno: evento.target.value,
+                      })
+                    }
+                    required
+                  />
+                  <Input
+                    label="Teléfono (opcional)"
+                    value={persona.telefono}
+                    onChange={(evento) =>
+                      setPersona({ ...persona, telefono: evento.target.value })
+                    }
+                    pattern="9[0-9]{8}"
+                    placeholder="984112233"
+                  />
+                </div>
+                <Input
+                  label="Dirección (opcional)"
+                  value={persona.direccion}
+                  onChange={(evento) =>
+                    setPersona({ ...persona, direccion: evento.target.value })
+                  }
+                  placeholder="Av. Principal 123"
+                />
+
+                <div className="border-t border-gray-200 pt-3">
+                  <p className="text-sm font-semibold text-gray-700 mb-2">
+                    Apoderado (opcional)
+                  </p>
+                  <p className="text-xs text-gray-500 mb-3">
+                    Si el DNI ya existe se reutiliza el apoderado registrado.
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <Input
+                      label="DNI del apoderado"
+                      value={persona.apoderado_dni}
+                      onChange={(evento) =>
+                        setPersona({
+                          ...persona,
+                          apoderado_dni: evento.target.value,
+                        })
+                      }
+                      maxLength={8}
+                      placeholder="40123456"
+                    />
+                    <Input
+                      label="Nombres del apoderado"
+                      value={persona.apoderado_nombres}
+                      onChange={(evento) =>
+                        setPersona({
+                          ...persona,
+                          apoderado_nombres: evento.target.value,
+                        })
+                      }
+                    />
+                    <Input
+                      label="Apellido paterno"
+                      value={persona.apoderado_apellido_paterno}
+                      onChange={(evento) =>
+                        setPersona({
+                          ...persona,
+                          apoderado_apellido_paterno: evento.target.value,
+                        })
+                      }
+                    />
+                    <Input
+                      label="Apellido materno"
+                      value={persona.apoderado_apellido_materno}
+                      onChange={(evento) =>
+                        setPersona({
+                          ...persona,
+                          apoderado_apellido_materno: evento.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Estudiante sin matrícula
+                </label>
+                <select
+                  value={formulario.estudiante_id}
+                  onChange={(evento) =>
+                    setFormulario({
+                      ...formulario,
+                      estudiante_id: evento.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#04ADBF]"
+                  required
+                >
+                  <option value="">Seleccionar estudiante</option>
+                  {estudiantesDisponibles.map((estudiante) => (
+                    <option key={estudiante.id} value={estudiante.id}>
+                      {estudiante.apellido_paterno}{" "}
+                      {estudiante.apellido_materno}, {estudiante.nombres} · DNI{" "}
+                      {estudiante.dni}
+                    </option>
+                  ))}
+                </select>
+                {estudiantesDisponibles.length === 0 && (
+                  <p className="mt-2 text-xs text-gray-500">
+                    Todos los estudiantes ya tienen matrícula en este año.
+                  </p>
+                )}
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">

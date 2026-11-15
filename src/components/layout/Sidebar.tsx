@@ -893,7 +893,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           {/* Navigation */}
           <nav className="flex-1 p-3 sm:p-4 overflow-y-auto">
             {secciones.map((seccion) => (
-              <div key={seccion.titulo || "principal"} className="mb-4 last:mb-0">
+              <div
+                key={seccion.titulo || "principal"}
+                className="mb-4 last:mb-0"
+              >
                 {seccion.titulo && (
                   <p className="px-3 sm:px-4 mb-2 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-gray-400">
                     {seccion.titulo}

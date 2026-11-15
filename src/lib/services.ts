@@ -290,6 +290,34 @@ class MatriculaServiceExtended {
     return await apiClient.post("/matriculas", datos);
   }
 
+  async registroCompleto(datos: {
+    dni: string;
+    nombres: string;
+    apellido_paterno: string;
+    apellido_materno: string;
+    fecha_nacimiento: string;
+    anio_escolar_id: number;
+    seccion_id: number;
+    tipo?: string;
+    observacion?: string;
+    telefono?: string;
+    direccion?: string;
+    apoderado?: {
+      dni: string;
+      nombres?: string;
+      apellido_paterno?: string;
+      apellido_materno?: string;
+      telefono?: string;
+    };
+  }): Promise<{
+    message: string;
+    persona_creada: boolean;
+    matricula: Matricula;
+    estudiante: Estudiante;
+  }> {
+    return await apiClient.post("/matriculas/registro-completo", datos);
+  }
+
   async actualizar(
     id: number,
     datos: {
