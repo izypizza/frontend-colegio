@@ -724,6 +724,59 @@ const menuItems: MenuItem[] = [
   },
 ];
 
+const SECCION_POR_RUTA: Record<string, string> = {
+  "/dashboard/matriculas": "Académico",
+  "/dashboard/estudiantes": "Académico",
+  "/dashboard/grados": "Académico",
+  "/dashboard/materias": "Académico",
+  "/dashboard/periodos": "Académico",
+  "/dashboard/asignaciones": "Académico",
+  "/dashboard/horarios": "Académico",
+  "/dashboard/docente/mis-clases": "Docencia",
+  "/dashboard/docente/mis-estudiantes": "Docencia",
+  "/dashboard/docente/llamar-lista": "Docencia",
+  "/dashboard/docente/tutor": "Docencia",
+  "/dashboard/calificaciones": "Evaluación",
+  "/dashboard/asistencias": "Evaluación",
+  "/dashboard/mis-calificaciones": "Mi información",
+  "/dashboard/estudiante/mis-calificaciones": "Mi información",
+  "/dashboard/estudiante/mis-asistencias": "Mi información",
+  "/dashboard/padre/mis-hijos": "Mis hijos",
+  "/dashboard/padre/calificaciones": "Mis hijos",
+  "/dashboard/padre/horarios": "Mis hijos",
+  "/dashboard/docentes": "Personas y cuentas",
+  "/dashboard/padres": "Personas y cuentas",
+  "/dashboard/auxiliares": "Personas y cuentas",
+  "/dashboard/bibliotecarios": "Personas y cuentas",
+  "/dashboard/usuarios": "Personas y cuentas",
+  "/dashboard/permisos-auxiliares": "Personas y cuentas",
+  "/dashboard/mis-permisos": "Mi cuenta",
+  "/dashboard/biblioteca": "Biblioteca",
+  "/dashboard/prestamos": "Biblioteca",
+  "/dashboard/biblioteca/estadisticas": "Biblioteca",
+  "/dashboard/estudiante/biblioteca": "Biblioteca",
+  "/dashboard/elecciones": "Institución",
+  "/dashboard/elecciones-admin": "Institución",
+  "/dashboard/chat": "Comunicación",
+  "/dashboard/chat-admin": "Comunicación",
+  "/dashboard/auditoria": "Sistema",
+};
+
+const ORDEN_SECCIONES = [
+  "",
+  "Académico",
+  "Evaluación",
+  "Docencia",
+  "Mi información",
+  "Mis hijos",
+  "Personas y cuentas",
+  "Biblioteca",
+  "Comunicación",
+  "Institución",
+  "Sistema",
+  "Mi cuenta",
+];
+
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const pathname = usePathname();
   const { user } = useAuth();
@@ -741,6 +794,30 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
     return true;
   });
+
+  // Agrupar por sección conservando el orden en que aparecen
+  const secciones = (() => {
+    const grupos = new Map<string, typeof visibleMenuItems>();
+
+    visibleMenuItems.forEach((item) => {
+      const titulo = SECCION_POR_RUTA[item.href] ?? "";
+      const lista = grupos.get(titulo) ?? [];
+      lista.push(item);
+      grupos.set(titulo, lista);
+    });
+
+    return Array.from(grupos, ([titulo, items]) => ({ titulo, items })).sort(
+      (a, b) => {
+        const posicionA = ORDEN_SECCIONES.indexOf(a.titulo);
+        const posicionB = ORDEN_SECCIONES.indexOf(b.titulo);
+
+        return (
+          (posicionA === -1 ? ORDEN_SECCIONES.length : posicionA) -
+          (posicionB === -1 ? ORDEN_SECCIONES.length : posicionB)
+        );
+      },
+    );
+  })();
 
   return (
     <>
@@ -815,29 +892,38 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
           {/* Navigation */}
           <nav className="flex-1 p-3 sm:p-4 overflow-y-auto">
-            <ul className="space-y-1.5 sm:space-y-2">
-              {visibleMenuItems.map((item) => {
-                const isActive = pathname === item.href;
-                return (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      className={`flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg transition-all duration-200 ${
-                        isActive
-                          ? "bg-[#04ADBF] text-white shadow-md scale-[1.02]"
-                          : "text-gray-700 hover:bg-[#F2F0CE] hover:scale-[1.01]"
-                      }`}
-                      onClick={() => onClose()}
-                    >
-                      <span className="flex-shrink-0">{item.icon}</span>
-                      <span className="font-medium text-sm sm:text-base truncate">
-                        {item.label}
-                      </span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
+            {secciones.map((seccion) => (
+              <div key={seccion.titulo || "principal"} className="mb-4 last:mb-0">
+                {seccion.titulo && (
+                  <p className="px-3 sm:px-4 mb-2 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+                    {seccion.titulo}
+                  </p>
+                )}
+                <ul className="space-y-1.5 sm:space-y-2">
+                  {seccion.items.map((item) => {
+                    const isActive = pathname === item.href;
+                    return (
+                      <li key={item.href}>
+                        <Link
+                          href={item.href}
+                          className={`flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg transition-all duration-200 ${
+                            isActive
+                              ? "bg-[#04ADBF] text-white shadow-md scale-[1.02]"
+                              : "text-gray-700 hover:bg-[#F2F0CE] hover:scale-[1.01]"
+                          }`}
+                          onClick={() => onClose()}
+                        >
+                          <span className="flex-shrink-0">{item.icon}</span>
+                          <span className="font-medium text-sm sm:text-base truncate">
+                            {item.label}
+                          </span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
           </nav>
 
           {/* Footer */}
