@@ -115,7 +115,7 @@ const menuItems: MenuItem[] = [
     ),
   },
   {
-    label: "Asignaciones",
+    label: "Carga académica",
     href: "/dashboard/asignaciones",
     roles: [UserRole.ADMIN],
     icon: (

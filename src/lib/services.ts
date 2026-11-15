@@ -193,6 +193,8 @@ export interface CursoAsignadoAnual {
   seccion_id: number;
   seccion: string;
   grado: string;
+  capacidad: number;
+  ocupadas: number;
   anio: number;
   bimestres: number;
   bimestres_del_anio: number;

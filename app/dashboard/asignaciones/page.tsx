@@ -175,6 +175,36 @@ export default function AsignacionesPage() {
       ),
     },
     {
+      key: "aforo",
+      label: "Aforo",
+      render: (_valor: unknown, curso: CursoAsignadoAnual) => {
+        const capacidad = curso.capacidad || 0;
+        const ocupadas = curso.ocupadas || 0;
+        const porcentaje =
+          capacidad > 0 ? Math.round((ocupadas / capacidad) * 100) : 0;
+
+        return (
+          <div className="min-w-[90px]">
+            <p className="text-sm text-gray-700">
+              {ocupadas}/{capacidad}
+            </p>
+            <div className="mt-1 h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full ${
+                  porcentaje >= 90
+                    ? "bg-red-500"
+                    : porcentaje >= 70
+                      ? "bg-amber-500"
+                      : "bg-[#04ADBF]"
+                }`}
+                style={{ width: `${Math.min(porcentaje, 100)}%` }}
+              />
+            </div>
+          </div>
+        );
+      },
+    },
+    {
       key: "bimestres",
       label: "Bimestres",
       render: (_valor: unknown, curso: CursoAsignadoAnual) => {
@@ -216,7 +246,7 @@ export default function AsignacionesPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">
-              Asignación de cursos
+              Carga académica
             </h1>
             <p className="text-sm text-gray-500">
               Asigna un curso a un docente para todo el año en un solo paso
