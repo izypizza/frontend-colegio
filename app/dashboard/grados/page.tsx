@@ -102,27 +102,6 @@ export default function GradosYSeccionesPage() {
     openGradoModal();
   };
 
-  const handleDeleteGrado = async (grado: Grado) => {
-    const seccionesGrado = secciones.filter((s) => s.grado_id === grado.id);
-    if (seccionesGrado.length > 0) {
-      setError(
-        `No se puede eliminar el grado "${grado.nombre}" porque tiene ${seccionesGrado.length} secciones asociadas`,
-      );
-      return;
-    }
-
-    if (!confirm(`¿Estás seguro de eliminar el grado "${grado.nombre}"?`))
-      return;
-
-    try {
-      await gradoService.delete(grado.id);
-      setSuccess("Grado eliminado correctamente");
-      fetchData();
-    } catch (err) {
-      handleError(err, "Error al eliminar el grado");
-    }
-  };
-
   const handleSubmitGrado = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -168,29 +147,6 @@ export default function GradosYSeccionesPage() {
       turno: seccion.turno || "Mañana",
     });
     openSeccionModal();
-  };
-
-  const handleDeleteSeccion = async (seccion: Seccion) => {
-    const estudiantesSeccion = estudiantes.filter(
-      (e) => e.seccion_id === seccion.id,
-    );
-    if (estudiantesSeccion.length > 0) {
-      setError(
-        `No se puede eliminar la sección "${seccion.nombre}" porque tiene ${estudiantesSeccion.length} estudiantes matriculados`,
-      );
-      return;
-    }
-
-    if (!confirm(`¿Estás seguro de eliminar la sección "${seccion.nombre}"?`))
-      return;
-
-    try {
-      await seccionService.delete(seccion.id);
-      setSuccess("Sección eliminada correctamente");
-      fetchData();
-    } catch (err) {
-      handleError(err, "Error al eliminar la sección");
-    }
   };
 
   const handleSubmitSeccion = async (e: React.FormEvent) => {

@@ -159,8 +159,11 @@ export default function AuditoriaPage() {
     const antes = registro.cambios_antes ?? {};
     const despues = registro.cambios_despues ?? {};
 
-    const claves = Array.from(
-      new Set([...Object.keys(antes), ...Object.keys(despues)]),
+    // Si hay datos enviados se comparan solo esos: un campo ausente no cambió.
+    // Si no los hay (eliminación) se muestran los valores que tenía el registro.
+    const clavesInformadas = Object.keys(despues);
+    const claves = (
+      clavesInformadas.length > 0 ? clavesInformadas : Object.keys(antes)
     ).filter((clave) => !CAMPOS_OCULTOS.has(clave));
 
     return claves

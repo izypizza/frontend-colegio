@@ -117,7 +117,6 @@ export const useRolePermissions = () => {
         "/dashboard/docentes",
         "/dashboard/padres",
         "/dashboard/grados",
-        "/dashboard/secciones",
         "/dashboard/materias",
         "/dashboard/horarios",
         "/dashboard/calificaciones",

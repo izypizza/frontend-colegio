@@ -244,7 +244,7 @@ export default function ConfiguracionesPage() {
       )}
 
       {/* Preferencias de Accesibilidad - Disponible para todos */}
-      <Card className="p-6 bg-blue-50 border-blue-200">
+      <Card className="bg-blue-50 border-blue-200">
         <h2 className="text-xl font-bold mb-4 text-blue-900">
           Preferencias de Accesibilidad
         </h2>
@@ -295,7 +295,7 @@ export default function ConfiguracionesPage() {
 
       {/* Asistente Virtual - Disponible para todos */}
       {assistantLoaded && (
-        <Card className="p-6 bg-teal-50 border-teal-200">
+        <Card className="bg-teal-50 border-teal-200">
           <h2 className="text-xl font-bold mb-4 text-teal-900">
             Asistente Virtual
           </h2>
@@ -334,7 +334,7 @@ export default function ConfiguracionesPage() {
 
       {/* Información del Sistema - Solo Admin */}
       {isAdmin && infoSistema && (
-        <Card className="p-6">
+        <Card>
           <h2 className="text-xl font-bold mb-4">Información del Sistema</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div>
@@ -363,7 +363,7 @@ export default function ConfiguracionesPage() {
 
       {/* Modo de Mantenimiento - Solo Admin */}
       {isAdmin && configuraciones.sistema && (
-        <Card className="p-6 bg-orange-50 border-orange-200">
+        <Card className="bg-orange-50 border-orange-200">
           <div className="flex items-start gap-3 mb-4">
             <div className="flex-shrink-0 w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center text-white text-xl">
               <svg
@@ -530,7 +530,7 @@ export default function ConfiguracionesPage() {
             if (filteredConfigs.length === 0) return null;
 
             return (
-              <Card key={categoria} className="p-6">
+              <Card key={categoria}>
                 <h2 className="text-xl font-bold mb-4">
                   {categoriaNombres[categoria] || categoria}
                 </h2>
@@ -569,7 +569,7 @@ export default function ConfiguracionesPage() {
 
       {/* Advertencias - Solo Admin */}
       {isAdmin && (
-        <Card className="p-6 bg-yellow-50 border-yellow-200">
+        <Card className="bg-yellow-50 border-yellow-200">
           <h3 className="font-bold text-yellow-800 mb-2">
             Advertencias Importantes
           </h3>

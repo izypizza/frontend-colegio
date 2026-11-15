@@ -134,7 +134,6 @@ export interface Seccion {
   id: number;
   nombre: string;
   grado_id: number;
-  capacidad?: number;
   capacidad_maxima?: number;
   turno?: string;
   grado?: Grado;
