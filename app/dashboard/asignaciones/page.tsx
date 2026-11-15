@@ -205,6 +205,20 @@ export default function AsignacionesPage() {
       },
     },
     {
+      key: "bloques_horario",
+      label: "Horario",
+      render: (_valor: unknown, curso: CursoAsignadoAnual) =>
+        curso.bloques_horario > 0 ? (
+          <span className="text-sm text-gray-700">
+            {curso.bloques_horario} bloque(s)
+          </span>
+        ) : (
+          <span className="px-2 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+            Sin horario
+          </span>
+        ),
+    },
+    {
       key: "bimestres",
       label: "Bimestres",
       render: (_valor: unknown, curso: CursoAsignadoAnual) => {

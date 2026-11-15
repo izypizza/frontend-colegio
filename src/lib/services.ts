@@ -195,6 +195,7 @@ export interface CursoAsignadoAnual {
   grado: string;
   capacidad: number;
   ocupadas: number;
+  bloques_horario: number;
   anio: number;
   bimestres: number;
   bimestres_del_anio: number;
