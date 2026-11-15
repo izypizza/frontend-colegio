@@ -82,9 +82,8 @@ export default function AuditoriaPage() {
 
   const cargarFiltros = useCallback(async () => {
     try {
-      const respuesta = await apiClient.get<FiltrosDisponibles>(
-        "/auditoria/filtros",
-      );
+      const respuesta =
+        await apiClient.get<FiltrosDisponibles>("/auditoria/filtros");
       setDisponibles(respuesta);
     } catch (err) {
       handleError(err, "No se pudieron cargar los filtros de auditoría");
@@ -152,7 +151,12 @@ export default function AuditoriaPage() {
   };
 
   const hayFiltrosActivos = Boolean(
-    filtroEntidad || filtroAccion || filtroUsuario || desde || hasta || busqueda,
+    filtroEntidad ||
+    filtroAccion ||
+    filtroUsuario ||
+    desde ||
+    hasta ||
+    busqueda,
   );
 
   const camposCambiados = (registro: RegistroAuditoria) => {
@@ -390,7 +394,9 @@ export default function AuditoriaPage() {
                         }
                         className="text-xs font-medium text-[#04ADBF] hover:underline"
                       >
-                        {estaExpandido ? "Ocultar detalle" : `Ver detalle (${cambios.length} campo(s))`}
+                        {estaExpandido
+                          ? "Ocultar detalle"
+                          : `Ver detalle (${cambios.length} campo(s))`}
                       </button>
 
                       {estaExpandido && (

@@ -311,6 +311,8 @@ class MatriculaServiceExtended {
       apellido_paterno?: string;
       apellido_materno?: string;
       telefono?: string;
+      tipo?: "padre" | "madre" | "apoderado";
+      es_contacto_principal?: boolean;
     };
   }): Promise<{
     message: string;

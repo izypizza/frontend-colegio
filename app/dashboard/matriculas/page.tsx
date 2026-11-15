@@ -81,6 +81,7 @@ interface FormularioPersona {
   apoderado_nombres: string;
   apoderado_apellido_paterno: string;
   apoderado_apellido_materno: string;
+  apoderado_tipo: "padre" | "madre" | "apoderado";
 }
 
 const personaInicial: FormularioPersona = {
@@ -95,6 +96,7 @@ const personaInicial: FormularioPersona = {
   apoderado_nombres: "",
   apoderado_apellido_paterno: "",
   apoderado_apellido_materno: "",
+  apoderado_tipo: "apoderado",
 };
 
 export default function MatriculasPage() {
@@ -304,8 +306,12 @@ export default function MatriculasPage() {
             ? {
                 dni: persona.apoderado_dni,
                 nombres: persona.apoderado_nombres || undefined,
-                apellido_paterno: persona.apoderado_apellido_paterno || undefined,
-                apellido_materno: persona.apoderado_apellido_materno || undefined,
+                apellido_paterno:
+                  persona.apoderado_apellido_paterno || undefined,
+                apellido_materno:
+                  persona.apoderado_apellido_materno || undefined,
+                tipo: persona.apoderado_tipo,
+                es_contacto_principal: true,
               }
             : undefined,
         });
@@ -453,6 +459,35 @@ export default function MatriculasPage() {
           {matricula.seccion?.nombre ? `"${matricula.seccion.nombre}"` : "—"}
         </span>
       ),
+    },
+    {
+      key: "apoderados",
+      label: "Apoderado",
+      render: (_valor: unknown, matricula: Matricula) => {
+        const apoderados = matricula.apoderados ?? [];
+
+        if (apoderados.length === 0) {
+          return <span className="text-xs text-gray-400">Sin registrar</span>;
+        }
+
+        const principal =
+          apoderados.find((apoderado) => apoderado.es_contacto_principal) ??
+          apoderados[0];
+
+        return (
+          <div>
+            <p className="text-sm text-gray-800">
+              {principal.padre
+                ? `${principal.padre.nombres} ${principal.padre.apellido_paterno}`
+                : "—"}
+            </p>
+            <p className="text-xs text-gray-500 capitalize">
+              {principal.tipo}
+              {apoderados.length > 1 ? ` · +${apoderados.length - 1}` : ""}
+            </p>
+          </div>
+        );
+      },
     },
     {
       key: "tipo",
@@ -892,6 +927,28 @@ export default function MatriculasPage() {
                         })
                       }
                     />
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Parentesco
+                      </label>
+                      <select
+                        value={persona.apoderado_tipo}
+                        onChange={(evento) =>
+                          setPersona({
+                            ...persona,
+                            apoderado_tipo: evento.target.value as
+                              | "padre"
+                              | "madre"
+                              | "apoderado",
+                          })
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#04ADBF]"
+                      >
+                        <option value="padre">Padre</option>
+                        <option value="madre">Madre</option>
+                        <option value="apoderado">Apoderado</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
               </>

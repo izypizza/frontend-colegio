@@ -187,8 +187,18 @@ export interface Matricula {
   estudiante?: Estudiante;
   anioEscolar?: AnioEscolar;
   seccion?: Seccion;
+  apoderados?: MatriculaApoderado[];
   created_at: string;
   updated_at: string;
+}
+
+export interface MatriculaApoderado {
+  id: number;
+  matricula_id: number;
+  padre_id: number;
+  tipo: "padre" | "madre" | "apoderado";
+  es_contacto_principal: boolean;
+  padre?: Padre;
 }
 
 export interface VacanteSeccion {
