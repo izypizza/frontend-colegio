@@ -149,18 +149,6 @@ export default function EstudiantesPage() {
     openEdit(item);
   };
 
-  const handleDelete = async (item: Estudiante) => {
-    if (!confirm("¿Estás seguro de eliminar este estudiante?")) return;
-
-    try {
-      await estudianteService.delete(item.id);
-      handleSuccess("Estudiante eliminado correctamente");
-      fetchData();
-    } catch (err) {
-      handleError(err, "Error al eliminar el estudiante");
-    }
-  };
-
   const handleCambiarEstado = async (
     item: Estudiante,
     nuevoEstado: "activo" | "suspendido" | "egresado",
@@ -389,7 +377,6 @@ export default function EstudiantesPage() {
             loading={loading}
             onView={handleView}
             onEdit={permissions.canEdit ? handleEdit : undefined}
-            onDelete={permissions.canDelete ? handleDelete : undefined}
             extraActions={
               permissions.canEdit
                 ? (item: Estudiante) => (

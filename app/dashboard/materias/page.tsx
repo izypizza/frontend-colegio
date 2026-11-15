@@ -55,17 +55,6 @@ export default function MateriasPage() {
     setFormData({ nombre: item.nombre });
   };
 
-  const handleDelete = async (item: Materia) => {
-    if (!confirm("¿Estás seguro de eliminar esta materia?")) return;
-
-    try {
-      await materiaService.delete(item.id);
-      handleSuccess("Materia eliminada correctamente", fetchData);
-    } catch (err) {
-      handleError(err, "Error al eliminar la materia");
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -145,7 +134,6 @@ export default function MateriasPage() {
             data={materiasFiltradas}
             loading={loading}
             onEdit={permissions.canEdit ? handleEditClick : undefined}
-            onDelete={permissions.canDelete ? handleDelete : undefined}
           />
         </Card>
 

@@ -68,18 +68,6 @@ export default function PeriodosPage() {
     openEdit(item);
   };
 
-  const handleDelete = async (item: PeriodoAcademico) => {
-    if (!confirm("¿Estás seguro de eliminar este periodo académico?")) return;
-
-    try {
-      await periodoAcademicoService.delete(item.id);
-      handleSuccess("Periodo eliminado correctamente");
-      fetchData();
-    } catch (err) {
-      handleError(err, "Error al eliminar el periodo");
-    }
-  };
-
   const handleActivar = async (item: PeriodoAcademico) => {
     if (
       !confirm(
@@ -276,7 +264,6 @@ export default function PeriodosPage() {
             data={periodosFiltradosCompletos}
             loading={loading}
             onEdit={permissions.canEdit ? handleEdit : undefined}
-            onDelete={permissions.canDelete ? handleDelete : undefined}
             extraActions={
               permissions.canEdit
                 ? (item: PeriodoAcademico) =>

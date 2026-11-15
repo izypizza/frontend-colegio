@@ -150,18 +150,6 @@ export default function PadresPage() {
     openEdit(item);
   };
 
-  const handleDelete = async (item: Padre) => {
-    if (!confirm("¿Estás seguro de eliminar este padre de familia?")) return;
-
-    try {
-      await padreService.delete(item.id);
-      handleSuccess("Padre eliminado correctamente");
-      fetchData();
-    } catch (err) {
-      handleError(err, "Error al eliminar el padre");
-    }
-  };
-
   const handleToggleActivo = async (item: Padre) => {
     if (!item.user_id) {
       setError(
@@ -439,7 +427,6 @@ export default function PadresPage() {
             loading={loading}
             onView={handleView}
             onEdit={permissions.canEdit ? handleEdit : undefined}
-            onDelete={permissions.canDelete ? handleDelete : undefined}
             extraActions={
               permissions.canEdit
                 ? (item: Padre) =>

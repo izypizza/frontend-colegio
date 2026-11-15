@@ -161,18 +161,6 @@ export default function DocentesPage() {
     openEdit(item);
   };
 
-  const handleDelete = async (item: Docente) => {
-    if (!confirm("¿Estás seguro de eliminar este docente?")) return;
-
-    try {
-      await docenteService.delete(item.id);
-      handleSuccess("Docente eliminado correctamente");
-      fetchData();
-    } catch (err) {
-      handleError(err, "Error al eliminar el docente");
-    }
-  };
-
   const handleToggleActivo = async (item: Docente) => {
     if (!item.user_id) {
       setError(
@@ -362,7 +350,6 @@ export default function DocentesPage() {
             loading={loading}
             onView={handleView}
             onEdit={permissions.canEdit ? handleEdit : undefined}
-            onDelete={permissions.canDelete ? handleDelete : undefined}
             extraActions={
               permissions.canEdit
                 ? (item: Docente) =>
