@@ -17,6 +17,7 @@ interface TableProps<T> {
   onDelete?: (item: T) => void;
   onView?: (item: T) => void;
   extraActions?: (item: T) => React.ReactNode;
+  sortable?: boolean;
 }
 
 export function Table<T extends { id: string | number; uniqueId?: string }>({
@@ -27,7 +28,55 @@ export function Table<T extends { id: string | number; uniqueId?: string }>({
   onDelete,
   onView,
   extraActions,
+  sortable = true,
 }: TableProps<T>) {
+  const [sortKey, setSortKey] = React.useState<string | null>(null);
+  const [sortAsc, setSortAsc] = React.useState(true);
+
+  const alternarOrden = (key: string) => {
+    if (!sortable) return;
+
+    if (sortKey !== key) {
+      setSortKey(key);
+      setSortAsc(true);
+      return;
+    }
+
+    if (sortAsc) {
+      setSortAsc(false);
+      return;
+    }
+
+    setSortKey(null);
+    setSortAsc(true);
+  };
+
+  const filasOrdenadas = React.useMemo(() => {
+    if (!sortKey) return data;
+
+    const copia = [...data];
+    copia.sort((a, b) => {
+      const valorA = (a as Record<string, unknown>)[sortKey];
+      const valorB = (b as Record<string, unknown>)[sortKey];
+
+      if (valorA === null || valorA === undefined) return 1;
+      if (valorB === null || valorB === undefined) return -1;
+
+      if (typeof valorA === "number" && typeof valorB === "number") {
+        return sortAsc ? valorA - valorB : valorB - valorA;
+      }
+
+      const comparacion = String(valorA).localeCompare(String(valorB), "es", {
+        numeric: true,
+        sensitivity: "base",
+      });
+
+      return sortAsc ? comparacion : -comparacion;
+    });
+
+    return copia;
+  }, [data, sortKey, sortAsc]);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -39,7 +88,12 @@ export function Table<T extends { id: string | number; uniqueId?: string }>({
   if (!data || data.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">No hay datos para mostrar</p>
+        <p className="text-gray-600 font-medium">
+          No se encontraron registros
+        </p>
+        <p className="text-sm text-gray-500 mt-1">
+          Ajusta la búsqueda o los filtros e inténtalo de nuevo.
+        </p>
       </div>
     );
   }
@@ -52,9 +106,30 @@ export function Table<T extends { id: string | number; uniqueId?: string }>({
             {columns.map((column) => (
               <th
                 key={column.key}
+                scope="col"
+                aria-sort={
+                  sortKey === column.key
+                    ? sortAsc
+                      ? "ascending"
+                      : "descending"
+                    : "none"
+                }
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                {column.label}
+                {sortable ? (
+                  <button
+                    type="button"
+                    onClick={() => alternarOrden(column.key)}
+                    className="inline-flex items-center gap-1 uppercase tracking-wider hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+                  >
+                    <span>{column.label}</span>
+                    <span aria-hidden="true" className="text-[10px]">
+                      {sortKey === column.key ? (sortAsc ? "▲" : "▼") : "↕"}
+                    </span>
+                  </button>
+                ) : (
+                  column.label
+                )}
               </th>
             ))}
             {(onEdit || onDelete || onView || extraActions) && (
@@ -65,7 +140,7 @@ export function Table<T extends { id: string | number; uniqueId?: string }>({
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {data.map((item, index) => (
+          {filasOrdenadas.map((item, index) => (
             <tr
               key={item.uniqueId || item.id || index}
               className="hover:bg-gray-50"
