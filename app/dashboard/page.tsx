@@ -106,19 +106,22 @@ export default function DashboardPage() {
             </Card>
           ))}
         </div>
-        <div className="flex flex-wrap gap-4">
+        <div className="flex flex-wrap gap-3">
           <Link
             href="/dashboard/biblioteca"
-            className="text-blue-700 underline"
+            className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-[#04ADBF] text-white text-sm font-semibold shadow-sm transition-colors hover:bg-[#039aab] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#04ADBF]"
           >
             Consultar catálogo
           </Link>
-          <Link href="/dashboard/prestamos" className="text-blue-700 underline">
+          <Link
+            href="/dashboard/prestamos"
+            className="inline-flex items-center justify-center px-4 py-2 rounded-lg border border-[#04ADBF] bg-white text-sm font-semibold text-[#04ADBF] transition-colors hover:bg-[#04ADBF]/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#04ADBF]"
+          >
             Gestionar préstamos
           </Link>
           <Link
             href="/dashboard/biblioteca/estadisticas"
-            className="text-blue-700 underline"
+            className="inline-flex items-center justify-center px-4 py-2 rounded-lg border border-gray-300 bg-white text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400"
           >
             Ver reportes
           </Link>
