@@ -88,6 +88,7 @@ export default function CalificacionesPage() {
     observaciones: "",
   });
   const [searchTerm, setSearchTerm] = useState("");
+  const [busquedaEstudiante, setBusquedaEstudiante] = useState("");
   const [filterMateria, setFilterMateria] = useState("");
   const [filterPeriodo, setFilterPeriodo] = useState("");
   const [mostrarEstadisticas, setMostrarEstadisticas] = useState(true);
@@ -273,6 +274,12 @@ export default function CalificacionesPage() {
     e.preventDefault();
 
     if (enviando) return;
+
+    if (!editingItem && !formData.estudiante_id) {
+      setError("Selecciona un estudiante de la lista.");
+      return;
+    }
+
     setEnviando(true);
 
     try {
@@ -323,6 +330,30 @@ export default function CalificacionesPage() {
   };
 
   // Filtrado de calificaciones
+  const normalizarTexto = (texto: string) =>
+    texto
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+  const terminoEstudiante = normalizarTexto(busquedaEstudiante.trim());
+  const estudiantesSugeridos = terminoEstudiante
+    ? (estudiantes || [])
+        .filter((estudiante) => {
+          const base = normalizarTexto(
+            `${estudiante.nombres} ${estudiante.apellido_paterno} ${estudiante.apellido_materno} ${estudiante.dni || ""}`,
+          );
+          return terminoEstudiante
+            .split(/\s+/)
+            .every((palabra) => base.includes(palabra));
+        })
+        .slice(0, 8)
+    : [];
+
+  const estudianteElegido = (estudiantes || []).find(
+    (estudiante) => String(estudiante.id) === formData.estudiante_id,
+  );
+
   const calificacionesFiltradas = listadoPaginadoEnServidor
     ? calificaciones
     : calificaciones.filter((calificacion) => {
@@ -611,26 +642,65 @@ export default function CalificacionesPage() {
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Estudiante
                   </label>
-                  <select
-                    value={formData.estudiante_id}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        estudiante_id: e.target.value,
-                      })
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  >
-                    <option value="">Seleccionar estudiante</option>
-                    {estudiantes?.map((estudiante) => (
-                      <option key={estudiante.id} value={estudiante.id}>
-                        {estudiante.nombre_completo ||
-                          `${estudiante.apellido_paterno || ""} ${estudiante.apellido_materno || ""}, ${estudiante.nombres}`}
-                        {estudiante.dni ? ` - DNI ${estudiante.dni}` : ""}
-                      </option>
-                    ))}
-                  </select>
+                  {formData.estudiante_id && estudianteElegido ? (
+                    <div className="flex items-center justify-between gap-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2">
+                      <span className="text-sm font-medium text-gray-900">
+                        {`${estudianteElegido.apellido_paterno || ""} ${estudianteElegido.apellido_materno || ""}, ${estudianteElegido.nombres || ""}`}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setFormData({ ...formData, estudiante_id: "" })
+                        }
+                        className="text-xs font-semibold text-blue-700 hover:underline"
+                      >
+                        Cambiar
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <input
+                        type="text"
+                        value={busquedaEstudiante}
+                        onChange={(e) => setBusquedaEstudiante(e.target.value)}
+                        placeholder="Escribe apellido, nombre o DNI"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      {busquedaEstudiante.trim() !== "" && (
+                        <div className="mt-2 max-h-56 overflow-y-auto rounded-lg border border-gray-200">
+                          {estudiantesSugeridos.length === 0 ? (
+                            <p className="px-3 py-2 text-sm text-gray-500">
+                              Sin coincidencias
+                            </p>
+                          ) : (
+                            estudiantesSugeridos.map((estudiante) => (
+                              <button
+                                key={estudiante.id}
+                                type="button"
+                                onClick={() => {
+                                  setFormData({
+                                    ...formData,
+                                    estudiante_id: String(estudiante.id),
+                                  });
+                                  setBusquedaEstudiante("");
+                                }}
+                                className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
+                              >
+                                <span className="font-medium text-gray-900">
+                                  {`${estudiante.apellido_paterno || ""} ${estudiante.apellido_materno || ""}, ${estudiante.nombres || ""}`}
+                                </span>
+                                {estudiante.dni && (
+                                  <span className="ml-2 text-xs text-gray-500">
+                                    DNI {estudiante.dni}
+                                  </span>
+                                )}
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
 
                 <div>

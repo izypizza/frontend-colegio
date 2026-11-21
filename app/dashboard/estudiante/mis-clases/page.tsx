@@ -97,8 +97,7 @@ export default function MisClasesPage() {
                 {clase.horario.length > 0
                   ? clase.horario
                       .map(
-                        (bloque: any) =>
-                          `${bloque.dia} ${bloque.hora_inicio}`,
+                        (bloque: any) => `${bloque.dia} ${bloque.hora_inicio}`,
                       )
                       .join(" · ")
                   : "Sin horario registrado"}
