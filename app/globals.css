@@ -51,6 +51,17 @@
   --color-colegio-secondary-dark: #c91f1f;
   --color-colegio-accent: #FEFCD6;
   --color-colegio-light: #F2F0CE;
+
+  /* La escala azul adopta la identidad del colegio para que todas las
+     pantallas mantengan el mismo color de acento. */
+  --color-blue-50: #eafafc;
+  --color-blue-100: #cbf2f6;
+  --color-blue-200: #9de8f0;
+  --color-blue-500: #04adbf;
+  --color-blue-600: #039aab;
+  --color-blue-700: #028a9a;
+  --color-blue-800: #026e7a;
+  --color-blue-900: #02545c;
 }
 
 body {

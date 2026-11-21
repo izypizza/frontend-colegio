@@ -88,9 +88,7 @@ export function Table<T extends { id: string | number; uniqueId?: string }>({
   if (!data || data.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-600 font-medium">
-          No se encontraron registros
-        </p>
+        <p className="text-gray-600 font-medium">No se encontraron registros</p>
         <p className="text-sm text-gray-500 mt-1">
           Ajusta la búsqueda o los filtros e inténtalo de nuevo.
         </p>
