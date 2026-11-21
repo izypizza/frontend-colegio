@@ -11,7 +11,10 @@ interface Estudiante {
   apellido_paterno: string;
   apellido_materno: string;
   codigo_estudiante: string;
+  dni?: string | null;
   email?: string;
+  estado_matricula?: string | null;
+  matriculado?: boolean;
   seccion: {
     id: number;
     nombre: string;
@@ -20,6 +23,19 @@ interface Estudiante {
     };
   };
 }
+
+const normalizar = (texto: string) =>
+  texto
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+const ESTILO_ESTADO: Record<string, string> = {
+  matriculado: "bg-green-100 text-green-800",
+  retirado: "bg-red-100 text-red-800",
+  culminado: "bg-blue-100 text-blue-800",
+  trasladado: "bg-amber-100 text-amber-800",
+};
 
 export default function MisEstudiantesPage() {
   const [loading, setLoading] = useState(true);
@@ -59,13 +75,16 @@ export default function MisEstudiantesPage() {
       filtered = filtered.filter((e) => e.seccion.id === parseInt(seccionId));
     }
 
-    // Filtrar por término de búsqueda
+    // Filtrar por término de búsqueda (sin distinguir tildes ni mayúsculas)
     if (searchTerm) {
-      const term = searchTerm.toLowerCase();
+      const term = normalizar(searchTerm.trim());
+      const palabras = term.split(/\s+/).filter(Boolean);
+
       filtered = filtered.filter((e) => {
-        const nombreCompleto =
-          `${e.nombres} ${e.apellido_paterno} ${e.apellido_materno}`.toLowerCase();
-        return nombreCompleto.includes(term);
+        const nombreCompleto = normalizar(
+          `${e.nombres} ${e.apellido_paterno} ${e.apellido_materno} ${e.dni || ""}`,
+        );
+        return palabras.every((palabra) => nombreCompleto.includes(palabra));
       });
     }
 
@@ -174,6 +193,9 @@ export default function MisEstudiantesPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Grado/Sección
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Matrícula
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -193,6 +215,11 @@ export default function MisEstudiantesPage() {
                             {estudiante.nombres} {estudiante.apellido_paterno}{" "}
                             {estudiante.apellido_materno}
                           </div>
+                          {estudiante.dni && (
+                            <div className="text-xs text-gray-500">
+                              DNI {estudiante.dni}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -201,6 +228,16 @@ export default function MisEstudiantesPage() {
                         {estudiante.seccion.grado.nombre} -{" "}
                         {estudiante.seccion.nombre}
                       </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                          ESTILO_ESTADO[estudiante.estado_matricula || ""] ||
+                          "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        {estudiante.estado_matricula || "Sin matrícula"}
+                      </span>
                     </td>
                   </tr>
                 ))}

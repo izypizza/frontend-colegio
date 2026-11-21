@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 
 interface AlertProps {
-  type: 'success' | 'error' | 'warning' | 'info';
+  type: "success" | "error" | "warning" | "info";
   title?: string;
   message: string;
   onClose?: () => void;
@@ -15,13 +15,13 @@ export const Alert: React.FC<AlertProps> = ({
   title,
   message,
   onClose,
-  className = '',
+  className = "",
 }) => {
   const typeStyles = {
-    success: 'bg-green-50 border-green-200 text-green-800',
-    error: 'bg-red-50 border-[#F22727]/20 text-[#F22727]',
-    warning: 'bg-[#FEFCD6] border-yellow-300 text-yellow-900',
-    info: 'bg-[#04ADBF]/10 border-[#04ADBF]/30 text-[#04ADBF]',
+    success: "bg-green-50 border-green-200 text-green-800",
+    error: "bg-red-50 border-[#F22727]/20 text-[#F22727]",
+    warning: "bg-[#FEFCD6] border-yellow-300 text-yellow-900",
+    info: "bg-[#04ADBF]/10 border-[#04ADBF]/30 text-[#04ADBF]",
   };
 
   const icons = {
