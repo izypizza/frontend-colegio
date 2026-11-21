@@ -71,6 +71,20 @@ export const MODULE_PERMISSIONS: Record<string, Record<string, UserRole[]>> = {
     delete: [UserRole.ADMIN],
   },
 
+  // Competencias del Currículo Nacional
+  competencias: {
+    view: [
+      UserRole.ADMIN,
+      UserRole.AUXILIAR,
+      UserRole.DOCENTE,
+      UserRole.ESTUDIANTE,
+      UserRole.PADRE,
+    ],
+    create: [UserRole.ADMIN],
+    edit: [UserRole.ADMIN],
+    delete: [UserRole.ADMIN],
+  },
+
   // Matrículas
   matriculas: {
     view: [UserRole.ADMIN, UserRole.AUXILIAR],

@@ -291,6 +291,8 @@ export interface Calificacion {
   materia_id: number;
   periodo_academico_id: number;
   nota: number;
+  observaciones?: string | null;
+  calificacion_literal?: string | null;
   estudiante?: Estudiante;
   materia?: Materia;
   periodo_academico?: PeriodoAcademico;

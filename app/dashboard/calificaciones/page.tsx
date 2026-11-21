@@ -85,15 +85,29 @@ export default function CalificacionesPage() {
     materia_id: "",
     periodo_academico_id: "",
     nota: "",
+    observaciones: "",
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [filterMateria, setFilterMateria] = useState("");
   const [filterPeriodo, setFilterPeriodo] = useState("");
   const [mostrarEstadisticas, setMostrarEstadisticas] = useState(true);
+  const [enviando, setEnviando] = useState(false);
+
+  const listadoPaginadoEnServidor =
+    user?.role === "admin" || user?.role === "auxiliar";
 
   useEffect(() => {
-    fetchData();
-  }, [currentPage, perPage]);
+    const demora = searchTerm || filterMateria || filterPeriodo ? 400 : 0;
+    const temporizador = setTimeout(() => {
+      fetchData();
+    }, demora);
+
+    return () => clearTimeout(temporizador);
+  }, [currentPage, perPage, searchTerm, filterMateria, filterPeriodo]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterMateria, filterPeriodo]);
 
   useEffect(() => {
     if (user?.role === "admin" || user?.role === "auxiliar") {
@@ -167,7 +181,15 @@ export default function CalificacionesPage() {
           materiasData,
           periodosData,
         ] = await Promise.all([
-          calificacionService.getAll({ page: currentPage, per_page: perPage }),
+          calificacionService.buscar({
+            page: currentPage,
+            per_page: perPage,
+            buscar: searchTerm.trim() || undefined,
+            materia_id: filterMateria ? parseInt(filterMateria) : undefined,
+            periodo_academico_id: filterPeriodo
+              ? parseInt(filterPeriodo)
+              : undefined,
+          }),
           estudianteService.getAll({ all: true }),
           materiaService.getAll({ all: true }),
           periodoService.getAll({ all: true }),
@@ -218,6 +240,7 @@ export default function CalificacionesPage() {
       materia_id: "",
       periodo_academico_id: "",
       nota: "",
+      observaciones: "",
     });
     openModal();
   };
@@ -229,6 +252,7 @@ export default function CalificacionesPage() {
       materia_id: item.materia_id.toString(),
       periodo_academico_id: item.periodo_academico_id.toString(),
       nota: item.nota.toString(),
+      observaciones: item.observaciones || "",
     });
     openModal();
   };
@@ -248,12 +272,32 @@ export default function CalificacionesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (enviando) return;
+    setEnviando(true);
+
     try {
+      const nota = parseFloat(formData.nota);
+      const observaciones = formData.observaciones.trim();
+
+      if (
+        editingItem &&
+        (user?.role === "admin" || user?.role === "auxiliar")
+      ) {
+        await calificacionService.update(editingItem.id, {
+          nota,
+          ...(observaciones ? { observaciones } : {}),
+        });
+        setSuccess("Calificación actualizada correctamente");
+        closeModal();
+        fetchData();
+        return;
+      }
+
       const data = {
         estudiante_id: parseInt(formData.estudiante_id),
         materia_id: parseInt(formData.materia_id),
         periodo_academico_id: parseInt(formData.periodo_academico_id),
-        nota: parseFloat(formData.nota),
+        nota,
       };
 
       if (user?.role === "docente") {
@@ -265,39 +309,46 @@ export default function CalificacionesPage() {
             : "Calificación registrada correctamente",
         );
       } else {
-        // Admin/Auxiliar usan endpoints generales
-        if (editingItem) {
-          await calificacionService.update(editingItem.id, data);
-          setSuccess("Calificación actualizada correctamente");
-        } else {
-          await calificacionService.create(data);
-          setSuccess("Calificación creada correctamente");
-        }
+        await calificacionService.create(data);
+        setSuccess("Calificación creada correctamente");
       }
 
       closeModal();
       fetchData();
     } catch (err) {
       handleError(err, "Error al guardar la calificación");
+    } finally {
+      setEnviando(false);
     }
   };
 
   // Filtrado de calificaciones
-  const calificacionesFiltradas = calificaciones.filter((calificacion) => {
-    const estudianteNombre =
-      (calificacion.estudiante as any)?.nombre?.toLowerCase() || "";
-    const materiaNombre =
-      (calificacion.materia as any)?.nombre?.toLowerCase() || "";
-    const matchesSearch =
-      estudianteNombre.includes(searchTerm.toLowerCase()) ||
-      materiaNombre.includes(searchTerm.toLowerCase());
-    const matchesMateria =
-      !filterMateria || calificacion.materia_id?.toString() === filterMateria;
-    const matchesPeriodo =
-      !filterPeriodo ||
-      calificacion.periodo_academico_id?.toString() === filterPeriodo;
-    return matchesSearch && matchesMateria && matchesPeriodo;
-  });
+  const calificacionesFiltradas = listadoPaginadoEnServidor
+    ? calificaciones
+    : calificaciones.filter((calificacion) => {
+        const estudiante = calificacion.estudiante as any;
+        const nombreCompleto = [
+          estudiante?.nombres,
+          estudiante?.apellido_paterno,
+          estudiante?.apellido_materno,
+          estudiante?.nombre_completo,
+          estudiante?.dni,
+          (calificacion.materia as any)?.nombre,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+        const termino = searchTerm.trim().toLowerCase();
+        const matchesSearch = !termino || nombreCompleto.includes(termino);
+        const matchesMateria =
+          !filterMateria ||
+          calificacion.materia_id?.toString() === filterMateria;
+        const matchesPeriodo =
+          !filterPeriodo ||
+          calificacion.periodo_academico_id?.toString() === filterPeriodo;
+        return matchesSearch && matchesMateria && matchesPeriodo;
+      });
 
   const columns = [
     { key: "id", label: "ID" },
@@ -502,8 +553,12 @@ export default function CalificacionesPage() {
               <Button variant="secondary" onClick={closeModal}>
                 Cancelar
               </Button>
-              <Button variant="primary" onClick={handleSubmit}>
-                Guardar
+              <Button
+                variant="primary"
+                onClick={handleSubmit}
+                disabled={enviando}
+              >
+                {enviando ? "Guardando..." : "Guardar"}
               </Button>
             </>
           }
@@ -516,73 +571,112 @@ export default function CalificacionesPage() {
                 onClose={() => setError(null)}
               />
             )}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Estudiante
-              </label>
-              <select
-                value={formData.estudiante_id}
-                onChange={(e) =>
-                  setFormData({ ...formData, estudiante_id: e.target.value })
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="">Seleccionar estudiante</option>
-                {estudiantes?.map((estudiante) => (
-                  <option key={estudiante.id} value={estudiante.id}>
-                    {estudiante.nombre_completo ||
-                      `${estudiante.apellido_paterno || ""} ${estudiante.apellido_materno || ""}, ${estudiante.nombres}`}
-                    {estudiante.dni ? ` - DNI ${estudiante.dni}` : ""}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {editingItem ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                  <p className="text-xs font-semibold text-gray-500 uppercase">
+                    Estudiante
+                  </p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {(editingItem.estudiante as Estudiante)
+                      ?.nombre_completo ||
+                      `${(editingItem.estudiante as Estudiante)?.apellido_paterno || ""} ${(editingItem.estudiante as Estudiante)?.apellido_materno || ""}, ${(editingItem.estudiante as Estudiante)?.nombres || ""}`.trim() ||
+                      "N/A"}
+                  </p>
+                </div>
+                <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                  <p className="text-xs font-semibold text-gray-500 uppercase">
+                    Materia
+                  </p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {(editingItem.materia as Materia)?.nombre || "N/A"}
+                  </p>
+                </div>
+                <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg md:col-span-2">
+                  <p className="text-xs font-semibold text-gray-500 uppercase">
+                    Periodo académico
+                  </p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {(editingItem.periodo_academico as PeriodoAcademico)
+                      ?.nombre || "N/A"}
+                  </p>
+                </div>
+                <p className="md:col-span-2 text-xs text-gray-500">
+                  El estudiante, la materia y el periodo no se modifican desde
+                  aquí. Solo puede corregir el resultado de la evaluación.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Estudiante
+                  </label>
+                  <select
+                    value={formData.estudiante_id}
+                    onChange={(e) =>
+                      setFormData({ ...formData, estudiante_id: e.target.value })
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="">Seleccionar estudiante</option>
+                    {estudiantes?.map((estudiante) => (
+                      <option key={estudiante.id} value={estudiante.id}>
+                        {estudiante.nombre_completo ||
+                          `${estudiante.apellido_paterno || ""} ${estudiante.apellido_materno || ""}, ${estudiante.nombres}`}
+                        {estudiante.dni ? ` - DNI ${estudiante.dni}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Materia
-              </label>
-              <select
-                value={formData.materia_id}
-                onChange={(e) =>
-                  setFormData({ ...formData, materia_id: e.target.value })
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="">Seleccionar materia</option>
-                {materias?.map((materia) => (
-                  <option key={materia.id} value={materia.id}>
-                    {materia.nombre}
-                  </option>
-                ))}
-              </select>
-            </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Materia
+                  </label>
+                  <select
+                    value={formData.materia_id}
+                    onChange={(e) =>
+                      setFormData({ ...formData, materia_id: e.target.value })
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="">Seleccionar materia</option>
+                    {materias?.map((materia) => (
+                      <option key={materia.id} value={materia.id}>
+                        {materia.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Periodo Académico
-              </label>
-              <select
-                value={formData.periodo_academico_id}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    periodo_academico_id: e.target.value,
-                  })
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="">Seleccionar periodo</option>
-                {periodos?.map((periodo) => (
-                  <option key={periodo.id} value={periodo.id}>
-                    {periodo.nombre}
-                  </option>
-                ))}
-              </select>
-            </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Periodo Académico
+                  </label>
+                  <select
+                    value={formData.periodo_academico_id}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        periodo_academico_id: e.target.value,
+                      })
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="">Seleccionar periodo</option>
+                    {periodos?.map((periodo) => (
+                      <option key={periodo.id} value={periodo.id}>
+                        {periodo.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </>
+            )}
 
             <Input
               label="Nota (0-20)"
@@ -596,6 +690,22 @@ export default function CalificacionesPage() {
               }
               required
             />
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Observaciones (opcional)
+              </label>
+              <textarea
+                value={formData.observaciones}
+                onChange={(e) =>
+                  setFormData({ ...formData, observaciones: e.target.value })
+                }
+                rows={3}
+                maxLength={500}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Observaciones sobre el desempeño del estudiante"
+              />
+            </div>
           </form>
         </Modal>
       </div>

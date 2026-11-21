@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { docentePortalService } from "@/src/lib/services";
+import { docentePortalService, sesionClaseService } from "@/src/lib/services";
 import { Button } from "@/src/components/ui/Button";
 import { Card } from "@/src/components/ui/Card";
 import { Alert } from "@/src/components/ui/Alert";
 import { useErrorHandler } from "@/src/hooks/useErrorHandler";
 
-type EstadoAsistencia = "presente" | "tarde" | "ausente";
+type EstadoAsistencia = "presente" | "tarde" | "ausente" | "justificado";
 
 interface Asignacion {
   id: number;
@@ -55,6 +55,11 @@ const opcionesEstado: Array<{
     etiqueta: "Ausente",
     claseActiva: "bg-red-600 text-white border-red-600",
   },
+  {
+    valor: "justificado",
+    etiqueta: "Justificado",
+    claseActiva: "bg-blue-600 text-white border-blue-600",
+  },
 ];
 
 export default function LlamarListaPage() {
@@ -71,6 +76,7 @@ export default function LlamarListaPage() {
     {},
   );
   const [yaRegistrada, setYaRegistrada] = useState(false);
+  const [sesionId, setSesionId] = useState<number | null>(null);
   const [nombreSeccion, setNombreSeccion] = useState("");
   const [cargandoLista, setCargandoLista] = useState(false);
   const [guardando, setGuardando] = useState(false);
@@ -126,13 +132,33 @@ export default function LlamarListaPage() {
         setError(null);
         setSuccess(null);
 
-        const datos = await docentePortalService.listaSeccion(
-          asignacionActiva.seccion_id,
-          asignacionActiva.materia_id,
+        const sesion = await sesionClaseService.abrir({
+          asignacion_id: asignacionActiva.id,
           fecha,
-        );
+        });
 
-        const lista: EstudianteLista[] = datos?.estudiantes ?? [];
+        const identificadorSesion = sesion?.sesion?.id ?? null;
+        setSesionId(identificadorSesion);
+
+        if (!identificadorSesion) {
+          throw new Error("No se pudo abrir la sesión de clase");
+        }
+
+        const datos = await sesionClaseService.hoja(identificadorSesion);
+
+        const lista: EstudianteLista[] = (datos?.estudiantes ?? []).map(
+          (estudiante: any) => ({
+            ...estudiante,
+            estado: ["presente", "tarde", "ausente", "justificado"].includes(
+              estudiante.estado,
+            )
+              ? estudiante.estado
+              : estudiante.estado
+                ? "justificado"
+                : null,
+            observaciones: estudiante.justificacion ?? null,
+          }),
+        );
         const marcasIniciales: Record<number, EstadoAsistencia> = {};
         const observacionesIniciales: Record<number, string> = {};
 
@@ -142,11 +168,17 @@ export default function LlamarListaPage() {
             estudiante.observaciones ?? "";
         });
 
+        const seccion = datos?.sesion?.asignacion?.seccion;
+
         setEstudiantes(lista);
         setMarcas(marcasIniciales);
         setObservaciones(observacionesIniciales);
-        setYaRegistrada(Boolean(datos?.ya_registrada));
-        setNombreSeccion(datos?.seccion?.nombre ?? "");
+        setYaRegistrada(lista.some((estudiante) => estudiante.estado !== null));
+        setNombreSeccion(
+          `${seccion?.grado?.nombre ?? ""} ${seccion?.nombre ?? ""}`.trim() ||
+            datos?.seccion?.nombre ||
+            "",
+        );
       } catch (err: any) {
         handleError(err, "No se pudo cargar la lista de estudiantes");
       } finally {
@@ -175,11 +207,12 @@ export default function LlamarListaPage() {
       presentes: valores.filter((valor) => valor === "presente").length,
       tarde: valores.filter((valor) => valor === "tarde").length,
       ausentes: valores.filter((valor) => valor === "ausente").length,
+      justificados: valores.filter((valor) => valor === "justificado").length,
     };
   }, [marcas]);
 
   const guardar = async () => {
-    if (!asignacionActiva || estudiantes.length === 0) return;
+    if (!asignacionActiva || estudiantes.length === 0 || !sesionId) return;
 
     try {
       setGuardando(true);
@@ -188,20 +221,19 @@ export default function LlamarListaPage() {
       const registros = estudiantes.map((estudiante) => ({
         estudiante_id: estudiante.id,
         estado: marcas[estudiante.id] ?? "presente",
-        observaciones: observaciones[estudiante.id]?.trim() || null,
+        justificacion: observaciones[estudiante.id]?.trim() || null,
       }));
 
-      const resultado = await docentePortalService.llamarLista({
-        materia_id: asignacionActiva.materia_id,
-        seccion_id: asignacionActiva.seccion_id,
-        fecha,
+      const resultado = await sesionClaseService.llamarLista(
+        sesionId,
         registros,
-      });
+      );
 
+      const conteos = resultado?.resultado;
       const partes: string[] = [];
-      if (resultado?.creados) partes.push(`${resultado.creados} nuevos`);
-      if (resultado?.actualizados)
-        partes.push(`${resultado.actualizados} corregidos`);
+      if (conteos?.creados) partes.push(`${conteos.creados} nuevos`);
+      if (conteos?.actualizados)
+        partes.push(`${conteos.actualizados} corregidos`);
 
       setSuccess(
         `Asistencia guardada: ${partes.join(" y ") || `${estudiantes.length} registros`}.`,

@@ -404,11 +404,179 @@ class CalificacionServiceExtended extends CrudService<Calificacion> {
       `/calificaciones/estadisticas-avanzadas${params}`,
     );
   }
+
+  async buscar(params: {
+    page?: number;
+    per_page?: number;
+    buscar?: string;
+    materia_id?: number;
+    periodo_academico_id?: number;
+    todos?: boolean;
+  }): Promise<{
+    data: Calificacion[];
+    current_page: number;
+    last_page: number;
+    total: number;
+  }> {
+    const query = new URLSearchParams();
+    if (params.page) query.set("page", String(params.page));
+    if (params.per_page) query.set("per_page", String(params.per_page));
+    if (params.buscar) query.set("buscar", params.buscar);
+    if (params.materia_id) query.set("materia_id", String(params.materia_id));
+    if (params.periodo_academico_id)
+      query.set("periodo_academico_id", String(params.periodo_academico_id));
+    if (params.todos) query.set("todos", "1");
+
+    return await apiClient.get(`/calificaciones?${query.toString()}`);
+  }
 }
 
 export const calificacionService = new CalificacionServiceExtended(
   "/calificaciones",
 );
+
+// Competencias del Currículo Nacional
+export const competenciaService = {
+  getAll: async (params?: {
+    materia_id?: number;
+    ciclo?: string;
+    activo?: boolean;
+    buscar?: string;
+    all?: boolean;
+    per_page?: number;
+  }): Promise<any> => {
+    const query = new URLSearchParams();
+    if (params?.materia_id) query.set("materia_id", String(params.materia_id));
+    if (params?.ciclo) query.set("ciclo", params.ciclo);
+    if (params?.activo !== undefined) query.set("activo", String(params.activo));
+    if (params?.buscar) query.set("buscar", params.buscar);
+    if (params?.all) query.set("all", "1");
+    if (params?.per_page) query.set("per_page", String(params.per_page));
+
+    return await apiClient.get(`/competencias?${query.toString()}`);
+  },
+
+  porCurso: async (seccion_id: number, materia_id: number): Promise<any> =>
+    await apiClient.get(
+      `/competencias/por-curso?seccion_id=${seccion_id}&materia_id=${materia_id}`,
+    ),
+
+  catalogoSeccion: async (seccion_id: number): Promise<any> =>
+    await apiClient.get(`/competencias/catalogo-seccion/${seccion_id}`),
+
+  create: async (datos: any): Promise<any> =>
+    await apiClient.post("/competencias", datos),
+
+  update: async (id: number, datos: any): Promise<any> =>
+    await apiClient.put(`/competencias/${id}`, datos),
+
+  delete: async (id: number): Promise<any> =>
+    await apiClient.delete(`/competencias/${id}`),
+};
+
+export const calificacionCompetenciaService = {
+  listar: async (params?: {
+    estudiante_id?: number;
+    materia_id?: number;
+    competencia_id?: number;
+    periodo_academico_id?: number;
+    per_page?: number;
+  }): Promise<any> => {
+    const query = new URLSearchParams();
+    if (params?.estudiante_id)
+      query.set("estudiante_id", String(params.estudiante_id));
+    if (params?.materia_id) query.set("materia_id", String(params.materia_id));
+    if (params?.competencia_id)
+      query.set("competencia_id", String(params.competencia_id));
+    if (params?.periodo_academico_id)
+      query.set("periodo_academico_id", String(params.periodo_academico_id));
+    if (params?.per_page) query.set("per_page", String(params.per_page));
+
+    return await apiClient.get(
+      `/calificaciones-competencias?${query.toString()}`,
+    );
+  },
+
+  consolidado: async (
+    estudiante_id: number,
+    periodo_academico_id: number,
+  ): Promise<any> =>
+    await apiClient.get(
+      `/calificaciones-competencias/consolidado/${estudiante_id}/${periodo_academico_id}`,
+    ),
+
+  guardar: async (datos: {
+    estudiante_id: number;
+    competencia_id: number;
+    periodo_academico_id: number;
+    escala: "literal" | "numerica";
+    nivel?: string | null;
+    nota?: number | null;
+    conclusion_descriptiva?: string | null;
+  }): Promise<any> => await apiClient.post("/calificaciones-competencias", datos),
+
+  guardarLote: async (datos: {
+    periodo_academico_id: number;
+    escala: "literal" | "numerica";
+    registros: Array<{
+      estudiante_id: number;
+      competencia_id: number;
+      nivel?: string | null;
+      nota?: number | null;
+      conclusion_descriptiva?: string | null;
+    }>;
+  }): Promise<any> =>
+    await apiClient.post("/calificaciones-competencias/lote", datos),
+};
+
+// Sesiones de clase (asistencia por curso)
+export const sesionClaseService = {
+  listar: async (params?: {
+    asignacion_id?: number;
+    materia_id?: number;
+    seccion_id?: number;
+    desde?: string;
+    hasta?: string;
+    per_page?: number;
+  }): Promise<any> => {
+    const query = new URLSearchParams();
+    if (params?.asignacion_id)
+      query.set("asignacion_id", String(params.asignacion_id));
+    if (params?.materia_id) query.set("materia_id", String(params.materia_id));
+    if (params?.seccion_id) query.set("seccion_id", String(params.seccion_id));
+    if (params?.desde) query.set("desde", params.desde);
+    if (params?.hasta) query.set("hasta", params.hasta);
+    if (params?.per_page) query.set("per_page", String(params.per_page));
+
+    return await apiClient.get(`/sesiones-clase?${query.toString()}`);
+  },
+
+  abrir: async (datos: {
+    asignacion_id: number;
+    fecha: string;
+    hora_inicio?: string;
+    hora_fin?: string;
+    tema?: string;
+    observaciones?: string;
+  }): Promise<any> => await apiClient.post("/sesiones-clase", datos),
+
+  hoja: async (id: number): Promise<any> =>
+    await apiClient.get(`/sesiones-clase/${id}/hoja`),
+
+  llamarLista: async (
+    id: number,
+    registros: Array<{
+      estudiante_id: number;
+      estado: string;
+      minutos_tardanza?: number | null;
+      justificacion?: string | null;
+    }>,
+  ): Promise<any> =>
+    await apiClient.post(`/sesiones-clase/${id}/asistencias`, { registros }),
+
+  anular: async (id: number): Promise<any> =>
+    await apiClient.put(`/sesiones-clase/${id}/anular`, {}),
+};
 
 // Biblioteca Services
 export const categoriaLibroService = new CrudService<any>("/categorias-libros");
