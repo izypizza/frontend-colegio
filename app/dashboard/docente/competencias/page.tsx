@@ -68,10 +68,11 @@ export default function CalificarCompetenciasPage() {
     const cargarInicial = async () => {
       try {
         setCargando(true);
-        const [respuestaAsignaciones, respuestaEstudiantes] = (await Promise.all([
-          docentePortalService.misAsignaciones(),
-          docentePortalService.misEstudiantes(),
-        ])) as any[];
+        const [respuestaAsignaciones, respuestaEstudiantes] =
+          (await Promise.all([
+            docentePortalService.misAsignaciones(),
+            docentePortalService.misEstudiantes(),
+          ])) as any[];
 
         setAsignaciones(respuestaAsignaciones.asignaciones || []);
         setEstudiantes(respuestaEstudiantes.estudiantes || []);
@@ -183,7 +184,8 @@ export default function CalificarCompetenciasPage() {
         const valor = valores[clave(estudiante.id, competencia.id)] || "";
         if (!valor) return;
 
-        const conclusion = conclusiones[clave(estudiante.id, competencia.id)] || "";
+        const conclusion =
+          conclusiones[clave(estudiante.id, competencia.id)] || "";
 
         if (requiereConclusion(valor) && !conclusion.trim()) {
           faltantes.push(
@@ -202,7 +204,9 @@ export default function CalificarCompetenciasPage() {
     });
 
     if (registros.length === 0) {
-      setError("No hay calificaciones para guardar. Registra al menos un nivel.");
+      setError(
+        "No hay calificaciones para guardar. Registra al menos un nivel.",
+      );
       return;
     }
 
@@ -224,7 +228,9 @@ export default function CalificarCompetenciasPage() {
         escala,
         registros,
       });
-      setSuccess(respuesta?.message || "Calificaciones registradas correctamente");
+      setSuccess(
+        respuesta?.message || "Calificaciones registradas correctamente",
+      );
     } catch (err) {
       handleError(err, "No se pudieron guardar las calificaciones");
     } finally {
@@ -350,7 +356,10 @@ export default function CalificarCompetenciasPage() {
                 </thead>
                 <tbody>
                   {estudiantesDeLaSeccion.map((estudiante) => (
-                    <tr key={estudiante.id} className="border-t border-gray-100">
+                    <tr
+                      key={estudiante.id}
+                      className="border-t border-gray-100"
+                    >
                       <td className="px-3 py-2 font-medium text-gray-900 sticky left-0 bg-white">
                         {`${estudiante.apellido_paterno} ${estudiante.apellido_materno}`}
                         <div className="text-xs text-gray-500">
@@ -439,11 +448,7 @@ export default function CalificarCompetenciasPage() {
                 {estudiantesDeLaSeccion.length} estudiante(s) ·{" "}
                 {competencias.length} competencia(s)
               </p>
-              <Button
-                variant="primary"
-                onClick={guardar}
-                disabled={guardando}
-              >
+              <Button variant="primary" onClick={guardar} disabled={guardando}>
                 {guardando ? "Guardando..." : "Guardar calificaciones"}
               </Button>
             </div>

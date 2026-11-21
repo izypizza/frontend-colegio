@@ -578,8 +578,7 @@ export default function CalificacionesPage() {
                     Estudiante
                   </p>
                   <p className="text-sm font-medium text-gray-900">
-                    {(editingItem.estudiante as Estudiante)
-                      ?.nombre_completo ||
+                    {(editingItem.estudiante as Estudiante)?.nombre_completo ||
                       `${(editingItem.estudiante as Estudiante)?.apellido_paterno || ""} ${(editingItem.estudiante as Estudiante)?.apellido_materno || ""}, ${(editingItem.estudiante as Estudiante)?.nombres || ""}`.trim() ||
                       "N/A"}
                   </p>
@@ -615,7 +614,10 @@ export default function CalificacionesPage() {
                   <select
                     value={formData.estudiante_id}
                     onChange={(e) =>
-                      setFormData({ ...formData, estudiante_id: e.target.value })
+                      setFormData({
+                        ...formData,
+                        estudiante_id: e.target.value,
+                      })
                     }
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required

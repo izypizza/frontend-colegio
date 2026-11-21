@@ -448,7 +448,8 @@ export const competenciaService = {
     const query = new URLSearchParams();
     if (params?.materia_id) query.set("materia_id", String(params.materia_id));
     if (params?.ciclo) query.set("ciclo", params.ciclo);
-    if (params?.activo !== undefined) query.set("activo", String(params.activo));
+    if (params?.activo !== undefined)
+      query.set("activo", String(params.activo));
     if (params?.buscar) query.set("buscar", params.buscar);
     if (params?.all) query.set("all", "1");
     if (params?.per_page) query.set("per_page", String(params.per_page));
@@ -513,7 +514,8 @@ export const calificacionCompetenciaService = {
     nivel?: string | null;
     nota?: number | null;
     conclusion_descriptiva?: string | null;
-  }): Promise<any> => await apiClient.post("/calificaciones-competencias", datos),
+  }): Promise<any> =>
+    await apiClient.post("/calificaciones-competencias", datos),
 
   guardarLote: async (datos: {
     periodo_academico_id: number;
@@ -775,6 +777,9 @@ export const padrePortalService = {
   },
   docentesHijo: async (hijo_id: number) => {
     return await apiClient.get<any>(`/padre/docentes-hijo/${hijo_id}`);
+  },
+  horarioHijo: async (hijo_id: number) => {
+    return await apiClient.get<any>(`/padre/horario-hijo/${hijo_id}`);
   },
 };
 

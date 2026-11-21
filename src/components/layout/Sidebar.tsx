@@ -786,6 +786,7 @@ const SECCION_POR_RUTA: Record<string, string> = {
   "/dashboard/estudiante/mis-asistencias": "Mi información",
   "/dashboard/padre/mis-hijos": "Mis hijos",
   "/dashboard/padre/calificaciones": "Mis hijos",
+  "/dashboard/padre/hijos": "Mis hijos",
   "/dashboard/padre/horarios": "Mis hijos",
   "/dashboard/docentes": "Personas y cuentas",
   "/dashboard/padres": "Personas y cuentas",

@@ -191,9 +191,7 @@ export default function CompetenciasPage() {
       render: (valor: unknown) => (
         <span
           className={`px-2 py-1 rounded-full text-xs font-semibold ${
-            valor
-              ? "bg-green-100 text-green-700"
-              : "bg-gray-100 text-gray-600"
+            valor ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
           }`}
         >
           {valor ? "Activa" : "Inactiva"}
@@ -305,11 +303,7 @@ export default function CompetenciasPage() {
               <Button variant="secondary" onClick={close}>
                 Cancelar
               </Button>
-              <Button
-                variant="primary"
-                onClick={guardar}
-                disabled={guardando}
-              >
+              <Button variant="primary" onClick={guardar} disabled={guardando}>
                 {guardando ? "Guardando..." : "Guardar"}
               </Button>
             </>
