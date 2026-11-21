@@ -21,7 +21,8 @@ const TIPOS = [
 ];
 
 export default function ActividadesEvaluacionPage() {
-  const { error, success, setError, setSuccess, handleError } = useErrorHandler();
+  const { error, success, setError, setSuccess, handleError } =
+    useErrorHandler();
 
   const [asignaciones, setAsignaciones] = useState<any[]>([]);
   const [estudiantes, setEstudiantes] = useState<any[]>([]);
@@ -107,12 +108,14 @@ export default function ActividadesEvaluacionPage() {
       const mapa: Record<string, string> = {};
       Object.entries(respuesta.notas || {}).forEach(
         ([estudianteId, porActividad]: [string, any]) => {
-          Object.entries(porActividad).forEach(([actividadId, registro]: [string, any]) => {
-            mapa[`${actividadId}-${estudianteId}`] =
-              registro?.nota !== null && registro?.nota !== undefined
-                ? String(registro.nota)
-                : "";
-          });
+          Object.entries(porActividad).forEach(
+            ([actividadId, registro]: [string, any]) => {
+              mapa[`${actividadId}-${estudianteId}`] =
+                registro?.nota !== null && registro?.nota !== undefined
+                  ? String(registro.nota)
+                  : "";
+            },
+          );
         },
       );
       setValores(mapa);
@@ -213,7 +216,8 @@ export default function ActividadesEvaluacionPage() {
     }
   };
 
-  const sumaNoEsCien = actividades.length > 0 && Math.abs(pesoTotal - 100) > 0.01;
+  const sumaNoEsCien =
+    actividades.length > 0 && Math.abs(pesoTotal - 100) > 0.01;
 
   return (
     <PermissionGuard
@@ -226,7 +230,9 @@ export default function ActividadesEvaluacionPage() {
     >
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Evidencias de evaluación</h1>
+          <h1 className="text-2xl font-bold text-gray-800">
+            Evidencias de evaluación
+          </h1>
           <p className="text-gray-600 mt-1">
             Registra exámenes, tareas y prácticas con su peso. La nota de la
             competencia es el promedio ponderado, no un valor único.
@@ -234,9 +240,15 @@ export default function ActividadesEvaluacionPage() {
         </div>
 
         {success && (
-          <Alert type="success" message={success} onClose={() => setSuccess(null)} />
+          <Alert
+            type="success"
+            message={success}
+            onClose={() => setSuccess(null)}
+          />
         )}
-        {error && <Alert type="error" message={error} onClose={() => setError(null)} />}
+        {error && (
+          <Alert type="error" message={error} onClose={() => setError(null)} />
+        )}
 
         <Card>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -296,7 +308,9 @@ export default function ActividadesEvaluacionPage() {
           <>
             <Card>
               <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-                <h2 className="text-lg font-semibold text-gray-800">Evidencias</h2>
+                <h2 className="text-lg font-semibold text-gray-800">
+                  Evidencias
+                </h2>
                 <span
                   className={`px-3 py-1 rounded-full text-xs font-semibold ${
                     sumaNoEsCien
@@ -310,8 +324,8 @@ export default function ActividadesEvaluacionPage() {
 
               {sumaNoEsCien && (
                 <p className="text-xs text-amber-700 mb-3">
-                  Los pesos no suman 100. El sistema los normaliza al calcular el
-                  promedio, pero se recomienda que sumen 100.
+                  Los pesos no suman 100. El sistema los normaliza al calcular
+                  el promedio, pero se recomienda que sumen 100.
                 </p>
               )}
 
@@ -322,7 +336,10 @@ export default function ActividadesEvaluacionPage() {
                 <input
                   value={formulario.nombre}
                   onChange={(evento) =>
-                    setFormulario({ ...formulario, nombre: evento.target.value })
+                    setFormulario({
+                      ...formulario,
+                      nombre: evento.target.value,
+                    })
                   }
                   placeholder="Nombre (ej. Examen 1)"
                   className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -421,7 +438,10 @@ export default function ActividadesEvaluacionPage() {
                     </thead>
                     <tbody>
                       {estudiantesDeLaSeccion.map((estudiante) => (
-                        <tr key={estudiante.id} className="border-t border-gray-100">
+                        <tr
+                          key={estudiante.id}
+                          className="border-t border-gray-100"
+                        >
                           <td className="px-3 py-2 font-medium text-gray-900 sticky left-0 bg-white">
                             {`${estudiante.apellido_paterno} ${estudiante.apellido_materno}`}
                             <div className="text-xs text-gray-500">
@@ -436,7 +456,8 @@ export default function ActividadesEvaluacionPage() {
                                 max="20"
                                 step="0.5"
                                 value={
-                                  valores[`${actividad.id}-${estudiante.id}`] || ""
+                                  valores[`${actividad.id}-${estudiante.id}`] ||
+                                  ""
                                 }
                                 onChange={(evento) =>
                                   setValores({

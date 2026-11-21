@@ -590,7 +590,9 @@ export const actividadEvaluacionService = {
       estudiante_id: String(params.estudiante_id),
     });
 
-    return await apiClient.get(`/actividades-evaluacion/resumen?${query.toString()}`);
+    return await apiClient.get(
+      `/actividades-evaluacion/resumen?${query.toString()}`,
+    );
   },
 };
 

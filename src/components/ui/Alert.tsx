@@ -65,7 +65,8 @@ export const Alert: React.FC<AlertProps> = ({
 
   return (
     <div
-      className={`border rounded-lg p-4 ${typeStyles[type]} flex items-start gap-3 ${className}`}
+      role="alert"
+      className={`relative z-[10001] border rounded-lg p-4 ${typeStyles[type]} flex items-start gap-3 ${className}`}
     >
       <span className="flex-shrink-0">{icons[type]}</span>
       <div className="flex-1">

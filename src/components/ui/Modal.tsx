@@ -9,6 +9,7 @@ interface ModalProps {
   children: React.ReactNode;
   footer?: React.ReactNode;
   size?: "sm" | "md" | "lg" | "xl";
+  feedback?: { type: "success" | "error" | "warning"; message: string } | null;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -18,6 +19,7 @@ export const Modal: React.FC<ModalProps> = ({
   children,
   footer,
   size = "md",
+  feedback = null,
 }) => {
   // Prevenir scroll del body cuando el modal está abierto
   useEffect(() => {
@@ -100,6 +102,20 @@ export const Modal: React.FC<ModalProps> = ({
 
           {/* Body */}
           <div className="px-6 py-4 max-h-[calc(100vh-16rem)] overflow-y-auto">
+            {feedback && (
+              <div
+                role="alert"
+                className={`mb-4 flex items-start gap-3 rounded-lg border p-3 text-sm ${
+                  feedback.type === "success"
+                    ? "border-green-200 bg-green-50 text-green-800"
+                    : feedback.type === "warning"
+                      ? "border-amber-200 bg-amber-50 text-amber-800"
+                      : "border-red-200 bg-red-50 text-red-800"
+                }`}
+              >
+                <span className="font-medium">{feedback.message}</span>
+              </div>
+            )}
             {children}
           </div>
 
