@@ -806,6 +806,7 @@ export const docentePortalService = {
 
 // Portal Estudiante
 export const estudiantePortalService = {
+  misClases: async () => await apiClient.get<any>("/estudiante/mis-clases"),
   misCalificaciones: async (params?: any) => {
     return await apiClient.get<any>("/estudiante/mis-calificaciones", {
       params,
