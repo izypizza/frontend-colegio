@@ -262,6 +262,27 @@ const menuItems: MenuItem[] = [
     ),
   },
   {
+    label: "Evidencias de evaluación",
+    href: "/dashboard/docente/actividades",
+    roles: [UserRole.DOCENTE],
+    modulo: "calificaciones",
+    icon: (
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M9 17v-6h13M9 7h13M4 7h.01M4 12h.01M4 17h.01"
+        />
+      </svg>
+    ),
+  },
+  {
     label: "Calificar competencias",
     href: "/dashboard/docente/competencias",
     roles: [UserRole.DOCENTE],
@@ -777,6 +798,7 @@ const SECCION_POR_RUTA: Record<string, string> = {
   "/dashboard/docente/mis-estudiantes": "Docencia",
   "/dashboard/docente/llamar-lista": "Docencia",
   "/dashboard/docente/competencias": "Docencia",
+  "/dashboard/docente/actividades": "Docencia",
   "/dashboard/docente/tutor": "Docencia",
   "/dashboard/calificaciones": "Evaluación",
   "/dashboard/asistencias": "Evaluación",

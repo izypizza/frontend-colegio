@@ -531,6 +531,69 @@ export const calificacionCompetenciaService = {
     await apiClient.post("/calificaciones-competencias/lote", datos),
 };
 
+// Evidencias de evaluación (exámenes, tareas, prácticas) y sus notas
+export const actividadEvaluacionService = {
+  listar: async (
+    competencia_id: number,
+    periodo_academico_id: number,
+    seccion_id?: number,
+  ): Promise<any> => {
+    const query = new URLSearchParams({
+      competencia_id: String(competencia_id),
+      periodo_academico_id: String(periodo_academico_id),
+    });
+    if (seccion_id) query.set("seccion_id", String(seccion_id));
+
+    return await apiClient.get(`/actividades-evaluacion?${query.toString()}`);
+  },
+
+  create: async (datos: {
+    competencia_id: number;
+    periodo_academico_id: number;
+    nombre: string;
+    tipo: string;
+    peso: number;
+    fecha?: string | null;
+    orden?: number;
+  }): Promise<any> => await apiClient.post("/actividades-evaluacion", datos),
+
+  update: async (id: number, datos: any): Promise<any> =>
+    await apiClient.put(`/actividades-evaluacion/${id}`, datos),
+
+  delete: async (id: number): Promise<any> =>
+    await apiClient.delete(`/actividades-evaluacion/${id}`),
+
+  registrarNotas: async (
+    id: number,
+    registros: Array<{
+      estudiante_id: number;
+      nota: number | null;
+      observacion?: string | null;
+    }>,
+  ): Promise<any> =>
+    await apiClient.post(`/actividades-evaluacion/${id}/notas`, { registros }),
+
+  recalcular: async (datos: {
+    competencia_id: number;
+    periodo_academico_id: number;
+  }): Promise<any> =>
+    await apiClient.post("/actividades-evaluacion/recalcular", datos),
+
+  resumen: async (params: {
+    competencia_id: number;
+    periodo_academico_id: number;
+    estudiante_id: number;
+  }): Promise<any> => {
+    const query = new URLSearchParams({
+      competencia_id: String(params.competencia_id),
+      periodo_academico_id: String(params.periodo_academico_id),
+      estudiante_id: String(params.estudiante_id),
+    });
+
+    return await apiClient.get(`/actividades-evaluacion/resumen?${query.toString()}`);
+  },
+};
+
 // Sesiones de clase (asistencia por curso)
 export const sesionClaseService = {
   listar: async (params?: {

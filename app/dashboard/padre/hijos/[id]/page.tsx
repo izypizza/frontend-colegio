@@ -150,7 +150,10 @@ export default function DetalleHijoPage() {
       requiredRoles={[UserRole.PADRE]}
       fallback={
         <div className="p-6">
-          <Alert type="error" message="Esta página es para padres de familia." />
+          <Alert
+            type="error"
+            message="Esta página es para padres de familia."
+          />
         </div>
       }
     >
@@ -250,7 +253,10 @@ export default function DetalleHijoPage() {
                     </div>
                     <ul className="divide-y divide-gray-100">
                       {area.competencias.map((competencia: any) => (
-                        <li key={competencia.competencia_id} className="px-4 py-3">
+                        <li
+                          key={competencia.competencia_id}
+                          className="px-4 py-3"
+                        >
                           <div className="flex flex-wrap items-start justify-between gap-3">
                             <div className="flex-1 min-w-[220px]">
                               <p className="text-sm font-medium text-gray-900">
@@ -310,7 +316,9 @@ export default function DetalleHijoPage() {
                       key={String(etiqueta)}
                       className="p-3 bg-gray-50 rounded-lg border border-gray-200"
                     >
-                      <p className="text-xs text-gray-500 uppercase">{etiqueta}</p>
+                      <p className="text-xs text-gray-500 uppercase">
+                        {etiqueta}
+                      </p>
                       <p className="text-lg font-bold text-gray-900">{valor}</p>
                     </div>
                   ))}
@@ -320,15 +328,26 @@ export default function DetalleHijoPage() {
                   <table className="min-w-full text-sm">
                     <thead>
                       <tr className="bg-gray-50 text-left">
-                        <th className="px-3 py-2 font-semibold text-gray-700">Fecha</th>
-                        <th className="px-3 py-2 font-semibold text-gray-700">Curso</th>
-                        <th className="px-3 py-2 font-semibold text-gray-700">Estado</th>
+                        <th className="px-3 py-2 font-semibold text-gray-700">
+                          Fecha
+                        </th>
+                        <th className="px-3 py-2 font-semibold text-gray-700">
+                          Curso
+                        </th>
+                        <th className="px-3 py-2 font-semibold text-gray-700">
+                          Estado
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {(asistencias.asistencias || []).map((registro: any) => (
-                        <tr key={registro.id} className="border-t border-gray-100">
-                          <td className="px-3 py-2 text-gray-700">{registro.fecha}</td>
+                        <tr
+                          key={registro.id}
+                          className="border-t border-gray-100"
+                        >
+                          <td className="px-3 py-2 text-gray-700">
+                            {registro.fecha}
+                          </td>
                           <td className="px-3 py-2 text-gray-700">
                             {registro.materia?.nombre || "—"}
                           </td>
