@@ -84,7 +84,12 @@ export const Modal: React.FC<ModalProps> = ({
         >
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50 rounded-t-lg">
-            <h3 id="modal-title" className="text-lg font-semibold text-gray-900">{title}</h3>
+            <h3
+              id="modal-title"
+              className="text-lg font-semibold text-gray-900"
+            >
+              {title}
+            </h3>
             <button
               type="button"
               onClick={onClose}

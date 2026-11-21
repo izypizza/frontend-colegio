@@ -18,6 +18,7 @@ interface TableProps<T> {
   onView?: (item: T) => void;
   extraActions?: (item: T) => React.ReactNode;
   sortable?: boolean;
+  filtrable?: boolean;
 }
 
 export function Table<T extends { id: string | number; uniqueId?: string }>({
@@ -29,9 +30,38 @@ export function Table<T extends { id: string | number; uniqueId?: string }>({
   onView,
   extraActions,
   sortable = true,
+  filtrable = true,
 }: TableProps<T>) {
   const [sortKey, setSortKey] = React.useState<string | null>(null);
   const [sortAsc, setSortAsc] = React.useState(true);
+  const [filtro, setFiltro] = React.useState("");
+
+  const normalizar = (texto: string) =>
+    texto
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+  const filasFiltradas = React.useMemo(() => {
+    const termino = normalizar(filtro.trim());
+
+    if (!termino) return data;
+
+    const palabras = termino.split(/\s+/).filter(Boolean);
+
+    return data.filter((item) => {
+      const contenido = normalizar(
+        columns
+          .map((column) => {
+            const valor = (item as Record<string, unknown>)[column.key];
+            return valor === null || valor === undefined ? "" : String(valor);
+          })
+          .join(" "),
+      );
+
+      return palabras.every((palabra) => contenido.includes(palabra));
+    });
+  }, [data, columns, filtro]);
 
   const alternarOrden = (key: string) => {
     if (!sortable) return;
@@ -52,9 +82,9 @@ export function Table<T extends { id: string | number; uniqueId?: string }>({
   };
 
   const filasOrdenadas = React.useMemo(() => {
-    if (!sortKey) return data;
+    if (!sortKey) return filasFiltradas;
 
-    const copia = [...data];
+    const copia = [...filasFiltradas];
     copia.sort((a, b) => {
       const valorA = (a as Record<string, unknown>)[sortKey];
       const valorB = (b as Record<string, unknown>)[sortKey];
@@ -75,7 +105,7 @@ export function Table<T extends { id: string | number; uniqueId?: string }>({
     });
 
     return copia;
-  }, [data, sortKey, sortAsc]);
+  }, [filasFiltradas, sortKey, sortAsc]);
 
   if (loading) {
     return (
@@ -98,6 +128,18 @@ export function Table<T extends { id: string | number; uniqueId?: string }>({
 
   return (
     <div className="overflow-x-auto">
+      {filtrable && (
+        <div className="px-6 pt-4 pb-2">
+          <input
+            type="text"
+            value={filtro}
+            onChange={(evento) => setFiltro(evento.target.value)}
+            placeholder="Filtrar en la tabla..."
+            aria-label="Filtrar registros de la tabla"
+            className="w-full md:w-72 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      )}
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
@@ -138,6 +180,16 @@ export function Table<T extends { id: string | number; uniqueId?: string }>({
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
+          {filasOrdenadas.length === 0 && (
+            <tr>
+              <td
+                colSpan={columns.length + (onEdit || onDelete || onView || extraActions ? 1 : 0)}
+                className="px-6 py-8 text-center text-sm text-gray-500"
+              >
+                No hay filas que coincidan con el filtro.
+              </td>
+            </tr>
+          )}
           {filasOrdenadas.map((item, index) => (
             <tr
               key={item.uniqueId || item.id || index}
