@@ -379,7 +379,8 @@ export default function AsignacionesPage() {
                 required
                 opciones={secciones.map((seccion) => ({
                   valor: seccion.id,
-                  etiqueta: `${seccion.nombre} - ${seccion.grado?.nombre ?? ""}`.trim(),
+                  etiqueta:
+                    `${seccion.nombre} - ${seccion.grado?.nombre ?? ""}`.trim(),
                 }))}
               />
 

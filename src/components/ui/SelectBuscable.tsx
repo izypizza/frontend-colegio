@@ -94,12 +94,7 @@ export function SelectBuscable({
         </label>
       )}
 
-      <input
-        type="hidden"
-        value={valor}
-        required={required}
-        readOnly
-      />
+      <input type="hidden" value={valor} required={required} readOnly />
 
       <button
         type="button"
