@@ -5,26 +5,13 @@ import { PermissionGuard } from "@/src/components/auth";
 import { UserRole } from "@/src/types";
 import { useErrorHandler } from "@/src/hooks/useErrorHandler";
 import {
+  calificacionCompetenciaService,
   libroNotasService,
   materiaService,
   periodoService,
   seccionService,
 } from "@/src/lib/services";
 import { useEffect, useMemo, useState } from "react";
-
-const COLOR_NIVEL: Record<string, string> = {
-  AD: "bg-green-100 text-green-800",
-  A: "bg-blue-100 text-blue-800",
-  B: "bg-amber-100 text-amber-800",
-  C: "bg-red-100 text-red-800",
-};
-
-const DESCRIPCION_NIVEL: Record<string, string> = {
-  AD: "Logro destacado",
-  A: "Logro esperado",
-  B: "En proceso",
-  C: "En inicio",
-};
 
 const listaDe = (respuesta: any): any[] =>
   Array.isArray(respuesta) ? respuesta : respuesta?.data || [];
@@ -44,6 +31,15 @@ export default function LibroDeNotasPage() {
   const [libro, setLibro] = useState<any>(null);
   const [cargando, setCargando] = useState(true);
   const [consultando, setConsultando] = useState(false);
+  const [guardando, setGuardando] = useState(false);
+  const [exito, setExito] = useState("");
+  const [valores, setValores] = useState<Record<string, string>>({});
+  const [conclusiones, setConclusiones] = useState<Record<string, string>>({});
+
+  const claveCelda = (estudianteId: number, competenciaId: number) =>
+    `${estudianteId}-${competenciaId}`;
+
+  const requiereConclusion = (nivel: string) => nivel === "B" || nivel === "C";
 
   useEffect(() => {
     const cargar = async () => {
@@ -109,11 +105,85 @@ export default function LibroDeNotasPage() {
         periodo_academico_id: parseInt(periodoId),
       });
       setLibro(respuesta);
+
+      const mapaValores: Record<string, string> = {};
+      const mapaConclusiones: Record<string, string> = {};
+
+      (respuesta.estudiantes || []).forEach((estudiante: any) => {
+        estudiante.niveles.forEach((nivel: any) => {
+          const clave = claveCelda(estudiante.id, nivel.competencia_id);
+          mapaValores[clave] = nivel.nivel || "";
+          mapaConclusiones[clave] = nivel.conclusion_descriptiva || "";
+        });
+      });
+
+      setValores(mapaValores);
+      setConclusiones(mapaConclusiones);
+      setExito("");
     } catch (err) {
       handleError(err, "No se pudo cargar el libro de notas");
       setLibro(null);
     } finally {
       setConsultando(false);
+    }
+  };
+
+  const guardar = async () => {
+    if (!libro || !periodoId || guardando) return;
+
+    const registros: any[] = [];
+    const faltantes: string[] = [];
+
+    libro.estudiantes.forEach((estudiante: any) => {
+      estudiante.niveles.forEach((nivel: any) => {
+        const clave = claveCelda(estudiante.id, nivel.competencia_id);
+        const valor = valores[clave] || "";
+
+        if (!valor) return;
+
+        const conclusion = conclusiones[clave] || "";
+
+        if (requiereConclusion(valor) && !conclusion.trim()) {
+          faltantes.push(
+            `${estudiante.apellido_paterno} — ${nivel.competencia_id}`,
+          );
+        }
+
+        registros.push({
+          estudiante_id: estudiante.id,
+          competencia_id: nivel.competencia_id,
+          nivel: valor,
+          conclusion_descriptiva: conclusion.trim() || null,
+        });
+      });
+    });
+
+    if (registros.length === 0) {
+      setError("No hay niveles para guardar.");
+      return;
+    }
+
+    if (faltantes.length > 0) {
+      setError(
+        `Faltan conclusiones descriptivas en ${faltantes.length} celda(s). Los niveles B y C las exigen.`,
+      );
+      return;
+    }
+
+    try {
+      setGuardando(true);
+      setError(null);
+      await calificacionCompetenciaService.guardarLote({
+        periodo_academico_id: parseInt(periodoId),
+        escala: "literal",
+        registros,
+      });
+      setExito(`Se guardaron ${registros.length} niveles de logro.`);
+      await consultar();
+    } catch (err) {
+      handleError(err, "No se pudieron guardar las calificaciones");
+    } finally {
+      setGuardando(false);
     }
   };
 
@@ -215,15 +285,30 @@ export default function LibroDeNotasPage() {
 
         {libro && libro.estudiantes.length > 0 && (
           <Card>
-            <div className="mb-3">
-              <h2 className="text-lg font-semibold text-gray-800">
-                {libro.materia.nombre}
-              </h2>
-              <p className="text-sm text-gray-600">
-                {libro.seccion.nombre} · {libro.periodo.nombre} · Ciclo{" "}
-                {libro.seccion.ciclo}
-              </p>
+            <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-800">
+                  {libro.materia.nombre}
+                </h2>
+                <p className="text-sm text-gray-600">
+                  {libro.seccion.nombre} · {libro.periodo.nombre} · Ciclo{" "}
+                  {libro.seccion.ciclo}
+                </p>
+              </div>
+              <Button
+                variant="primary"
+                onClick={guardar}
+                disabled={guardando}
+              >
+                {guardando ? "Guardando..." : "Guardar niveles"}
+              </Button>
             </div>
+
+            {exito && (
+              <div className="mb-3">
+                <Alert type="success" message={exito} />
+              </div>
+            )}
 
             {libro.competencias.length === 0 ? (
               <Alert
@@ -267,20 +352,54 @@ export default function LibroDeNotasPage() {
                             {estudiante.dni ? ` · DNI ${estudiante.dni}` : ""}
                           </div>
                         </td>
-                        {estudiante.niveles.map((nivel: any) => (
-                          <td key={nivel.competencia_id} className="px-3 py-2">
-                            {nivel.nivel ? (
-                              <span
-                                className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${COLOR_NIVEL[nivel.nivel] || "bg-gray-100 text-gray-700"}`}
-                                title={DESCRIPCION_NIVEL[nivel.nivel] || ""}
+                        {estudiante.niveles.map((nivel: any) => {
+                          const clave = claveCelda(
+                            estudiante.id,
+                            nivel.competencia_id,
+                          );
+                          const valor = valores[clave] || "";
+
+                          return (
+                            <td
+                              key={nivel.competencia_id}
+                              className="px-2 py-2 align-top"
+                            >
+                              <select
+                                value={valor}
+                                onChange={(evento) =>
+                                  setValores({
+                                    ...valores,
+                                    [clave]: evento.target.value,
+                                  })
+                                }
+                                aria-label={`Nivel de ${estudiante.nombres} en la competencia ${nivel.competencia_id}`}
+                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                               >
-                                {nivel.nivel}
-                              </span>
-                            ) : (
-                              <span className="text-xs text-gray-400">—</span>
-                            )}
-                          </td>
-                        ))}
+                                <option value="">—</option>
+                                <option value="AD">AD</option>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                              </select>
+
+                              {requiereConclusion(valor) && (
+                                <textarea
+                                  value={conclusiones[clave] || ""}
+                                  onChange={(evento) =>
+                                    setConclusiones({
+                                      ...conclusiones,
+                                      [clave]: evento.target.value,
+                                    })
+                                  }
+                                  rows={2}
+                                  maxLength={1000}
+                                  placeholder="Conclusión descriptiva"
+                                  className="mt-1 w-full px-2 py-1 text-xs border border-amber-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                />
+                              )}
+                            </td>
+                          );
+                        })}
                       </tr>
                     ))}
                   </tbody>
