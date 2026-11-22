@@ -6,5 +6,7 @@ export { Modal } from "./Modal";
 export { Table } from "./Table";
 export { Toast, ToastContainer } from "./Toast";
 export { Pagination } from "./Pagination";
+export { SelectBuscable } from "./SelectBuscable";
+export type { OpcionSelect } from "./SelectBuscable";
 export { SystemStatusBanner } from "./SystemStatusBanner";
 export { CredencialTemporalModal } from "./CredencialTemporalModal";

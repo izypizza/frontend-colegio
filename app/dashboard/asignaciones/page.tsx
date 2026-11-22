@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button, Card, Table } from "@/src/components/ui";
+import { Button, Card, SelectBuscable, Table } from "@/src/components/ui";
 import { PermissionGuard } from "@/src/components/auth";
 import { UserRole } from "@/src/types";
 import { usePermissions } from "@/src/hooks/usePermissions";
@@ -344,63 +344,44 @@ export default function AsignacionesPage() {
               onSubmit={asignar}
               className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end"
             >
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Docente
-                </label>
-                <select
-                  value={docenteId}
-                  onChange={(evento) => setDocenteId(evento.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#04ADBF]"
-                  required
-                >
-                  <option value="">Seleccionar</option>
-                  {docentes.map((docente) => (
-                    <option key={docente.id} value={docente.id}>
-                      {docente.apellido_paterno} {docente.apellido_materno},{" "}
-                      {docente.nombres}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <SelectBuscable
+                label="Docente"
+                valor={docenteId}
+                onChange={setDocenteId}
+                vacio="Seleccionar docente"
+                placeholder="Buscar por apellido o nombre"
+                required
+                opciones={docentes.map((docente) => ({
+                  valor: docente.id,
+                  etiqueta: `${docente.apellido_paterno} ${docente.apellido_materno}, ${docente.nombres}`,
+                }))}
+              />
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Materia
-                </label>
-                <select
-                  value={materiaId}
-                  onChange={(evento) => setMateriaId(evento.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#04ADBF]"
-                  required
-                >
-                  <option value="">Seleccionar</option>
-                  {materias.map((materia) => (
-                    <option key={materia.id} value={materia.id}>
-                      {materia.nombre}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <SelectBuscable
+                label="Materia"
+                valor={materiaId}
+                onChange={setMateriaId}
+                vacio="Seleccionar materia"
+                placeholder="Buscar materia"
+                required
+                opciones={materias.map((materia) => ({
+                  valor: materia.id,
+                  etiqueta: materia.nombre,
+                }))}
+              />
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Sección
-                </label>
-                <select
-                  value={seccionId}
-                  onChange={(evento) => setSeccionId(evento.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#04ADBF]"
-                  required
-                >
-                  <option value="">Seleccionar</option>
-                  {secciones.map((seccion) => (
-                    <option key={seccion.id} value={seccion.id}>
-                      {seccion.nombre} - {seccion.grado?.nombre}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <SelectBuscable
+                label="Sección"
+                valor={seccionId}
+                onChange={setSeccionId}
+                vacio="Seleccionar sección"
+                placeholder="Buscar por grado o sección"
+                required
+                opciones={secciones.map((seccion) => ({
+                  valor: seccion.id,
+                  etiqueta: `${seccion.nombre} - ${seccion.grado?.nombre ?? ""}`.trim(),
+                }))}
+              />
 
               <div className="flex items-center gap-3">
                 <label className="flex items-center gap-2 text-sm text-gray-700">
