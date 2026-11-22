@@ -1,7 +1,7 @@
 "use client";
 
 import { Alert, Button, Card, Input, Modal, Table } from "@/src/components/ui";
-import { materiaService } from "@/src/lib/services";
+import { materiaEstadoService, materiaService } from "@/src/lib/services";
 import { Materia } from "@/src/types/models";
 import { useEffect, useState } from "react";
 import { useErrorHandler } from "@/src/hooks/useErrorHandler";
@@ -77,7 +77,36 @@ export default function MateriasPage() {
   const columns = [
     { key: "id", label: "ID" },
     { key: "nombre", label: "Nombre de la Materia" },
+    {
+      key: "activo",
+      label: "Estado",
+      render: (valor: unknown) => (
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-semibold ${
+            valor === false
+              ? "bg-gray-100 text-gray-600"
+              : "bg-green-100 text-green-700"
+          }`}
+        >
+          {valor === false ? "Desactivada" : "Activa"}
+        </span>
+      ),
+    },
   ];
+
+  const alternarEstado = async (materia: Materia) => {
+    try {
+      const activar = materia.activo === false;
+      const respuesta = await materiaEstadoService.cambiar(
+        materia.id,
+        activar,
+      );
+      handleSuccess(respuesta?.message || "Estado actualizado");
+      await fetchData();
+    } catch (err) {
+      handleError(err, "No se pudo cambiar el estado de la materia");
+    }
+  };
 
   return (
     <PermissionGuard
@@ -130,10 +159,23 @@ export default function MateriasPage() {
 
         <Card>
           <Table
-            columns={columns}
+            columns={columns as never}
             data={materiasFiltradas}
             loading={loading}
             onEdit={permissions.canEdit ? handleEditClick : undefined}
+            extraActions={
+              permissions.canEdit
+                ? (materia: Materia) => (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => alternarEstado(materia)}
+                    >
+                      {materia.activo === false ? "Activar" : "Desactivar"}
+                    </Button>
+                  )
+                : undefined
+            }
           />
         </Card>
 

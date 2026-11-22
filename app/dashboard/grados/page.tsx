@@ -310,11 +310,10 @@ export default function GradosYSeccionesPage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="max-w-md"
               />
-              {permissions.canCreate && (
-                <Button variant="primary" onClick={handleCreateGrado}>
-                  + Nuevo Grado
-                </Button>
-              )}
+              <p className="text-sm text-gray-500">
+                Los grados corresponden a la estructura del colegio. Aquí se
+                gestionan sus secciones y su ciclo.
+              </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

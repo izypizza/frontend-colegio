@@ -145,6 +145,7 @@ export interface Seccion {
 export interface Materia {
   id: number;
   nombre: string;
+  activo?: boolean;
   created_at: string;
   updated_at: string;
 }

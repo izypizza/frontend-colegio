@@ -83,9 +83,7 @@ export default function LibroDeNotasPage() {
   const seccionesFiltradas = useMemo(
     () =>
       gradoNombre
-        ? secciones.filter(
-            (seccion) => seccion.grado?.nombre === gradoNombre,
-          )
+        ? secciones.filter((seccion) => seccion.grado?.nombre === gradoNombre)
         : secciones,
     [secciones, gradoNombre],
   );
@@ -250,7 +248,8 @@ export default function LibroDeNotasPage() {
               placeholder="Buscar por grado o sección"
               opciones={seccionesFiltradas.map((seccion) => ({
                 valor: seccion.id,
-                etiqueta: `${seccion.nombre} - ${seccion.grado?.nombre ?? ""}`.trim(),
+                etiqueta:
+                  `${seccion.nombre} - ${seccion.grado?.nombre ?? ""}`.trim(),
               }))}
             />
 
@@ -295,11 +294,7 @@ export default function LibroDeNotasPage() {
                   {libro.seccion.ciclo}
                 </p>
               </div>
-              <Button
-                variant="primary"
-                onClick={guardar}
-                disabled={guardando}
-              >
+              <Button variant="primary" onClick={guardar} disabled={guardando}>
                 {guardando ? "Guardando..." : "Guardar niveles"}
               </Button>
             </div>
@@ -342,7 +337,10 @@ export default function LibroDeNotasPage() {
                   </thead>
                   <tbody>
                     {libro.estudiantes.map((estudiante: any) => (
-                      <tr key={estudiante.id} className="border-t border-gray-100">
+                      <tr
+                        key={estudiante.id}
+                        className="border-t border-gray-100"
+                      >
                         <td className="px-3 py-2 sticky left-0 bg-white">
                           <div className="font-medium text-gray-900">
                             {`${estudiante.apellido_paterno} ${estudiante.apellido_materno}`}

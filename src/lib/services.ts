@@ -166,6 +166,11 @@ export const padreService = new PadreServiceExtended("/padres");
 export const gradoService = new CrudService<Grado>("/grados");
 export const seccionService = new CrudService<Seccion>("/secciones");
 export const materiaService = new CrudService<Materia>("/materias");
+
+export const materiaEstadoService = {
+  cambiar: async (id: number, activo: boolean): Promise<any> =>
+    await apiClient.put(`/materias/${id}/estado`, { activo }),
+};
 export const periodoService = new CrudService<PeriodoAcademico>("/periodos");
 class PeriodoAcademicoServiceExtended extends CrudService<PeriodoAcademico> {
   async activar(id: number): Promise<any> {
