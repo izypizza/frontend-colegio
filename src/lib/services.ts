@@ -596,6 +596,25 @@ export const actividadEvaluacionService = {
   },
 };
 
+// Libro de notas de un curso (estudiantes x competencias)
+export const libroNotasService = {
+  obtener: async (params: {
+    seccion_id: number;
+    materia_id: number;
+    periodo_academico_id: number;
+  }): Promise<any> => {
+    const query = new URLSearchParams({
+      seccion_id: String(params.seccion_id),
+      materia_id: String(params.materia_id),
+      periodo_academico_id: String(params.periodo_academico_id),
+    });
+
+    return await apiClient.get(
+      `/calificaciones-competencias/libro?${query.toString()}`,
+    );
+  },
+};
+
 // Sesiones de clase (asistencia por curso)
 export const sesionClaseService = {
   listar: async (params?: {

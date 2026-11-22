@@ -304,6 +304,27 @@ const menuItems: MenuItem[] = [
     ),
   },
   {
+    label: "Libro de notas",
+    href: "/dashboard/calificaciones/libro",
+    roles: [UserRole.ADMIN, UserRole.AUXILIAR, UserRole.DOCENTE],
+    modulo: "calificaciones",
+    icon: (
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M3 10h18M3 6h18M3 14h18M3 18h18"
+        />
+      </svg>
+    ),
+  },
+  {
     label: "Calificaciones",
     href: "/dashboard/calificaciones",
     roles: [UserRole.ADMIN, UserRole.AUXILIAR, UserRole.DOCENTE],
@@ -821,6 +842,7 @@ const SECCION_POR_RUTA: Record<string, string> = {
   "/dashboard/docente/actividades": "Docencia",
   "/dashboard/docente/tutor": "Docencia",
   "/dashboard/calificaciones": "Evaluación",
+  "/dashboard/calificaciones/libro": "Evaluación",
   "/dashboard/asistencias": "Evaluación",
   "/dashboard/competencias": "Evaluación",
   "/dashboard/mis-calificaciones": "Mi información",
