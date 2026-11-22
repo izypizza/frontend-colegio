@@ -41,9 +41,10 @@ class ApiClient {
     response: Response,
     responseType: "json" | "blob" = "json",
   ): Promise<T> {
-    const data = responseType === "blob" && response.ok
-      ? null
-      : await response.json().catch(() => null);
+    const data =
+      responseType === "blob" && response.ok
+        ? null
+        : await response.json().catch(() => null);
 
     if (!response.ok) {
       // Verificar si el sistema está en modo mantenimiento (503)
@@ -59,7 +60,9 @@ class ApiClient {
       }
 
       if (response.status >= 500) {
-        throw new Error("No se pudo completar la solicitud. Inténtalo nuevamente más tarde.");
+        throw new Error(
+          "No se pudo completar la solicitud. Inténtalo nuevamente más tarde.",
+        );
       }
 
       if (response.status === HTTP_STATUS.UNAUTHORIZED) {
