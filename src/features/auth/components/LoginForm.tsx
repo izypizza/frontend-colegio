@@ -16,6 +16,18 @@ export const LoginForm: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [avisoSesion, setAvisoSesion] = useState("");
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    if (sessionStorage.getItem("sesion_invalidada") === "1") {
+      setAvisoSesion(
+        "Tu sesión anterior dejó de ser válida porque los datos del sistema se actualizaron. Vuelve a iniciar sesión.",
+      );
+      sessionStorage.removeItem("sesion_invalidada");
+    }
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -85,6 +97,12 @@ export const LoginForm: React.FC = () => {
               />
             </svg>
             {successMessage}
+          </div>
+        )}
+
+        {avisoSesion && (
+          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm">
+            {avisoSesion}
           </div>
         )}
 

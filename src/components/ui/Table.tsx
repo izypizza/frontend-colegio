@@ -183,7 +183,10 @@ export function Table<T extends { id: string | number; uniqueId?: string }>({
           {filasOrdenadas.length === 0 && (
             <tr>
               <td
-                colSpan={columns.length + (onEdit || onDelete || onView || extraActions ? 1 : 0)}
+                colSpan={
+                  columns.length +
+                  (onEdit || onDelete || onView || extraActions ? 1 : 0)
+                }
                 className="px-6 py-8 text-center text-sm text-gray-500"
               >
                 No hay filas que coincidan con el filtro.

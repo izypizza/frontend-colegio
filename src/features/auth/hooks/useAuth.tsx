@@ -37,6 +37,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
         if (token && storedUser) {
           setUser(JSON.parse(storedUser));
+
+          // El token guardado puede haber quedado inválido (por ejemplo, si la
+          // base de datos se recreó). Se valida contra el servidor antes de
+          // dar la sesión por buena.
+          try {
+            const perfil = await authService.getCurrentUser();
+
+            if (perfil?.data) {
+              setUser(perfil.data);
+              localStorage.setItem(USER_KEY, JSON.stringify(perfil.data));
+            }
+          } catch {
+            localStorage.removeItem(TOKEN_KEY);
+            localStorage.removeItem(REFRESH_TOKEN_KEY);
+            localStorage.removeItem(USER_KEY);
+            setUser(null);
+          }
         }
       } catch (err) {
         console.error("Error initializing auth:", err);

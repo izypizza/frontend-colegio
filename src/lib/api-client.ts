@@ -4,6 +4,7 @@ import {
   HTTP_STATUS,
   REFRESH_TOKEN_KEY,
   TOKEN_KEY,
+  USER_KEY,
 } from "@/src/config/constants";
 
 class ApiClient {
@@ -64,6 +65,7 @@ class ApiClient {
       if (response.status === HTTP_STATUS.UNAUTHORIZED) {
         this.clearAuth();
         if (typeof window !== "undefined") {
+          sessionStorage.setItem("sesion_invalidada", "1");
           window.location.href = "/login";
         }
         throw new Error("Sesión expirada. Por favor inicia sesión nuevamente.");
@@ -197,6 +199,7 @@ class ApiClient {
     if (typeof window !== "undefined") {
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(REFRESH_TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
     }
   }
 }
