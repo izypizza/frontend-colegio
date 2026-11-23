@@ -140,8 +140,8 @@ export function Table<T extends { id: string | number; uniqueId?: string }>({
           />
         </div>
       )}
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+      <table className="block w-full md:table md:min-w-full md:divide-y md:divide-gray-200">
+        <thead className="hidden bg-gray-50 md:table-header-group">
           <tr>
             {columns.map((column) => (
               <th
@@ -179,15 +179,15 @@ export function Table<T extends { id: string | number; uniqueId?: string }>({
             )}
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="block bg-transparent md:table-row-group md:bg-white md:divide-y md:divide-gray-200">
           {filasOrdenadas.length === 0 && (
-            <tr>
+            <tr className="block md:table-row">
               <td
                 colSpan={
                   columns.length +
                   (onEdit || onDelete || onView || extraActions ? 1 : 0)
                 }
-                className="px-6 py-8 text-center text-sm text-gray-500"
+                className="block px-3 py-8 text-center text-sm text-gray-500 md:table-cell md:px-6"
               >
                 No hay filas que coincidan con el filtro.
               </td>
@@ -196,26 +196,31 @@ export function Table<T extends { id: string | number; uniqueId?: string }>({
           {filasOrdenadas.map((item, index) => (
             <tr
               key={item.uniqueId || item.id || index}
-              className="hover:bg-gray-50"
+              className="mb-3 block rounded-xl border border-gray-200 bg-white p-3 shadow-sm md:mb-0 md:table-row md:rounded-none md:border-0 md:p-0 md:shadow-none hover:bg-gray-50"
             >
               {columns.map((column) => (
                 <td
                   key={column.key}
-                  className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                  className="flex items-start justify-between gap-3 border-b border-gray-100 py-2 text-sm text-gray-900 last:border-0 md:table-cell md:border-0 md:px-6 md:py-4 md:whitespace-nowrap"
                 >
-                  {column.render
-                    ? column.render(
-                        (item as Record<string, unknown>)[column.key],
-                        item,
-                      )
-                    : String(
-                        (item as Record<string, unknown>)[column.key] ?? "",
-                      )}
+                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 md:hidden">
+                    {column.label}
+                  </span>
+                  <div className="text-right md:text-left">
+                    {column.render
+                      ? column.render(
+                          (item as Record<string, unknown>)[column.key],
+                          item,
+                        )
+                      : String(
+                          (item as Record<string, unknown>)[column.key] ?? "",
+                        )}
+                  </div>
                 </td>
               ))}
               {(onEdit || onDelete || onView || extraActions) && (
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <div className="flex justify-end gap-2">
+                <td className="flex flex-wrap items-center justify-end gap-2 pt-3 md:table-cell md:px-6 md:py-4 md:pt-4 md:text-right md:whitespace-nowrap text-sm font-medium">
+                  <div className="flex flex-wrap justify-end gap-2">
                     {onView && (
                       <Button
                         variant="outline"

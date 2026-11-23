@@ -97,10 +97,7 @@ export default function MateriasPage() {
   const alternarEstado = async (materia: Materia) => {
     try {
       const activar = materia.activo === false;
-      const respuesta = await materiaEstadoService.cambiar(
-        materia.id,
-        activar,
-      );
+      const respuesta = await materiaEstadoService.cambiar(materia.id, activar);
       handleSuccess(respuesta?.message || "Estado actualizado");
       await fetchData();
     } catch (err) {
