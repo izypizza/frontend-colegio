@@ -913,7 +913,9 @@ export default function DashboardPage() {
               <div className="mt-3 grid grid-cols-3 gap-2 text-center">
                 <div className="rounded-lg bg-gray-50 px-2 py-2">
                   <p className="text-xs text-gray-600">Registradas</p>
-                  <p className="text-lg font-bold text-gray-800">{totalNotas}</p>
+                  <p className="text-lg font-bold text-gray-800">
+                    {totalNotas}
+                  </p>
                 </div>
                 <div className="rounded-lg bg-green-50 px-2 py-2">
                   <p className="text-xs text-green-700">Aprobados</p>

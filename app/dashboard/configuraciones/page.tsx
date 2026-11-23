@@ -6,7 +6,6 @@ import { Button } from "@/src/components/ui/Button";
 import { configuracionService } from "@/src/lib/services";
 import { useTheme } from "@/src/contexts/ThemeContext";
 import { useAuth } from "@/src/features/auth";
-import { useAssistantPreference } from "@/src/hooks/useAssistantPreference";
 import { UserRole } from "@/src/types";
 
 interface Configuracion {
@@ -22,11 +21,6 @@ export default function ConfiguracionesPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === UserRole.ADMIN;
   const { fontSize, screenReader, setFontSize, setScreenReader } = useTheme();
-  const {
-    assistantEnabled,
-    toggleAssistant,
-    isLoaded: assistantLoaded,
-  } = useAssistantPreference();
   const [configuraciones, setConfiguraciones] = useState<
     Record<string, Configuracion[]>
   >({});
@@ -67,15 +61,48 @@ export default function ConfiguracionesPage() {
     }
   };
 
+  const confirmarCambioPeligroso = (clave: string, valor: boolean) => {
+    if (clave === "sistema_modo_mantenimiento") {
+      if (!valor) return true;
+      return confirm(
+        "Al activar el modo mantenimiento, todos los usuarios excepto los administradores quedarán fuera del sistema hasta que lo desactives. ¿Deseas continuar?",
+      );
+    }
+
+    if (!valor && clave.startsWith("modulos_")) {
+      return confirm(
+        "Si desactivas este módulo, desaparecerá del menú y nadie podrá usar sus funciones hasta que lo vuelvas a activar. ¿Deseas continuar?",
+      );
+    }
+
+    return true;
+  };
+
   const handleCambio = (clave: string, valor: any, tipo: string) => {
     let valorConvertido = valor;
 
     if (tipo === "boolean") {
       valorConvertido = valor === "true" || valor === true;
     } else if (tipo === "integer") {
-      valorConvertido = parseInt(valor) || 0;
+      valorConvertido = parseInt(valor);
+      if (Number.isNaN(valorConvertido)) {
+        valorConvertido = 0;
+      }
     }
 
+    if (
+      clave === "seguridad_intentos_login" &&
+      (valorConvertido < 1 || valorConvertido > 20)
+    ) {
+      setError("El máximo de intentos de login debe estar entre 1 y 20.");
+      return;
+    }
+
+    if (tipo === "boolean" && !confirmarCambioPeligroso(clave, valorConvertido)) {
+      return;
+    }
+
+    setError("");
     setCambios((prev) => ({
       ...prev,
       [clave]: valorConvertido,
@@ -94,6 +121,10 @@ export default function ConfiguracionesPage() {
         }),
       );
 
+      const afectaMenu = Object.keys(cambios).some((clave) =>
+        clave.startsWith("modulos_"),
+      );
+
       await configuracionService.actualizar(configuracionesArray);
       setSuccess(
         "Configuraciones guardadas correctamente. Los cambios se han aplicado al sistema.",
@@ -102,9 +133,11 @@ export default function ConfiguracionesPage() {
       fetchData();
 
       // Recargar la página después de 2 segundos para reflejar los cambios en el menú
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
+      if (afectaMenu) {
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      }
     } catch {
       setError("Error al guardar configuraciones");
     }
@@ -162,6 +195,8 @@ export default function ConfiguracionesPage() {
       return (
         <input
           type="number"
+          min={config.clave === "seguridad_intentos_login" ? 1 : 0}
+          max={config.clave === "seguridad_intentos_login" ? 20 : undefined}
           value={valorActual}
           onChange={(e) =>
             handleCambio(config.clave, e.target.value, config.tipo)
@@ -292,45 +327,6 @@ export default function ConfiguracionesPage() {
           </div>
         </div>
       </Card>
-
-      {/* Asistente Virtual - Disponible para todos */}
-      {assistantLoaded && (
-        <Card className="bg-teal-50 border-teal-200">
-          <h2 className="text-xl font-bold mb-4 text-teal-900">
-            Asistente Virtual
-          </h2>
-          <p className="text-sm text-teal-700 mb-4">
-            Habilita o deshabilita el tour interactivo del sistema que te ayuda
-            a conocer todas las funcionalidades
-          </p>
-
-          <div className="bg-white rounded-lg p-4">
-            <label className="flex items-center gap-3 cursor-pointer">
-              <div className="relative">
-                <input
-                  type="checkbox"
-                  checked={assistantEnabled}
-                  onChange={(e) => toggleAssistant(e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500"></div>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-900">
-                  {assistantEnabled
-                    ? "Asistente Virtual Habilitado"
-                    : "Asistente Virtual Deshabilitado"}
-                </span>
-                <p className="text-xs text-gray-500">
-                  {assistantEnabled
-                    ? "El botón flotante aparecerá en la esquina inferior derecha"
-                    : "El asistente no será visible en el dashboard"}
-                </p>
-              </div>
-            </label>
-          </div>
-        </Card>
-      )}
 
       {/* Información del Sistema - Solo Admin */}
       {isAdmin && infoSistema && (
@@ -553,12 +549,6 @@ export default function ConfiguracionesPage() {
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Clave:{" "}
-                          <code className="bg-gray-100 px-1 rounded">
-                            {config.clave}
-                          </code>
-                        </p>
                       </div>
                     </div>
                   ))}
@@ -571,22 +561,25 @@ export default function ConfiguracionesPage() {
       {isAdmin && (
         <Card className="bg-yellow-50 border-yellow-200">
           <h3 className="font-bold text-yellow-800 mb-2">
-            Advertencias Importantes
+            Antes de cambiar algo
           </h3>
           <ul className="text-sm text-yellow-700 space-y-1">
             <li>
-              • Desactivar módulos ocultará funcionalidades para todos los
-              usuarios
+              • Desactivar un módulo lo quita del menú para todos los usuarios
+              del colegio.
             </li>
             <li>
-              • La protección de grados/secciones requiere confirmación
-              adicional para modificaciones
+              • El modo mantenimiento bloquea el acceso a todos, excepto a los
+              administradores.
             </li>
             <li>
-              • Limpiar cache puede afectar temporalmente el rendimiento del
-              sistema
+              • El máximo de intentos de login permitido va de 1 a 20; valores
+              muy bajos bloquean cuentas rápido.
             </li>
-            <li>• Los cambios en configuraciones se aplican inmediatamente</li>
+            <li>
+              • Limpiar la caché puede ralentizar el sistema durante unos
+              minutos.
+            </li>
           </ul>
         </Card>
       )}

@@ -32,7 +32,11 @@ export default function PlanificacionLayout({
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-2" role="tablist" aria-label="Secciones de planificación">
+      <div
+        className="flex flex-wrap gap-2"
+        role="tablist"
+        aria-label="Secciones de planificación"
+      >
         {PESTANAS.map((pestana) => {
           const activa = pathname?.startsWith(pestana.href);
 
