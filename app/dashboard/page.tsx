@@ -647,438 +647,305 @@ export default function DashboardPage() {
     );
   }
 
-  // Dashboard para admin/auxiliar
+  // Dashboard para administración
+  const asistenciaHoy = stats?.asistencias_hoy;
+  const notaResumen = stats?.calificaciones;
+
+  const indicadores = [
+    {
+      titulo: "Estudiantes",
+      valor: stats?.estudiantes ?? 0,
+      detalle: `${stats?.grados ?? 0} grados activos`,
+      href: "/dashboard/estudiantes",
+      trazo:
+        "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z",
+    },
+    {
+      titulo: "Docentes",
+      valor: stats?.docentes ?? 0,
+      detalle: "Personal activo",
+      href: "/dashboard/docentes",
+      trazo:
+        "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z",
+    },
+    {
+      titulo: "Secciones",
+      valor: stats?.secciones ?? 0,
+      detalle: `${stats?.materias ?? 0} cursos`,
+      href: "/dashboard/grados",
+      trazo:
+        "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10",
+    },
+    {
+      titulo: "Asistencia de hoy",
+      valor: `${asistenciaHoy?.porcentaje_asistencia ?? 0}%`,
+      detalle: `${asistenciaHoy?.presentes ?? 0} de ${asistenciaHoy?.total ?? 0}`,
+      href: "/dashboard/asistencias",
+      trazo: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
+    },
+  ];
+
+  const resumen: [string, string | number][] = [
+    ["Padres de familia", stats?.padres ?? 0],
+    ["Calificaciones", notaResumen?.total_calificaciones ?? 0],
+    ["Promedio general", notaResumen?.promedio_general ?? "—"],
+    ["Aprobados", notaResumen?.aprobados ?? 0],
+    ["Desaprobados", notaResumen?.desaprobados ?? 0],
+    ["Tardanzas hoy", asistenciaHoy?.tardes ?? 0],
+    ["Ausentes hoy", asistenciaHoy?.ausentes ?? 0],
+    ["Préstamos activos", stats?.biblioteca?.prestamos_activos ?? 0],
+    ["Préstamos vencidos", stats?.biblioteca?.prestamos_vencidos ?? 0],
+    ["Elecciones activas", stats?.elecciones?.activas ?? 0],
+  ];
+
+  const gruposAcceso = [
+    {
+      grupo: "Académico",
+      items: [
+        { etiqueta: "Libro de notas", href: "/dashboard/calificaciones/libro" },
+        { etiqueta: "Calificaciones", href: "/dashboard/calificaciones" },
+        { etiqueta: "Asistencias", href: "/dashboard/asistencias" },
+        { etiqueta: "Planificación", href: "/dashboard/planificacion" },
+        { etiqueta: "Competencias", href: "/dashboard/competencias" },
+      ],
+    },
+    {
+      grupo: "Personas",
+      items: [
+        { etiqueta: "Estudiantes", href: "/dashboard/estudiantes" },
+        { etiqueta: "Matrículas", href: "/dashboard/matriculas" },
+        { etiqueta: "Docentes", href: "/dashboard/docentes" },
+        { etiqueta: "Padres", href: "/dashboard/padres" },
+        { etiqueta: "Usuarios", href: "/dashboard/usuarios" },
+      ],
+    },
+    {
+      grupo: "Institución",
+      items: [
+        { etiqueta: "Grados y secciones", href: "/dashboard/grados" },
+        { etiqueta: "Materias", href: "/dashboard/materias" },
+        { etiqueta: "Periodos", href: "/dashboard/periodos" },
+        { etiqueta: "Biblioteca", href: "/dashboard/biblioteca" },
+        { etiqueta: "Configuraciones", href: "/dashboard/configuraciones" },
+      ],
+    },
+  ];
+
+  const totalAsistencia = asistenciaHoy?.total ?? 0;
+  const proporcionPresentes =
+    totalAsistencia > 0
+      ? Math.round(((asistenciaHoy?.presentes ?? 0) / totalAsistencia) * 100)
+      : 0;
+  const totalNotas = notaResumen?.total_calificaciones ?? 0;
+  const proporcionAprobados =
+    totalNotas > 0
+      ? Math.round(((notaResumen?.aprobados ?? 0) / totalNotas) * 100)
+      : 0;
+
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Header */}
-      <div className="bg-[#04ADBF] rounded-lg p-6 shadow-md text-white">
-        <h1 className="text-3xl lg:text-4xl font-bold">
-          Bienvenido(a), {user?.name}
-        </h1>
-        <p className="mt-2 text-lg text-teal-50">
-          Gestiona todo el sistema educativo y supervisa las operaciones
-        </p>
-        <p className="text-sm text-teal-100 mt-1">
-          Institución Educativa N° 51006 Túpac Amaru
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">
+            Hola, {user?.name}
+          </h1>
+          <p className="text-sm text-gray-500">
+            Panel de administración · I.E. N° 51006 Túpac Amaru
+          </p>
+        </div>
+        <Link
+          href="/dashboard/calificaciones/libro"
+          className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-[#04ADBF] text-white text-sm font-semibold shadow-sm transition-colors hover:bg-[#039aab] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#04ADBF]"
+        >
+          Abrir libro de notas
+        </Link>
       </div>
 
       {stats ? (
         <>
-          {/* Stats Grid - Mejorado */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="hover:shadow-lg transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500 font-medium uppercase tracking-wider">
-                    Estudiantes
-                  </p>
-                  <p className="text-4xl font-bold text-gray-900 mt-2">
-                    {stats.estudiantes}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Total matriculados
-                  </p>
-                </div>
-                <div className="p-4 bg-blue-100 rounded-2xl">
-                  <svg
-                    className="w-10 h-10 text-blue-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500 font-medium uppercase tracking-wider">
-                    Docentes
-                  </p>
-                  <p className="text-4xl font-bold text-gray-900 mt-2">
-                    {stats.docentes}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">Personal activo</p>
-                </div>
-                <div className="p-4 bg-green-100 rounded-2xl">
-                  <svg
-                    className="w-10 h-10 text-green-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500 font-medium uppercase tracking-wider">
-                    Padres
-                  </p>
-                  <p className="text-4xl font-bold text-gray-900 mt-2">
-                    {stats.padres}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Familias registradas
-                  </p>
-                </div>
-                <div className="p-4 bg-purple-100 rounded-2xl">
-                  <svg
-                    className="w-10 h-10 text-purple-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500 font-medium uppercase tracking-wider">
-                    Secciones
-                  </p>
-                  <p className="text-4xl font-bold text-gray-900 mt-2">
-                    {stats.secciones}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    {stats.grados} grados activos
-                  </p>
-                </div>
-                <div className="p-4 bg-yellow-100 rounded-2xl">
-                  <svg
-                    className="w-10 h-10 text-yellow-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </Card>
-          </div>
-
-          {/* Segunda fila de stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="hover:shadow-lg transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500 font-medium uppercase tracking-wider">
-                    Materias
-                  </p>
-                  <p className="text-4xl font-bold text-gray-900 mt-2">
-                    {stats.materias}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">Asignaturas</p>
-                </div>
-                <div className="p-4 bg-orange-100 rounded-2xl">
-                  <svg
-                    className="w-10 h-10 text-orange-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </Card>
-
-            {stats.asistencias_hoy && (
-              <Card className="hover:shadow-lg transition-shadow">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-500 font-medium uppercase tracking-wider">
-                      Asistencia Hoy
-                    </p>
-                    <p className="text-4xl font-bold text-gray-900 mt-2">
-                      {stats.asistencias_hoy.porcentaje_asistencia}%
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      {stats.asistencias_hoy.presentes} presentes
-                    </p>
-                  </div>
-                  <div className="p-4 bg-teal-100 rounded-2xl">
-                    <svg
-                      className="w-10 h-10 text-teal-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                  </div>
-                </div>
-              </Card>
-            )}
-
-            <Card className="hover:shadow-lg transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500 font-medium uppercase tracking-wider">
-                    Promedio General
-                  </p>
-                  <p className="text-4xl font-bold text-gray-900 mt-2">
-                    {stats.calificaciones?.promedio_general ?? "—"}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    {stats.calificaciones
-                      ? `${stats.calificaciones.aprobados} aprobados`
-                      : "Sin periodo activo"}
-                  </p>
-                </div>
-                <div className="p-4 bg-indigo-100 rounded-2xl">
-                  <svg
-                    className="w-10 h-10 text-indigo-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500 font-medium uppercase tracking-wider">
-                    Calificaciones
-                  </p>
-                  <p className="text-4xl font-bold text-gray-900 mt-2">
-                    {stats.calificaciones?.total_calificaciones || 0}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Total registradas
-                  </p>
-                </div>
-                <div className="p-4 bg-pink-100 rounded-2xl">
-                  <svg
-                    className="w-10 h-10 text-pink-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </Card>
-          </div>
-
-          {/* Detalles de Asistencias y Calificaciones */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {stats.asistencias_hoy && (
-              <Card className="hover:shadow-lg transition-shadow">
-                <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                  <div className="w-1 h-6 bg-teal-500 rounded mr-3"></div>
-                  Resumen de Asistencias Hoy
-                </h2>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <span className="text-gray-700 font-medium">
-                      Total Registradas
-                    </span>
-                    <span className="text-2xl font-bold text-gray-900">
-                      {stats.asistencias_hoy.total}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
-                    <span className="text-green-700 font-medium">
-                      Presentes
-                    </span>
-                    <span className="text-2xl font-bold text-green-700">
-                      {stats.asistencias_hoy.presentes}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-red-50 rounded-lg">
-                    <span className="text-red-700 font-medium">Ausentes</span>
-                    <span className="text-2xl font-bold text-red-700">
-                      {stats.asistencias_hoy.ausentes}
-                    </span>
-                  </div>
-                  <div className="mt-4 p-4 bg-[#04ADBF] rounded-lg text-white">
-                    <p className="text-sm font-medium opacity-90">
-                      Porcentaje de Asistencia
-                    </p>
-                    <p className="text-5xl font-bold mt-1">
-                      {stats.asistencias_hoy.porcentaje_asistencia}%
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            )}
-
-            {stats.calificaciones && (
-              <Card className="hover:shadow-lg transition-shadow">
-                <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                  <div className="w-1 h-6 bg-indigo-500 rounded mr-3"></div>
-                  Resumen de Calificaciones
-                </h2>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <span className="text-gray-700 font-medium">
-                      Promedio General
-                    </span>
-                    <span className="text-2xl font-bold text-gray-900">
-                      {stats.calificaciones.promedio_general}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-                    <span className="text-blue-700 font-medium">
-                      Total Registradas
-                    </span>
-                    <span className="text-2xl font-bold text-blue-700">
-                      {stats.calificaciones.total_calificaciones}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3 mt-4">
-                    <div className="p-4 bg-green-600 rounded-lg text-white text-center">
-                      <p className="text-sm font-medium opacity-90">
-                        Aprobados
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            {indicadores.map((indicador) => (
+              <Link key={indicador.titulo} href={indicador.href}>
+                <Card className="hover:shadow-md transition-shadow h-full">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                        {indicador.titulo}
                       </p>
-                      <p className="text-4xl font-bold mt-2">
-                        {stats.calificaciones.aprobados}
+                      <p className="mt-2 text-2xl sm:text-3xl font-bold text-gray-900">
+                        {indicador.valor}
+                      </p>
+                      <p className="mt-1 text-xs text-gray-500">
+                        {indicador.detalle}
                       </p>
                     </div>
-                    <div className="p-4 bg-red-600 rounded-lg text-white text-center">
-                      <p className="text-sm font-medium opacity-90">
-                        Desaprobados
-                      </p>
-                      <p className="text-4xl font-bold mt-2">
-                        {stats.calificaciones.desaprobados}
-                      </p>
+                    <div className="p-2 bg-teal-50 rounded-lg text-[#04ADBF]">
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d={indicador.trazo}
+                        />
+                      </svg>
                     </div>
                   </div>
-                </div>
-              </Card>
-            )}
+                </Card>
+              </Link>
+            ))}
           </div>
 
-          {/* Biblioteca y Elecciones */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {stats.biblioteca && (
-              <Card>
-                <h2 className="text-xl font-bold text-gray-900 mb-4">
-                  Biblioteca
-                </h2>
-                <div className="space-y-3">
-                  <div className="p-3 bg-blue-50 rounded-lg flex justify-between items-center">
-                    <span className="text-gray-700">Préstamos Activos:</span>
-                    <span className="text-xl font-bold text-blue-600">
-                      {stats.biblioteca.prestamos_activos}
-                    </span>
-                  </div>
-                  <div className="p-3 bg-red-50 rounded-lg flex justify-between items-center">
-                    <span className="text-gray-700">Préstamos Vencidos:</span>
-                    <span className="text-xl font-bold text-red-600">
-                      {stats.biblioteca.prestamos_vencidos}
-                    </span>
-                  </div>
-                  <div className="p-3 bg-green-50 rounded-lg flex justify-between items-center">
-                    <span className="text-gray-700">Total Este Mes:</span>
-                    <span className="text-xl font-bold text-green-600">
-                      {stats.biblioteca.total_prestamos_mes}
-                    </span>
-                  </div>
+          <Card>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">
+              Resumen del periodo
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-gray-100 rounded-lg overflow-hidden">
+              {resumen.map(([titulo, valor]) => (
+                <div key={titulo} className="bg-white px-3 py-3">
+                  <p className="text-xs text-gray-500">{titulo}</p>
+                  <p className="text-xl font-bold text-gray-900 mt-1">
+                    {valor}
+                  </p>
                 </div>
-              </Card>
-            )}
+              ))}
+            </div>
+          </Card>
 
-            {stats.elecciones && (
-              <Card>
-                <h2 className="text-xl font-bold text-gray-900 mb-4">
-                  Elecciones
-                </h2>
-                <div className="space-y-3">
-                  <div className="p-4 bg-green-50 rounded-lg">
-                    <p className="text-sm text-green-600">Elecciones Activas</p>
-                    <p className="text-4xl font-bold text-green-900">
-                      {stats.elecciones.activas}
-                    </p>
+          <div>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">
+              Accesos rápidos
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+              {gruposAcceso.map((grupo) => (
+                <Card key={grupo.grupo}>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[#04ADBF] mb-3">
+                    {grupo.grupo}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {grupo.items.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className="inline-flex items-center px-3 py-1.5 rounded-full border border-gray-200 bg-white text-xs font-medium text-gray-700 transition-colors hover:border-[#04ADBF] hover:text-[#04ADBF] focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#04ADBF]"
+                      >
+                        {item.etiqueta}
+                      </Link>
+                    ))}
                   </div>
-                  <div className="p-4 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-blue-600">Próximas Elecciones</p>
-                    <p className="text-4xl font-bold text-blue-900">
-                      {stats.elecciones.proximas}
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            )}
+                </Card>
+              ))}
+            </div>
           </div>
 
-          {/* Distribución por Grados */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+            {asistenciaHoy && (
+              <Card>
+                <div className="flex items-baseline justify-between">
+                  <h2 className="text-base font-semibold text-gray-800">
+                    Asistencia de hoy
+                  </h2>
+                  <Link
+                    href="/dashboard/asistencias"
+                    className="text-xs font-semibold text-[#04ADBF] hover:underline"
+                  >
+                    Ver detalle
+                  </Link>
+                </div>
+                <p className="mt-3 text-3xl font-bold text-gray-900">
+                  {asistenciaHoy.porcentaje_asistencia}%
+                </p>
+                <div className="mt-2 h-2 w-full rounded-full bg-gray-100">
+                  <div
+                    className="h-2 rounded-full bg-[#04ADBF]"
+                    style={{ width: `${proporcionPresentes}%` }}
+                  />
+                </div>
+                <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                  <div className="rounded-lg bg-green-50 px-2 py-2">
+                    <p className="text-xs text-green-700">Presentes</p>
+                    <p className="text-lg font-bold text-green-800">
+                      {asistenciaHoy.presentes}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-red-50 px-2 py-2">
+                    <p className="text-xs text-red-700">Ausentes</p>
+                    <p className="text-lg font-bold text-red-800">
+                      {asistenciaHoy.ausentes}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-amber-50 px-2 py-2">
+                    <p className="text-xs text-amber-700">Tardanzas</p>
+                    <p className="text-lg font-bold text-amber-800">
+                      {asistenciaHoy.tardes ?? 0}
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            <Card>
+              <div className="flex items-baseline justify-between">
+                <h2 className="text-base font-semibold text-gray-800">
+                  Calificaciones
+                </h2>
+                <Link
+                  href="/dashboard/calificaciones"
+                  className="text-xs font-semibold text-[#04ADBF] hover:underline"
+                >
+                  Ver detalle
+                </Link>
+              </div>
+              <p className="mt-3 text-3xl font-bold text-gray-900">
+                {notaResumen?.promedio_general ?? "—"}
+              </p>
+              <p className="text-xs text-gray-500">Promedio general</p>
+              <div className="mt-2 h-2 w-full rounded-full bg-gray-100">
+                <div
+                  className="h-2 rounded-full bg-green-500"
+                  style={{ width: `${proporcionAprobados}%` }}
+                />
+              </div>
+              <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                <div className="rounded-lg bg-gray-50 px-2 py-2">
+                  <p className="text-xs text-gray-600">Registradas</p>
+                  <p className="text-lg font-bold text-gray-800">{totalNotas}</p>
+                </div>
+                <div className="rounded-lg bg-green-50 px-2 py-2">
+                  <p className="text-xs text-green-700">Aprobados</p>
+                  <p className="text-lg font-bold text-green-800">
+                    {notaResumen?.aprobados ?? 0}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-red-50 px-2 py-2">
+                  <p className="text-xs text-red-700">Desaprobados</p>
+                  <p className="text-lg font-bold text-red-800">
+                    {notaResumen?.desaprobados ?? 0}
+                  </p>
+                </div>
+              </div>
+            </Card>
+          </div>
+
           {stats.distribucion_grados &&
             stats.distribucion_grados.length > 0 && (
               <Card>
-                <h2 className="text-xl font-bold text-gray-900 mb-4">
-                  Distribución por Grados
+                <h2 className="text-base font-semibold text-gray-800 mb-3">
+                  Matrícula por grado
                 </h2>
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b-2 border-gray-200">
-                        <th className="text-left py-3 px-4 font-semibold text-gray-700">
-                          Grado
-                        </th>
-                        <th className="text-center py-3 px-4 font-semibold text-gray-700">
+                      <tr className="border-b border-gray-200 text-left text-xs uppercase tracking-wide text-gray-500">
+                        <th className="py-2 pr-4 font-semibold">Grado</th>
+                        <th className="py-2 pr-4 text-center font-semibold">
                           Secciones
                         </th>
-                        <th className="text-center py-3 px-4 font-semibold text-gray-700">
+                        <th className="py-2 text-right font-semibold">
                           Estudiantes
                         </th>
                       </tr>
@@ -1088,15 +955,15 @@ export default function DashboardPage() {
                         (grado: any, idx: number) => (
                           <tr
                             key={idx}
-                            className="border-b border-gray-100 hover:bg-gray-50"
+                            className="border-b border-gray-50 last:border-0 hover:bg-gray-50"
                           >
-                            <td className="py-3 px-4 font-medium">
+                            <td className="py-2 pr-4 font-medium text-gray-800">
                               {grado.grado}
                             </td>
-                            <td className="text-center py-3 px-4">
+                            <td className="py-2 pr-4 text-center text-gray-600">
                               {grado.secciones}
                             </td>
-                            <td className="text-center py-3 px-4 font-bold text-blue-600">
+                            <td className="py-2 text-right font-bold text-[#04ADBF]">
                               {grado.estudiantes}
                             </td>
                           </tr>
@@ -1108,40 +975,39 @@ export default function DashboardPage() {
               </Card>
             )}
 
-          {/* Actividad Reciente */}
           {stats.actividad_reciente && stats.actividad_reciente.length > 0 && (
             <Card>
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
-                Actividad Reciente
+              <h2 className="text-base font-semibold text-gray-800 mb-3">
+                Actividad reciente
               </h2>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {stats.actividad_reciente.map((actividad: any, idx: number) => {
                   const colorClasses: Record<string, string> = {
-                    blue: "bg-blue-600",
-                    green: "bg-green-600",
-                    red: "bg-red-600",
+                    blue: "bg-[#04ADBF]",
+                    green: "bg-green-500",
+                    red: "bg-red-500",
                   };
                   return (
                     <div
                       key={idx}
-                      className="flex items-start gap-3 pb-3 border-b last:border-b-0"
+                      className="flex items-start gap-3 pb-2 border-b border-gray-50 last:border-0 last:pb-0"
                     >
                       <div
-                        className={`w-2 h-2 rounded-full mt-2 ${
-                          colorClasses[actividad.color] || "bg-gray-600"
+                        className={`w-2 h-2 rounded-full mt-1.5 ${
+                          colorClasses[actividad.color] || "bg-gray-400"
                         }`}
                       ></div>
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800">
                           {actividad.titulo}
                         </p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-xs text-gray-600">
                           {actividad.descripcion}
                         </p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          {actividad.fecha}
-                        </p>
                       </div>
+                      <p className="text-xs text-gray-400 whitespace-nowrap">
+                        {actividad.fecha}
+                      </p>
                     </div>
                   );
                 })}
