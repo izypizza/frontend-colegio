@@ -116,7 +116,7 @@ const menuItems: MenuItem[] = [
   },
   {
     label: "Carga académica",
-    href: "/dashboard/asignaciones",
+    href: "/dashboard/planificacion/carga",
     roles: [UserRole.ADMIN],
     icon: (
       <svg
@@ -216,7 +216,7 @@ const menuItems: MenuItem[] = [
   },
   {
     label: "Horarios",
-    href: "/dashboard/horarios",
+    href: "/dashboard/planificacion/horario",
     roles: [
       UserRole.ADMIN,
       UserRole.AUXILIAR,
@@ -833,8 +833,9 @@ const SECCION_POR_RUTA: Record<string, string> = {
   "/dashboard/grados": "Académico",
   "/dashboard/materias": "Académico",
   "/dashboard/periodos": "Académico",
-  "/dashboard/asignaciones": "Académico",
-  "/dashboard/horarios": "Académico",
+  "/dashboard/asignaciones": "Planificación",
+  "/dashboard/horarios": "Planificación",
+  "/dashboard/planificacion": "Planificación",
   "/dashboard/docente/mis-clases": "Docencia",
   "/dashboard/docente/mis-estudiantes": "Docencia",
   "/dashboard/docente/llamar-lista": "Docencia",
