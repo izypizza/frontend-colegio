@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Button, Card, Input, Modal, Alert } from "@/src/components/ui";
+import Link from "next/link";
 import {
   gradoService,
   seccionService,
@@ -266,6 +267,14 @@ export default function GradosYSeccionesPage() {
             >
               Volver a grados
             </Button>
+          )}
+          {viewMode === "grados" && (
+            <Link
+              href="/dashboard/grados/reporte"
+              className="inline-flex items-center justify-center px-4 py-2 rounded-lg border border-[#04ADBF] bg-white text-sm font-semibold text-[#04ADBF] transition-colors hover:bg-[#04ADBF]/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#04ADBF]"
+            >
+              Reporte de secciones
+            </Link>
           )}
         </div>
 

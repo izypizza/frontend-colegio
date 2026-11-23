@@ -5,25 +5,25 @@ export const validateEmail = (email: string): boolean => {
 
 export const validatePassword = (password: string): string | null => {
   if (password.length < 6) {
-    return 'La contraseña debe tener al menos 6 caracteres';
+    return "La contraseña debe tener al menos 6 caracteres";
   }
   return null;
 };
 
 export const validateLoginForm = (
   email: string,
-  password: string
+  password: string,
 ): Record<string, string> => {
   const errors: Record<string, string> = {};
 
   if (!email.trim()) {
-    errors.email = 'El email es requerido';
+    errors.email = "El email es requerido";
   } else if (!validateEmail(email)) {
-    errors.email = 'Email inválido';
+    errors.email = "Email inválido";
   }
 
   if (!password) {
-    errors.password = 'La contraseña es requerida';
+    errors.password = "La contraseña es requerida";
   } else {
     const passwordError = validatePassword(password);
     if (passwordError) {
@@ -35,5 +35,16 @@ export const validateLoginForm = (
 };
 
 export const cn = (...classes: (string | boolean | undefined)[]): string => {
-  return classes.filter(Boolean).join(' ');
+  return classes.filter(Boolean).join(" ");
+};
+
+export const descargarBlob = (blob: Blob, nombreArchivo: string): void => {
+  const url = URL.createObjectURL(blob);
+  const enlace = document.createElement("a");
+  enlace.href = url;
+  enlace.download = nombreArchivo;
+  document.body.appendChild(enlace);
+  enlace.click();
+  document.body.removeChild(enlace);
+  URL.revokeObjectURL(url);
 };

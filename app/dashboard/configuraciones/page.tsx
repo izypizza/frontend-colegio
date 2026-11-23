@@ -98,7 +98,10 @@ export default function ConfiguracionesPage() {
       return;
     }
 
-    if (tipo === "boolean" && !confirmarCambioPeligroso(clave, valorConvertido)) {
+    if (
+      tipo === "boolean" &&
+      !confirmarCambioPeligroso(clave, valorConvertido)
+    ) {
       return;
     }
 

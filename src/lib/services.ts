@@ -962,4 +962,38 @@ export const reporteService = {
       params: { periodo_academico_id },
     });
   },
+  secciones: async (params?: {
+    nivel?: string;
+    turno?: string;
+    buscar?: string;
+  }) => {
+    return await apiClient.get<any>("/reportes/secciones", { params });
+  },
+  seccionesPdf: async (params?: { nivel?: string; turno?: string }) => {
+    return await apiClient.get<any>("/reportes/secciones/pdf", {
+      responseType: "blob",
+      params,
+    });
+  },
+  seccionesExcel: async (params?: { nivel?: string; turno?: string }) => {
+    return await apiClient.get<any>("/reportes/secciones/excel", {
+      responseType: "blob",
+      params,
+    });
+  },
+  nominaSeccion: async (seccionId: number) => {
+    return await apiClient.get<any>(`/reportes/secciones/${seccionId}/nomina`);
+  },
+  nominaSeccionPdf: async (seccionId: number) => {
+    return await apiClient.get<any>(
+      `/reportes/secciones/${seccionId}/nomina/pdf`,
+      { responseType: "blob" },
+    );
+  },
+  nominaSeccionExcel: async (seccionId: number) => {
+    return await apiClient.get<any>(
+      `/reportes/secciones/${seccionId}/nomina/excel`,
+      { responseType: "blob" },
+    );
+  },
 };
