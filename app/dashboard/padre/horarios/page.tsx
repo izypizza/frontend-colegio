@@ -1,6 +1,11 @@
 "use client";
 
-import { Alert, Card, GrillaHorario, SelectBuscable } from "@/src/components/ui";
+import {
+  Alert,
+  Card,
+  GrillaHorario,
+  SelectBuscable,
+} from "@/src/components/ui";
 import { PermissionGuard } from "@/src/components/auth";
 import { UserRole } from "@/src/types";
 import { useErrorHandler } from "@/src/hooks/useErrorHandler";
