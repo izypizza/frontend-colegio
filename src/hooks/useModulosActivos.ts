@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { configuracionService } from "@/src/lib/services";
 
 export interface ModulosActivos {
@@ -10,16 +10,32 @@ export interface ModulosActivos {
   horarios: boolean;
 }
 
+const modulosPorDefecto: ModulosActivos = {
+  biblioteca: true,
+  elecciones: true,
+  permisos: true,
+  calificaciones: true,
+  asistencias: true,
+  horarios: true,
+};
+
 export function useModulosActivos() {
-  const [modulos, setModulos] = useState<ModulosActivos>({
-    biblioteca: true,
-    elecciones: true,
-    permisos: true,
-    calificaciones: true,
-    asistencias: true,
-    horarios: true,
-  });
+  const [modulos, setModulos] = useState<ModulosActivos>(modulosPorDefecto);
   const [loading, setLoading] = useState(true);
+
+  const fetchModulos = useCallback(async () => {
+    try {
+      const data = await configuracionService.modulosActivos();
+      const normalizados = {
+        ...modulosPorDefecto,
+        ...(data as ModulosActivos),
+      };
+      guardarCache(normalizados);
+      setModulos(normalizados);
+    } catch (error) {
+      console.error("Error al cargar módulos activos:", error);
+    }
+  }, []);
 
   useEffect(() => {
     let activo = true;
@@ -33,10 +49,9 @@ export function useModulosActivos() {
         return;
       }
 
-      fetchModulos().finally(() => {
-        if (!activo) return;
-        setLoading(false);
-      });
+      await fetchModulos();
+
+      if (activo) setLoading(false);
     };
 
     cargar();
@@ -44,18 +59,7 @@ export function useModulosActivos() {
     return () => {
       activo = false;
     };
-  }, []);
-
-  const fetchModulos = async () => {
-    try {
-      const data = await configuracionService.modulosActivos();
-      const normalizados = { ...modulosPorDefecto, ...(data as ModulosActivos) };
-      guardarCache(normalizados);
-      setModulos(normalizados);
-    } catch (error) {
-      console.error("Error al cargar módulos activos:", error);
-    }
-  };
+  }, [fetchModulos]);
 
   return {
     modulos,
@@ -66,15 +70,6 @@ export function useModulosActivos() {
     },
   };
 }
-
-const modulosPorDefecto: ModulosActivos = {
-  biblioteca: true,
-  elecciones: true,
-  permisos: true,
-  calificaciones: true,
-  asistencias: true,
-  horarios: true,
-};
 
 const CLAVE_CACHE = "modulos_activos";
 const VIGENCIA_CACHE_MS = 5 * 60 * 1000;

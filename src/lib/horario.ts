@@ -61,9 +61,7 @@ export const sumarMinutos = (hora: string, minutos: number): string => {
 export const construirFilasHorario = (
   bloques: { hora_inicio?: string | null; hora_fin?: string | null }[] = [],
 ): FranjaAcademica[] => {
-  const conocidas = new Set(
-    FRANJAS_ACADEMICAS.map((franja) => franja.inicio),
-  );
+  const conocidas = new Set(FRANJAS_ACADEMICAS.map((franja) => franja.inicio));
 
   const extras = new Map<string, FranjaAcademica>();
 
@@ -74,7 +72,9 @@ export const construirFilasHorario = (
     extras.set(inicio, {
       etiqueta: "Bloque",
       inicio,
-      fin: normalizarHora(bloque.hora_fin) || sumarMinutos(inicio, 45),
+      fin:
+        normalizarHora(bloque.hora_fin) ||
+        sumarMinutos(inicio, MINUTOS_POR_HORA_ACADEMICA),
       tipo: "clase",
     });
   });

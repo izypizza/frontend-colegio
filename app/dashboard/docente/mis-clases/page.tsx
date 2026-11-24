@@ -49,7 +49,8 @@ export default function MisClasesPage() {
         const response = await docentePortalService.misAsignaciones();
         setAsignaciones(response.asignaciones || []);
         setError(null);
-      } catch (err) {
+      } catch (error) {
+        console.error("Error al cargar las asignaciones del docente:", error);
         setError("No se pudieron cargar tus cursos asignados.");
       } finally {
         setLoading(false);
@@ -112,9 +113,7 @@ export default function MisClasesPage() {
       }))
       .filter((curso) =>
         periodoId
-          ? curso.periodos.some(
-              (periodo) => String(periodo.id) === periodoId,
-            )
+          ? curso.periodos.some((periodo) => String(periodo.id) === periodoId)
           : true,
       )
       .sort((a, b) =>
@@ -175,7 +174,10 @@ export default function MisClasesPage() {
 
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
             {cursos.map((curso) => (
-              <Card key={curso.clave} className="transition-shadow hover:shadow-lg">
+              <Card
+                key={curso.clave}
+                className="transition-shadow hover:shadow-lg"
+              >
                 <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-[#04ADBF]">
                   <svg
                     className="h-7 w-7 text-white"
@@ -197,9 +199,7 @@ export default function MisClasesPage() {
                 </h3>
                 <p className="mt-1 text-sm text-gray-600">
                   Código:{" "}
-                  <span className="font-semibold">
-                    {curso.materia.codigo}
-                  </span>
+                  <span className="font-semibold">{curso.materia.codigo}</span>
                 </p>
                 <p className="text-sm text-gray-600">
                   {curso.seccion.grado.nombre} - {curso.seccion.nombre}

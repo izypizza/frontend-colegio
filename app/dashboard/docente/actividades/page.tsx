@@ -302,7 +302,7 @@ export default function ActividadesEvaluacionPage() {
 
   return (
     <PermissionGuard
-      requiredRoles={[UserRole.DOCENTE, UserRole.ADMIN]}
+      requiredRoles={[UserRole.DOCENTE]}
       fallback={
         <div className="p-6">
           <Alert type="error" message="Esta página es para docentes." />
@@ -564,7 +564,10 @@ export default function ActividadesEvaluacionPage() {
                 </thead>
                 <tbody>
                   {estudiantesDeLaSeccion.map((estudiante) => (
-                    <tr key={estudiante.id} className="border-t border-gray-100">
+                    <tr
+                      key={estudiante.id}
+                      className="border-t border-gray-100"
+                    >
                       <td className="sticky left-0 z-10 bg-white px-3 py-2 font-medium text-gray-900">
                         {`${estudiante.apellido_paterno} ${estudiante.apellido_materno}`}
                         <div className="text-xs text-gray-500">

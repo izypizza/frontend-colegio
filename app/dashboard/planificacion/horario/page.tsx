@@ -4,6 +4,7 @@ import {
   Alert,
   Button,
   Card,
+  GrillaHorario,
   Input,
   Modal,
   Pagination,
@@ -17,7 +18,7 @@ import {
 } from "@/src/lib/services";
 import {
   DIAS_SEMANA,
-  construirFilasHorario,
+  FRANJAS_ACADEMICAS,
   normalizarHora,
   rangoHorario,
 } from "@/src/lib/horario";
@@ -30,14 +31,13 @@ import { usePermissions } from "@/src/hooks/usePermissions";
 import { PermissionGuard } from "@/src/components/auth";
 import { UserRole } from "@/src/types";
 
-const BLOQUES_RAPIDOS = [
-  { etiqueta: "Hora 1 · 08:00 - 08:45", inicio: "08:00", fin: "08:45" },
-  { etiqueta: "Hora 2 · 08:45 - 09:30", inicio: "08:45", fin: "09:30" },
-  { etiqueta: "Hora 3 · 09:30 - 10:15", inicio: "09:30", fin: "10:15" },
-  { etiqueta: "Hora 4 · 10:30 - 11:15", inicio: "10:30", fin: "11:15" },
-  { etiqueta: "Hora 5 · 11:15 - 12:00", inicio: "11:15", fin: "12:00" },
-  { etiqueta: "Hora 6 · 12:00 - 12:45", inicio: "12:00", fin: "12:45" },
-];
+const BLOQUES_RAPIDOS = FRANJAS_ACADEMICAS.filter(
+  (franja) => franja.tipo === "clase",
+).map((franja) => ({
+  etiqueta: `${franja.etiqueta} · ${franja.inicio} - ${franja.fin}`,
+  inicio: franja.inicio,
+  fin: franja.fin,
+}));
 
 const COLORES_MATERIA = [
   "bg-blue-50 border-blue-300 text-blue-900",
@@ -80,13 +80,11 @@ export default function HorariosPage() {
     try {
       setCargando(true);
 
-      const respuestaHorarios = (await horarioService.getAll({
-        all: true,
-      })) as any;
+      const respuestaHorarios = await horarioService.getAll({ all: true });
 
       const lista: Horario[] = Array.isArray(respuestaHorarios)
         ? respuestaHorarios
-        : respuestaHorarios?.data || [];
+        : respuestaHorarios.data;
 
       setHorarios(lista);
 
@@ -97,12 +95,14 @@ export default function HorariosPage() {
         ]);
 
         setSecciones(
-          (Array.isArray(respuestaSecciones)
+          Array.isArray(respuestaSecciones)
             ? respuestaSecciones
-            : []) as Seccion[],
+            : respuestaSecciones.data,
         );
         setMaterias(
-          (Array.isArray(respuestaMaterias) ? respuestaMaterias : []) as Materia[],
+          Array.isArray(respuestaMaterias)
+            ? respuestaMaterias
+            : respuestaMaterias.data,
         );
         return;
       }
@@ -165,11 +165,6 @@ export default function HorariosPage() {
     });
   }, [horarios, seccionSeleccionada]);
 
-  const filas = useMemo(
-    () => construirFilasHorario(horariosFiltrados),
-    [horariosFiltrados],
-  );
-
   const totalPaginasLista = Math.max(
     1,
     Math.ceil(horariosFiltrados.length / porPagina),
@@ -181,13 +176,6 @@ export default function HorariosPage() {
     (paginaActualLista - 1) * porPagina,
     paginaActualLista * porPagina,
   );
-
-  const horarioEnCelda = (dia: string, inicio: string) =>
-    horariosFiltrados.find(
-      (horario) =>
-        horario.dia?.toLowerCase() === dia.toLowerCase() &&
-        normalizarHora(horario.hora_inicio) === inicio,
-    );
 
   const colorMateria = (materiaId: number) =>
     COLORES_MATERIA[materiaId % COLORES_MATERIA.length];
@@ -386,7 +374,9 @@ export default function HorariosPage() {
 
         {cargando ? (
           <Card>
-            <p className="py-10 text-center text-gray-600">Cargando horario...</p>
+            <p className="py-10 text-center text-gray-600">
+              Cargando horario...
+            </p>
           </Card>
         ) : horariosFiltrados.length === 0 ? (
           <Card>
@@ -401,89 +391,31 @@ export default function HorariosPage() {
           </Card>
         ) : vista === "calendario" ? (
           <Card>
-            <div className="overflow-x-auto">
-              <table className="min-w-full border-collapse text-sm">
-                <thead>
-                  <tr>
-                    <th className="sticky left-0 z-10 w-24 border border-gray-200 bg-gray-100 px-2 py-2 text-left text-xs font-bold uppercase text-gray-600">
-                      Hora
-                    </th>
-                    {DIAS_SEMANA.map((dia) => (
-                      <th
-                        key={dia}
-                        className="min-w-[140px] border border-gray-200 bg-[#04ADBF] px-2 py-2 text-center text-xs font-bold uppercase text-white"
-                      >
-                        {dia}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filas.map((franja) =>
-                    franja.tipo === "receso" ? (
-                      <tr key={franja.inicio} className="bg-gray-50">
-                        <td className="sticky left-0 z-10 border border-gray-200 bg-gray-100 px-2 py-1 text-[11px] font-semibold text-gray-500">
-                          {rangoHorario(franja.inicio, franja.fin)}
-                        </td>
-                        <td
-                          colSpan={DIAS_SEMANA.length}
-                          className="border border-gray-200 px-2 py-1 text-center text-[11px] font-semibold uppercase tracking-wide text-gray-500"
-                        >
-                          Recreo
-                        </td>
-                      </tr>
-                    ) : (
-                      <tr key={franja.inicio}>
-                        <td className="sticky left-0 z-10 border border-gray-200 bg-gray-50 px-2 py-2 align-top">
-                          <span className="block text-[11px] font-bold uppercase text-gray-700">
-                            {franja.etiqueta}
-                          </span>
-                          <span className="block text-[11px] text-gray-500">
-                            {rangoHorario(franja.inicio, franja.fin)}
-                          </span>
-                        </td>
-                        {DIAS_SEMANA.map((dia) => {
-                          const horario = horarioEnCelda(dia, franja.inicio);
-
-                          return (
-                            <td
-                              key={`${dia}-${franja.inicio}`}
-                              className="border border-gray-200 p-1 align-top"
-                            >
-                              {horario && (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    esGestor && abrirEditar(horario)
-                                  }
-                                  className={`h-full w-full rounded-md border-l-4 p-2 text-left transition-shadow ${colorMateria(
-                                    horario.materia_id,
-                                  )} ${
-                                    esGestor
-                                      ? "hover:shadow-md"
-                                      : "cursor-default"
-                                  }`}
-                                >
-                                  <span className="block text-xs font-bold leading-tight">
-                                    {horario.materia?.nombre || "Curso"}
-                                  </span>
-                                  {esGestor && (
-                                    <span className="mt-0.5 block truncate text-[10px] text-gray-600">
-                                      {horario.seccion?.grado?.nombre}{" "}
-                                      {horario.seccion?.nombre}
-                                    </span>
-                                  )}
-                                </button>
-                              )}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ),
-                  )}
-                </tbody>
-              </table>
-            </div>
+            {!seccionSeleccionada && opcionesSecciones.length > 1 ? (
+              <Alert
+                type="info"
+                message="Elige una sección para ver el calendario: cada franja admite un solo curso, así que el calendario muestra una sección a la vez. En la vista de lista puedes revisar todas juntas."
+              />
+            ) : (
+              <GrillaHorario
+                bloques={horariosFiltrados}
+                onSeleccionar={esGestor ? abrirEditar : undefined}
+                claseBloque={(horario) => colorMateria(horario.materia_id)}
+                renderBloque={(horario) => (
+                  <>
+                    <span className="block text-xs font-bold leading-tight">
+                      {horario.materia?.nombre || "Curso"}
+                    </span>
+                    {esGestor && (
+                      <span className="mt-0.5 block truncate text-[10px] text-gray-600">
+                        {horario.seccion?.grado?.nombre}{" "}
+                        {horario.seccion?.nombre}
+                      </span>
+                    )}
+                  </>
+                )}
+              />
+            )}
           </Card>
         ) : (
           <>

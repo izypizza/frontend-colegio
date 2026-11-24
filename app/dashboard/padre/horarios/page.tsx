@@ -1,16 +1,10 @@
 "use client";
 
-import { Alert, Card, SelectBuscable } from "@/src/components/ui";
+import { Alert, Card, GrillaHorario, SelectBuscable } from "@/src/components/ui";
 import { PermissionGuard } from "@/src/components/auth";
 import { UserRole } from "@/src/types";
 import { useErrorHandler } from "@/src/hooks/useErrorHandler";
 import { padrePortalService } from "@/src/lib/services";
-import {
-  DIAS_SEMANA,
-  construirFilasHorario,
-  normalizarHora,
-  rangoHorario,
-} from "@/src/lib/horario";
 import { useEffect, useMemo, useState } from "react";
 
 interface Hijo {
@@ -99,15 +93,6 @@ export default function HorarioHijosPage() {
     [hijos],
   );
 
-  const filas = useMemo(() => construirFilasHorario(bloques), [bloques]);
-
-  const bloqueEnCelda = (dia: string, inicio: string) =>
-    bloques.find(
-      (bloque) =>
-        String(bloque.dia || "").toLowerCase() === dia.toLowerCase() &&
-        normalizarHora(bloque.hora_inicio) === inicio,
-    );
-
   return (
     <PermissionGuard
       requiredRoles={[UserRole.PADRE]}
@@ -178,76 +163,21 @@ export default function HorarioHijosPage() {
                   message="Todavía no hay un horario registrado para esta sección."
                 />
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full border-collapse text-sm">
-                    <thead>
-                      <tr>
-                        <th className="sticky left-0 z-10 w-24 border border-gray-200 bg-gray-100 px-2 py-2 text-left text-xs font-bold uppercase text-gray-600">
-                          Hora
-                        </th>
-                        {DIAS_SEMANA.map((dia) => (
-                          <th
-                            key={dia}
-                            className="min-w-[140px] border border-gray-200 bg-[#04ADBF] px-2 py-2 text-center text-xs font-bold uppercase text-white"
-                          >
-                            {dia}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filas.map((franja) =>
-                        franja.tipo === "receso" ? (
-                          <tr key={franja.inicio} className="bg-gray-50">
-                            <td className="sticky left-0 z-10 border border-gray-200 bg-gray-100 px-2 py-1 text-[11px] font-semibold text-gray-500">
-                              {rangoHorario(franja.inicio, franja.fin)}
-                            </td>
-                            <td
-                              colSpan={DIAS_SEMANA.length}
-                              className="border border-gray-200 px-2 py-1 text-center text-[11px] font-semibold uppercase tracking-wide text-gray-500"
-                            >
-                              Recreo
-                            </td>
-                          </tr>
-                        ) : (
-                          <tr key={franja.inicio}>
-                            <td className="sticky left-0 z-10 border border-gray-200 bg-gray-50 px-2 py-2 align-top">
-                              <span className="block text-[11px] font-bold uppercase text-gray-700">
-                                {franja.etiqueta}
-                              </span>
-                              <span className="block text-[11px] text-gray-500">
-                                {rangoHorario(franja.inicio, franja.fin)}
-                              </span>
-                            </td>
-                            {DIAS_SEMANA.map((dia) => {
-                              const bloque = bloqueEnCelda(dia, franja.inicio);
-
-                              return (
-                                <td
-                                  key={`${dia}-${franja.inicio}`}
-                                  className="border border-gray-200 p-1 align-top"
-                                >
-                                  {bloque && (
-                                    <div className="h-full rounded-md border-l-4 border-[#04ADBF] bg-[#04ADBF]/10 p-2">
-                                      <span className="block text-xs font-bold leading-tight text-gray-900">
-                                        {bloque.materia || "Curso"}
-                                      </span>
-                                      {bloque.docente && (
-                                        <span className="mt-0.5 block text-[10px] text-gray-600">
-                                          {bloque.docente}
-                                        </span>
-                                      )}
-                                    </div>
-                                  )}
-                                </td>
-                              );
-                            })}
-                          </tr>
-                        ),
+                <GrillaHorario
+                  bloques={bloques}
+                  renderBloque={(bloque) => (
+                    <>
+                      <span className="block text-xs font-bold leading-tight text-gray-900">
+                        {bloque.materia || "Curso"}
+                      </span>
+                      {bloque.docente && (
+                        <span className="mt-0.5 block text-[10px] text-gray-600">
+                          {bloque.docente}
+                        </span>
                       )}
-                    </tbody>
-                  </table>
-                </div>
+                    </>
+                  )}
+                />
               )}
             </Card>
           </>

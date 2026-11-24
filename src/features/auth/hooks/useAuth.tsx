@@ -1,6 +1,7 @@
 "use client";
 
 import { REFRESH_TOKEN_KEY, TOKEN_KEY, USER_KEY } from "@/src/config/constants";
+import { apiClient } from "@/src/lib/api-client";
 import { AuthContextType, LoginCredentials, User } from "@/src/types";
 import React, {
   createContext,
@@ -80,9 +81,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
       const { user: userData, token, refreshToken } = response.data;
 
-      // Store tokens and user
-      localStorage.setItem(TOKEN_KEY, token);
-      localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+      // Guardar credenciales a través del cliente HTTP para que también se
+      // invalide cualquier lectura en caché de la sesión anterior.
+      apiClient.setToken(token);
+      apiClient.setRefreshToken(refreshToken);
       localStorage.setItem(USER_KEY, JSON.stringify(userData));
 
       setUser(userData);
@@ -100,7 +102,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     try {
       await authService.logout();
     } finally {
-      localStorage.removeItem(USER_KEY);
+      apiClient.clearAuth();
       setUser(null);
       setError(null);
     }

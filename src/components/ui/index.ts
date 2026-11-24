@@ -8,5 +8,7 @@ export { Toast, ToastContainer } from "./Toast";
 export { Pagination } from "./Pagination";
 export { SelectBuscable } from "./SelectBuscable";
 export type { OpcionSelect } from "./SelectBuscable";
+export { GrillaHorario } from "./GrillaHorario";
+export type { BloqueHorario } from "./GrillaHorario";
 export { SystemStatusBanner } from "./SystemStatusBanner";
 export { CredencialTemporalModal } from "./CredencialTemporalModal";

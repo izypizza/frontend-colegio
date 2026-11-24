@@ -17,10 +17,7 @@ const VIGENCIA_LECTURA_MS = 3000;
 class ApiClient {
   private baseURL: string;
   private timeout: number;
-  private cacheLecturas = new Map<
-    string,
-    { expira: number; datos: unknown }
-  >();
+  private cacheLecturas = new Map<string, { expira: number; datos: unknown }>();
   private solicitudesEnVuelo = new Map<string, Promise<unknown>>();
 
   constructor(baseURL: string = API_BASE_URL, timeout: number = API_TIMEOUT) {
