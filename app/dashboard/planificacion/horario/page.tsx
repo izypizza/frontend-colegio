@@ -6,39 +6,64 @@ import {
   Card,
   Input,
   Modal,
-  Table,
   Pagination,
+  SelectBuscable,
+  Table,
 } from "@/src/components/ui";
 import {
   horarioService,
   materiaService,
   seccionService,
-  docentePortalService,
-  estudiantePortalService,
-  padrePortalService,
 } from "@/src/lib/services";
+import {
+  DIAS_SEMANA,
+  construirFilasHorario,
+  normalizarHora,
+  rangoHorario,
+} from "@/src/lib/horario";
 import { Horario, Materia, Seccion } from "@/src/types/models";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/src/features/auth";
 import { useErrorHandler } from "@/src/hooks/useErrorHandler";
 import { useModalState } from "@/src/hooks/useModalState";
-import { usePagination } from "@/src/hooks/usePagination";
 import { usePermissions } from "@/src/hooks/usePermissions";
 import { PermissionGuard } from "@/src/components/auth";
 import { UserRole } from "@/src/types";
 
+const BLOQUES_RAPIDOS = [
+  { etiqueta: "Hora 1 · 08:00 - 08:45", inicio: "08:00", fin: "08:45" },
+  { etiqueta: "Hora 2 · 08:45 - 09:30", inicio: "08:45", fin: "09:30" },
+  { etiqueta: "Hora 3 · 09:30 - 10:15", inicio: "09:30", fin: "10:15" },
+  { etiqueta: "Hora 4 · 10:30 - 11:15", inicio: "10:30", fin: "11:15" },
+  { etiqueta: "Hora 5 · 11:15 - 12:00", inicio: "11:15", fin: "12:00" },
+  { etiqueta: "Hora 6 · 12:00 - 12:45", inicio: "12:00", fin: "12:45" },
+];
+
+const COLORES_MATERIA = [
+  "bg-blue-50 border-blue-300 text-blue-900",
+  "bg-emerald-50 border-emerald-300 text-emerald-900",
+  "bg-amber-50 border-amber-300 text-amber-900",
+  "bg-purple-50 border-purple-300 text-purple-900",
+  "bg-pink-50 border-pink-300 text-pink-900",
+  "bg-indigo-50 border-indigo-300 text-indigo-900",
+  "bg-rose-50 border-rose-300 text-rose-900",
+  "bg-cyan-50 border-cyan-300 text-cyan-900",
+];
+
 export default function HorariosPage() {
   const { user } = useAuth();
   const permissions = usePermissions("horarios");
+  const esGestor = user?.role === "admin" || user?.role === "auxiliar";
+
   const [horarios, setHorarios] = useState<Horario[]>([]);
   const [secciones, setSecciones] = useState<Seccion[]>([]);
   const [materias, setMaterias] = useState<Materia[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<"calendario" | "lista">(
-    "calendario",
-  );
-  const [selectedSeccion, setSelectedSeccion] = useState<string>("");
-  const [formData, setFormData] = useState({
+  const [cargando, setCargando] = useState(true);
+  const [vista, setVista] = useState<"calendario" | "lista">("calendario");
+  const [seccionSeleccionada, setSeccionSeleccionada] = useState("");
+  const [paginaLista, setPaginaLista] = useState(1);
+  const [porPagina] = useState(25);
+  const [formulario, setFormulario] = useState({
     seccion_id: "",
     materia_id: "",
     dia: "",
@@ -46,332 +71,230 @@ export default function HorariosPage() {
     hora_fin: "",
   });
 
-  // Hooks personalizados
   const { error, success, handleError, handleSuccess, setError, setSuccess } =
     useErrorHandler();
   const { isOpen, editingItem, openCreate, openEdit, close } =
     useModalState<Horario>();
-  const pagination = usePagination();
 
-  const dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
-  const horas = [
-    "07:00",
-    "08:00",
-    "09:00",
-    "10:00",
-    "11:00",
-    "12:00",
-    "13:00",
-    "14:00",
-    "15:00",
-    "16:00",
-    "17:00",
-    "18:00",
-  ];
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    if (user?.role === "admin" || user?.role === "auxiliar") {
-      fetchDataPaginated();
-    }
-  }, [pagination.currentPage, pagination.perPage, user]);
-
-  const fetchDataPaginated = async () => {
+  const cargarHorarios = useCallback(async () => {
     try {
-      setLoading(true);
-      const [horariosData, seccionesData, materiasData] = await Promise.all([
-        horarioService.getAll({
-          page: pagination.currentPage,
-          per_page: pagination.perPage,
-        }),
-        seccionService.getAll({ all: true }),
-        materiaService.getAll({ all: true }),
-      ]);
+      setCargando(true);
 
-      if (
-        horariosData &&
-        typeof horariosData === "object" &&
-        "data" in horariosData &&
-        "current_page" in horariosData
-      ) {
-        setHorarios(horariosData.data);
-        pagination.updatePagination({
-          currentPage: horariosData.current_page,
-          totalPages: horariosData.last_page || 1,
-          totalItems: horariosData.total || 0,
-        });
-      } else {
-        const horariosArray = Array.isArray(horariosData)
-          ? horariosData
-          : (horariosData as any)?.data || [];
-        setHorarios(horariosArray);
-      }
+      const respuestaHorarios = (await horarioService.getAll({
+        all: true,
+      })) as any;
 
-      setSecciones(
-        Array.isArray(seccionesData)
-          ? seccionesData
-          : seccionesData?.data || [],
-      );
-      setMaterias(
-        Array.isArray(materiasData) ? materiasData : materiasData?.data || [],
-      );
-    } catch (err) {
-      handleError(err, "Error al cargar los datos");
-    } finally {
-      setLoading(false);
-    }
-  };
+      const lista: Horario[] = Array.isArray(respuestaHorarios)
+        ? respuestaHorarios
+        : respuestaHorarios?.data || [];
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
+      setHorarios(lista);
 
-      if (user?.role === "docente") {
-        // Docentes obtienen horarios de sus secciones
-        const asignacionesData =
-          (await docentePortalService.misAsignaciones()) as any;
-        const asignaciones = asignacionesData.asignaciones || [];
-
-        // Extraer secciones y materias únicas
-        const seccionesUnicas = Array.from(
-          new Map(
-            asignaciones.map((a: any) => [a.seccion.id, a.seccion]),
-          ).values(),
-        );
-        const materiasUnicas = Array.from(
-          new Map(
-            asignaciones.map((a: any) => [a.materia.id, a.materia]),
-          ).values(),
-        );
-
-        setSecciones(seccionesUnicas as Seccion[]);
-        setMaterias(materiasUnicas as Materia[]);
-
-        // Obtener horarios de esas secciones
-        const seccionIds = seccionesUnicas.map((s: any) => s.id);
-        const horariosData = await horarioService.getAll();
-        const horariosArray = Array.isArray(horariosData)
-          ? horariosData
-          : (horariosData as any)?.data || [];
-        const horariosFiltrados = horariosArray.filter((h: Horario) =>
-          seccionIds.includes(h.seccion_id),
-        );
-        setHorarios(horariosFiltrados);
-      } else if (user?.role === "estudiante") {
-        // Estudiantes ven el horario de su sección
-        const perfilData = (await estudiantePortalService.miPerfil()) as any;
-        const estudiante = perfilData.estudiante || perfilData;
-
-        if (estudiante?.seccion_id) {
-          const [horariosData, materiasData] = (await Promise.all([
-            horarioService.getAll(),
-            materiaService.getAll(),
-          ])) as any[];
-
-          // Manejar respuesta paginada o sin paginar
-          const horariosArray = Array.isArray(horariosData)
-            ? horariosData
-            : horariosData?.data || [];
-
-          const horariosFiltrados = horariosArray.filter(
-            (h: Horario) => h.seccion_id === estudiante.seccion_id,
-          );
-          setHorarios(horariosFiltrados);
-          setSecciones([estudiante.seccion]);
-          setMaterias(
-            Array.isArray(materiasData)
-              ? materiasData
-              : materiasData?.data || [],
-          );
-        }
-      } else if (user?.role === "padre") {
-        // Padres ven horarios de sus hijos
-        const hijosData = (await padrePortalService.misHijos()) as any;
-        const hijos = hijosData.hijos || [];
-
-        if (hijos.length > 0) {
-          const [horariosData, materiasData] = (await Promise.all([
-            horarioService.getAll(),
-            materiaService.getAll(),
-          ])) as any[];
-
-          // Manejar respuesta paginada o sin paginar
-          const horariosArray = Array.isArray(horariosData)
-            ? horariosData
-            : horariosData?.data || [];
-
-          const seccionIds = hijos.map((h: any) => h.seccion_id);
-          const horariosFiltrados = horariosArray.filter((h: Horario) =>
-            seccionIds.includes(h.seccion_id),
-          );
-          setHorarios(horariosFiltrados);
-          setSecciones(hijos.map((h: any) => h.seccion).filter(Boolean));
-          setMaterias(
-            Array.isArray(materiasData)
-              ? materiasData
-              : materiasData?.data || [],
-          );
-        }
-      } else {
-        // Admin/Auxiliar usan endpoints generales con paginación
-        const [horariosData, seccionesData, materiasData] = await Promise.all([
-          horarioService.getAll({
-            page: pagination.currentPage,
-            per_page: pagination.perPage,
-          }),
+      if (esGestor) {
+        const [respuestaSecciones, respuestaMaterias] = await Promise.all([
           seccionService.getAll({ all: true }),
           materiaService.getAll({ all: true }),
         ]);
 
-        if (
-          horariosData &&
-          typeof horariosData === "object" &&
-          "data" in horariosData &&
-          "current_page" in horariosData
-        ) {
-          setHorarios(horariosData.data);
-          pagination.updatePagination({
-            currentPage: horariosData.current_page,
-            totalPages: horariosData.last_page || 1,
-            totalItems: horariosData.total || 0,
-          });
-        } else {
-          const horariosArray = Array.isArray(horariosData)
-            ? horariosData
-            : (horariosData as any)?.data || [];
-          setHorarios(horariosArray);
-        }
-
         setSecciones(
-          Array.isArray(seccionesData)
-            ? seccionesData
-            : seccionesData?.data || [],
+          (Array.isArray(respuestaSecciones)
+            ? respuestaSecciones
+            : []) as Seccion[],
         );
         setMaterias(
-          Array.isArray(materiasData) ? materiasData : materiasData?.data || [],
+          (Array.isArray(respuestaMaterias) ? respuestaMaterias : []) as Materia[],
         );
+        return;
       }
-    } catch (err) {
-      handleError(err, "Error al cargar los datos");
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const handleCreate = () => {
-    setFormData({
-      seccion_id: "",
+      const seccionesUnicas = new Map<number, Seccion>();
+      lista.forEach((horario) => {
+        if (horario.seccion) {
+          seccionesUnicas.set(horario.seccion_id, horario.seccion);
+        }
+      });
+      setSecciones(Array.from(seccionesUnicas.values()));
+    } catch (err) {
+      handleError(err, "Error al cargar los horarios");
+    } finally {
+      setCargando(false);
+    }
+  }, [esGestor, handleError]);
+
+  useEffect(() => {
+    if (!user) return;
+    cargarHorarios();
+  }, [user, cargarHorarios]);
+
+  const opcionesSecciones = useMemo(
+    () =>
+      secciones.map((seccion) => ({
+        valor: seccion.id,
+        etiqueta: `${seccion.grado?.nombre ?? ""} ${seccion.nombre}`.trim(),
+        detalle: seccion.grado?.nivel ?? null,
+      })),
+    [secciones],
+  );
+
+  const opcionesMaterias = useMemo(
+    () =>
+      materias.map((materia) => ({
+        valor: materia.id,
+        etiqueta: materia.nombre,
+      })),
+    [materias],
+  );
+
+  const horariosFiltrados = useMemo(() => {
+    const lista = seccionSeleccionada
+      ? horarios.filter(
+          (horario) => String(horario.seccion_id) === seccionSeleccionada,
+        )
+      : horarios;
+
+    return [...lista].sort((a, b) => {
+      const ordenDia =
+        DIAS_SEMANA.indexOf(a.dia as (typeof DIAS_SEMANA)[number]) -
+        DIAS_SEMANA.indexOf(b.dia as (typeof DIAS_SEMANA)[number]);
+
+      if (ordenDia !== 0) return ordenDia;
+
+      return normalizarHora(a.hora_inicio).localeCompare(
+        normalizarHora(b.hora_inicio),
+      );
+    });
+  }, [horarios, seccionSeleccionada]);
+
+  const filas = useMemo(
+    () => construirFilasHorario(horariosFiltrados),
+    [horariosFiltrados],
+  );
+
+  const totalPaginasLista = Math.max(
+    1,
+    Math.ceil(horariosFiltrados.length / porPagina),
+  );
+
+  const paginaActualLista = Math.min(paginaLista, totalPaginasLista);
+
+  const horariosDeLaPagina = horariosFiltrados.slice(
+    (paginaActualLista - 1) * porPagina,
+    paginaActualLista * porPagina,
+  );
+
+  const horarioEnCelda = (dia: string, inicio: string) =>
+    horariosFiltrados.find(
+      (horario) =>
+        horario.dia?.toLowerCase() === dia.toLowerCase() &&
+        normalizarHora(horario.hora_inicio) === inicio,
+    );
+
+  const colorMateria = (materiaId: number) =>
+    COLORES_MATERIA[materiaId % COLORES_MATERIA.length];
+
+  const abrirCrear = () => {
+    setFormulario({
+      seccion_id: seccionSeleccionada || "",
       materia_id: "",
       dia: "",
       hora_inicio: "",
       hora_fin: "",
     });
+    setError(null);
     openCreate();
   };
 
-  const handleEdit = (item: Horario) => {
-    setFormData({
-      seccion_id: item.seccion_id.toString(),
-      materia_id: item.materia_id.toString(),
-      dia: item.dia,
-      hora_inicio: item.hora_inicio,
-      hora_fin: item.hora_fin,
+  const abrirEditar = (horario: Horario) => {
+    setFormulario({
+      seccion_id: String(horario.seccion_id),
+      materia_id: String(horario.materia_id),
+      dia: horario.dia,
+      hora_inicio: normalizarHora(horario.hora_inicio),
+      hora_fin: normalizarHora(horario.hora_fin),
     });
-    openEdit(item);
+    setError(null);
+    openEdit(horario);
   };
 
-  const handleDelete = async (item: Horario) => {
-    if (!confirm("¿Estás seguro de eliminar este horario?")) return;
+  const eliminarHorario = async (horario: Horario) => {
+    if (!confirm("¿Eliminar este bloque de horario?")) return;
 
     try {
-      await horarioService.delete(item.id);
-      handleSuccess("Horario eliminado correctamente");
-      fetchData();
+      await horarioService.delete(horario.id);
+      handleSuccess("Bloque de horario eliminado.");
+      cargarHorarios();
     } catch (err) {
-      handleError(err, "Error al eliminar el horario");
+      handleError(err, "No se pudo eliminar el bloque");
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const guardarHorario = async (evento?: React.FormEvent) => {
+    evento?.preventDefault();
+
+    if (
+      !formulario.seccion_id ||
+      !formulario.materia_id ||
+      !formulario.dia ||
+      !formulario.hora_inicio ||
+      !formulario.hora_fin
+    ) {
+      setError("Completa sección, curso, día y las horas del bloque.");
+      return;
+    }
+
+    const datos = {
+      seccion_id: parseInt(formulario.seccion_id),
+      materia_id: parseInt(formulario.materia_id),
+      dia: formulario.dia,
+      hora_inicio: formulario.hora_inicio,
+      hora_fin: formulario.hora_fin,
+    };
 
     try {
-      const data = {
-        seccion_id: parseInt(formData.seccion_id),
-        materia_id: parseInt(formData.materia_id),
-        dia: formData.dia,
-        hora_inicio: formData.hora_inicio,
-        hora_fin: formData.hora_fin,
-      };
-
       if (editingItem) {
-        await horarioService.update(editingItem.id, data);
-        handleSuccess("Horario actualizado correctamente");
+        await horarioService.update(editingItem.id, datos);
+        handleSuccess("Bloque actualizado.");
       } else {
-        await horarioService.create(data);
-        handleSuccess("Horario creado correctamente");
+        await horarioService.create(datos);
+        handleSuccess("Bloque registrado.");
       }
 
       close();
-      fetchData();
+      cargarHorarios();
     } catch (err) {
-      handleError(err, "Error al guardar el horario");
+      handleError(err, "No se pudo guardar el bloque");
     }
   };
 
-  const horariosFiltrados = selectedSeccion
-    ? horarios.filter((h) => h.seccion_id.toString() === selectedSeccion)
-    : horarios;
-
-  const getHorarioParaCelda = (dia: string, hora: string) => {
-    return horariosFiltrados.find((h) => {
-      if (h.dia !== dia) return false;
-
-      // Extraer la hora de inicio (formato HH:MM)
-      const horaInicio = h.hora_inicio.substring(0, 5); // "08:45"
-      const [horaInicioHH] = horaInicio.split(":"); // "08"
-      const [horaHH] = hora.split(":"); // "08"
-
-      // Buscar horarios que comiencen en esta franja horaria
-      return horaInicioHH === horaHH;
-    });
+  const aplicarBloqueRapido = (inicio: string, fin: string) => {
+    setFormulario((previo) => ({
+      ...previo,
+      hora_inicio: inicio,
+      hora_fin: fin,
+    }));
   };
 
-  const getColorMateria = (materiaId: number) => {
-    const colors = [
-      "bg-blue-100 border-blue-300 text-blue-800",
-      "bg-green-100 border-green-300 text-green-800",
-      "bg-yellow-100 border-yellow-300 text-yellow-800",
-      "bg-purple-100 border-purple-300 text-purple-800",
-      "bg-pink-100 border-pink-300 text-pink-800",
-      "bg-indigo-100 border-indigo-300 text-indigo-800",
-      "bg-red-100 border-red-300 text-red-800",
-      "bg-orange-100 border-orange-300 text-orange-800",
-    ];
-    return colors[materiaId % colors.length];
-  };
-
-  const columns = [
-    { key: "id", label: "ID" },
+  const columnas = [
     {
       key: "seccion",
       label: "Sección",
-      render: (value: unknown) => {
-        const seccion = value as Seccion;
-        return `${seccion?.nombre} - ${seccion?.grado?.nombre}` || "N/A";
-      },
+      render: (_valor: unknown, horario: Horario) =>
+        `${horario.seccion?.grado?.nombre ?? ""} ${horario.seccion?.nombre ?? ""}`.trim() ||
+        "—",
     },
     {
       key: "materia",
-      label: "Materia",
-      render: (value: unknown) => (value as Materia)?.nombre || "N/A",
+      label: "Curso",
+      render: (_valor: unknown, horario: Horario) =>
+        horario.materia?.nombre || "—",
     },
     { key: "dia", label: "Día" },
-    { key: "hora_inicio", label: "Hora Inicio" },
-    { key: "hora_fin", label: "Hora Fin" },
+    {
+      key: "hora_inicio",
+      label: "Horario",
+      render: (_valor: unknown, horario: Horario) =>
+        rangoHorario(horario.hora_inicio, horario.hora_fin),
+    },
   ];
 
   return (
@@ -381,7 +304,6 @@ export default function HorariosPage() {
         UserRole.AUXILIAR,
         UserRole.DOCENTE,
         UserRole.ESTUDIANTE,
-        UserRole.PADRE,
       ]}
       fallback={
         <div className="p-6">
@@ -392,15 +314,18 @@ export default function HorariosPage() {
         </div>
       }
     >
-      <div className="space-y-6 p-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Horarios</h1>
-            <p className="text-gray-600 mt-2">Gestión de horarios de clases</p>
+            <h1 className="text-2xl font-bold text-gray-800">Horario</h1>
+            <p className="text-gray-600 mt-1">
+              Cada bloque dura 45 minutos: son las horas académicas del colegio,
+              no horas cronológicas.
+            </p>
           </div>
           {permissions.canCreate && (
-            <Button variant="primary" onClick={handleCreate}>
-              + Nuevo Horario
+            <Button variant="primary" onClick={abrirCrear}>
+              + Nuevo bloque
             </Button>
           )}
         </div>
@@ -416,180 +341,191 @@ export default function HorariosPage() {
           />
         )}
 
-        {/* Controles */}
         <Card>
-          <div className="flex flex-wrap gap-4 items-center justify-between">
-            <div className="flex gap-2">
-              <button
-                onClick={() => setViewMode("calendario")}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  viewMode === "calendario"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                }`}
-              >
-                Vista Calendario
-              </button>
-              <button
-                onClick={() => setViewMode("lista")}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  viewMode === "lista"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                }`}
-              >
-                Vista Lista
-              </button>
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="min-w-[220px] flex-1">
+              <SelectBuscable
+                label="Sección"
+                opciones={opcionesSecciones}
+                valor={seccionSeleccionada}
+                onChange={(valor) => {
+                  setSeccionSeleccionada(valor);
+                  setPaginaLista(1);
+                }}
+                vacio="Todas las secciones"
+                placeholder="Buscar sección..."
+              />
             </div>
 
-            <select
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={selectedSeccion}
-              onChange={(e) => setSelectedSeccion(e.target.value)}
-            >
-              <option value="">Todas las secciones</option>
-              {secciones.map((seccion, index) => (
-                <option key={`${seccion.id}-${index}`} value={seccion.id}>
-                  {seccion.nombre} - {seccion.grado?.nombre}
-                </option>
-              ))}
-            </select>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setVista("calendario")}
+                className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+                  vista === "calendario"
+                    ? "bg-[#04ADBF] text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                Calendario
+              </button>
+              <button
+                type="button"
+                onClick={() => setVista("lista")}
+                className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+                  vista === "lista"
+                    ? "bg-[#04ADBF] text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                Lista
+              </button>
+            </div>
           </div>
         </Card>
 
-        {/* Vista Calendario */}
-        {viewMode === "calendario" ? (
+        {cargando ? (
           <Card>
-            {loading ? (
-              <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-4 text-gray-600">Cargando horarios...</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full border-collapse">
-                  <thead>
-                    <tr className="bg-[#04ADBF]">
-                      <th className="sticky left-0 z-10 bg-blue-600 border border-blue-400 px-2 py-2 text-left text-xs font-bold text-white w-16">
-                        HORA
-                      </th>
-                      {dias.map((dia) => (
-                        <th
-                          key={dia}
-                          className="border border-blue-400 px-2 py-2 text-center text-xs font-bold text-white uppercase min-w-[140px]"
-                        >
-                          {dia}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {horas.map((hora, idx) => (
-                      <tr
-                        key={hora}
-                        className={idx % 2 === 0 ? "bg-gray-50" : "bg-white"}
+            <p className="py-10 text-center text-gray-600">Cargando horario...</p>
+          </Card>
+        ) : horariosFiltrados.length === 0 ? (
+          <Card>
+            <Alert
+              type="warning"
+              message={
+                seccionSeleccionada
+                  ? "Esta sección todavía no tiene bloques de horario."
+                  : "Todavía no hay bloques de horario registrados."
+              }
+            />
+          </Card>
+        ) : vista === "calendario" ? (
+          <Card>
+            <div className="overflow-x-auto">
+              <table className="min-w-full border-collapse text-sm">
+                <thead>
+                  <tr>
+                    <th className="sticky left-0 z-10 w-24 border border-gray-200 bg-gray-100 px-2 py-2 text-left text-xs font-bold uppercase text-gray-600">
+                      Hora
+                    </th>
+                    {DIAS_SEMANA.map((dia) => (
+                      <th
+                        key={dia}
+                        className="min-w-[140px] border border-gray-200 bg-[#04ADBF] px-2 py-2 text-center text-xs font-bold uppercase text-white"
                       >
-                        <td className="sticky left-0 z-10 border border-gray-300 px-2 py-2 text-xs font-bold text-gray-800 whitespace-nowrap bg-gray-100">
-                          {hora}
+                        {dia}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filas.map((franja) =>
+                    franja.tipo === "receso" ? (
+                      <tr key={franja.inicio} className="bg-gray-50">
+                        <td className="sticky left-0 z-10 border border-gray-200 bg-gray-100 px-2 py-1 text-[11px] font-semibold text-gray-500">
+                          {rangoHorario(franja.inicio, franja.fin)}
                         </td>
-                        {dias.map((dia) => {
-                          const horario = getHorarioParaCelda(dia, hora);
+                        <td
+                          colSpan={DIAS_SEMANA.length}
+                          className="border border-gray-200 px-2 py-1 text-center text-[11px] font-semibold uppercase tracking-wide text-gray-500"
+                        >
+                          Recreo
+                        </td>
+                      </tr>
+                    ) : (
+                      <tr key={franja.inicio}>
+                        <td className="sticky left-0 z-10 border border-gray-200 bg-gray-50 px-2 py-2 align-top">
+                          <span className="block text-[11px] font-bold uppercase text-gray-700">
+                            {franja.etiqueta}
+                          </span>
+                          <span className="block text-[11px] text-gray-500">
+                            {rangoHorario(franja.inicio, franja.fin)}
+                          </span>
+                        </td>
+                        {DIAS_SEMANA.map((dia) => {
+                          const horario = horarioEnCelda(dia, franja.inicio);
+
                           return (
                             <td
-                              key={`${dia}-${hora}`}
-                              className="border border-gray-300 p-1 align-top h-20"
+                              key={`${dia}-${franja.inicio}`}
+                              className="border border-gray-200 p-1 align-top"
                             >
                               {horario && (
-                                <div
-                                  className={`${getColorMateria(
-                                    horario.materia_id,
-                                  )} border-l-4 rounded-lg p-2 h-full cursor-pointer hover:shadow-lg transition-all`}
+                                <button
+                                  type="button"
                                   onClick={() =>
-                                    (user?.role === "admin" ||
-                                      user?.role === "auxiliar") &&
-                                    handleEdit(horario)
+                                    esGestor && abrirEditar(horario)
                                   }
+                                  className={`h-full w-full rounded-md border-l-4 p-2 text-left transition-shadow ${colorMateria(
+                                    horario.materia_id,
+                                  )} ${
+                                    esGestor
+                                      ? "hover:shadow-md"
+                                      : "cursor-default"
+                                  }`}
                                 >
-                                  <div className="font-bold text-xs mb-0.5 line-clamp-2">
-                                    {horario.materia?.nombre}
-                                  </div>
-                                  {(user?.role === "admin" ||
-                                    user?.role === "auxiliar") && (
-                                    <div className="text-[10px] text-gray-700 mb-0.5 truncate">
-                                      {horario.seccion?.nombre} -{" "}
-                                      {horario.seccion?.grado?.nombre}
-                                    </div>
+                                  <span className="block text-xs font-bold leading-tight">
+                                    {horario.materia?.nombre || "Curso"}
+                                  </span>
+                                  {esGestor && (
+                                    <span className="mt-0.5 block truncate text-[10px] text-gray-600">
+                                      {horario.seccion?.grado?.nombre}{" "}
+                                      {horario.seccion?.nombre}
+                                    </span>
                                   )}
-                                  <div className="text-[10px] font-medium text-gray-600">
-                                    {horario.hora_inicio.substring(0, 5)} -{" "}
-                                    {horario.hora_fin.substring(0, 5)}
-                                  </div>
-                                </div>
+                                </button>
                               )}
                             </td>
                           );
                         })}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {horariosFiltrados.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
-                    No hay horarios registrados
-                    {selectedSeccion ? " para esta sección" : ""}
-                  </div>
-                )}
-              </div>
-            )}
+                    ),
+                  )}
+                </tbody>
+              </table>
+            </div>
           </Card>
         ) : (
           <>
             <Card>
               <Table
-                columns={columns}
-                data={horariosFiltrados}
-                loading={loading}
-                onEdit={permissions.canEdit ? handleEdit : undefined}
-                onDelete={permissions.canDelete ? handleDelete : undefined}
+                columns={columnas}
+                data={horariosDeLaPagina}
+                onEdit={permissions.canEdit ? abrirEditar : undefined}
+                onDelete={permissions.canDelete ? eliminarHorario : undefined}
               />
             </Card>
 
-            {(user?.role === "admin" || user?.role === "auxiliar") &&
-              pagination.totalItems > 0 && (
-                <Pagination
-                  currentPage={pagination.currentPage}
-                  lastPage={pagination.totalPages}
-                  total={pagination.totalItems}
-                  perPage={pagination.perPage}
-                  onPageChange={(page) => {
-                    pagination.goToPage(page);
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  onPerPageChange={(newPerPage) => {
-                    pagination.updatePagination({ perPage: newPerPage });
-                  }}
-                />
-              )}
+            <Pagination
+              currentPage={paginaActualLista}
+              lastPage={totalPaginasLista}
+              total={horariosFiltrados.length}
+              perPage={porPagina}
+              onPageChange={(pagina) => {
+                setPaginaLista(pagina);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            />
           </>
         )}
 
         <Modal
           isOpen={isOpen}
           onClose={close}
-          title={editingItem ? "Editar Horario" : "Nuevo Horario"}
+          title={editingItem ? "Editar bloque" : "Nuevo bloque de horario"}
           size="lg"
           footer={
             <>
               <Button variant="secondary" onClick={close}>
                 Cancelar
               </Button>
-              <Button variant="primary" onClick={handleSubmit}>
+              <Button variant="primary" onClick={() => guardarHorario()}>
                 Guardar
               </Button>
             </>
           }
         >
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={guardarHorario} className="space-y-4">
             {error && (
               <Alert
                 type="error"
@@ -597,62 +533,43 @@ export default function HorariosPage() {
                 onClose={() => setError(null)}
               />
             )}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Sección
-              </label>
-              <select
-                value={formData.seccion_id}
-                onChange={(e) =>
-                  setFormData({ ...formData, seccion_id: e.target.value })
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="">Seleccionar sección</option>
-                {secciones?.map((seccion) => (
-                  <option key={seccion.id} value={seccion.id}>
-                    {seccion.nombre} - {seccion.grado?.nombre}
-                  </option>
-                ))}
-              </select>
-            </div>
+
+            <SelectBuscable
+              label="Sección"
+              opciones={opcionesSecciones}
+              valor={formulario.seccion_id}
+              onChange={(valor) =>
+                setFormulario({ ...formulario, seccion_id: valor })
+              }
+              placeholder="Buscar sección..."
+              required
+            />
+
+            <SelectBuscable
+              label="Curso"
+              opciones={opcionesMaterias}
+              valor={formulario.materia_id}
+              onChange={(valor) =>
+                setFormulario({ ...formulario, materia_id: valor })
+              }
+              placeholder="Buscar curso..."
+              required
+            />
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Materia
-              </label>
-              <select
-                value={formData.materia_id}
-                onChange={(e) =>
-                  setFormData({ ...formData, materia_id: e.target.value })
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="">Seleccionar materia</option>
-                {materias?.map((materia) => (
-                  <option key={materia.id} value={materia.id}>
-                    {materia.nombre}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="mb-2 block text-sm font-semibold text-gray-700">
                 Día
               </label>
               <select
-                value={formData.dia}
-                onChange={(e) =>
-                  setFormData({ ...formData, dia: e.target.value })
+                value={formulario.dia}
+                onChange={(evento) =>
+                  setFormulario({ ...formulario, dia: evento.target.value })
                 }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               >
                 <option value="">Seleccionar día</option>
-                {dias?.map((dia) => (
+                {DIAS_SEMANA.map((dia) => (
                   <option key={dia} value={dia}>
                     {dia}
                   </option>
@@ -660,22 +577,58 @@ export default function HorariosPage() {
               </select>
             </div>
 
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-gray-700">
+                Bloque académico (45 min)
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {BLOQUES_RAPIDOS.map((bloque) => {
+                  const activo =
+                    formulario.hora_inicio === bloque.inicio &&
+                    formulario.hora_fin === bloque.fin;
+
+                  return (
+                    <button
+                      key={bloque.inicio}
+                      type="button"
+                      onClick={() =>
+                        aplicarBloqueRapido(bloque.inicio, bloque.fin)
+                      }
+                      className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                        activo
+                          ? "border-[#04ADBF] bg-[#04ADBF] text-white"
+                          : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      {bloque.etiqueta}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <Input
-                label="Hora Inicio"
+                label="Hora inicio"
                 type="time"
-                value={formData.hora_inicio}
-                onChange={(e) =>
-                  setFormData({ ...formData, hora_inicio: e.target.value })
+                value={formulario.hora_inicio}
+                onChange={(evento) =>
+                  setFormulario({
+                    ...formulario,
+                    hora_inicio: evento.target.value,
+                  })
                 }
                 required
               />
               <Input
-                label="Hora Fin"
+                label="Hora fin"
                 type="time"
-                value={formData.hora_fin}
-                onChange={(e) =>
-                  setFormData({ ...formData, hora_fin: e.target.value })
+                value={formulario.hora_fin}
+                onChange={(evento) =>
+                  setFormulario({
+                    ...formulario,
+                    hora_fin: evento.target.value,
+                  })
                 }
                 required
               />

@@ -9,6 +9,11 @@ import {
   padrePortalService,
   periodoService,
 } from "@/src/lib/services";
+import {
+  DIAS_SEMANA,
+  construirFilasHorario,
+  rangoHorario,
+} from "@/src/lib/horario";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -37,6 +42,46 @@ const DESCRIPCION_NIVEL: Record<string, string> = {
 
 const listaDe = <T,>(respuesta: any): T[] =>
   Array.isArray(respuesta) ? respuesta : respuesta?.data || [];
+
+const MESES = [
+  "enero",
+  "febrero",
+  "marzo",
+  "abril",
+  "mayo",
+  "junio",
+  "julio",
+  "agosto",
+  "septiembre",
+  "octubre",
+  "noviembre",
+  "diciembre",
+];
+
+const formatearFecha = (valor?: string | null): string => {
+  if (!valor) return "—";
+
+  const coincidencia = String(valor).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!coincidencia) return String(valor);
+
+  const anio = Number(coincidencia[1]);
+  const mes = Number(coincidencia[2]);
+  const dia = Number(coincidencia[3]);
+  const fecha = new Date(anio, mes - 1, dia);
+
+  const dias = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+
+  return `${dias[fecha.getDay()]} ${dia} de ${MESES[mes - 1]} de ${anio}`;
+};
+
+const formatearFechaCorta = (valor?: string | null): string => {
+  if (!valor) return "—";
+
+  const coincidencia = String(valor).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!coincidencia) return String(valor);
+
+  return `${coincidencia[3]}/${coincidencia[2]}/${coincidencia[1]}`;
+};
 
 export default function DetalleHijoPage() {
   const params = useParams();
@@ -126,16 +171,14 @@ export default function DetalleHijoPage() {
     cargarAsistencias();
   }, [hijoId, pestanaActiva]);
 
-  const bloquesPorDia = useMemo(() => {
-    const grupos = new Map<string, any[]>();
+  const filasHorario = useMemo(() => construirFilasHorario(bloques), [bloques]);
 
-    bloques.forEach((bloque) => {
-      const dia = bloque.dia || "Sin día";
-      grupos.set(dia, [...(grupos.get(dia) || []), bloque]);
-    });
-
-    return Array.from(grupos.entries());
-  }, [bloques]);
+  const bloqueEnCelda = (dia: string, inicio: string) =>
+    bloques.find(
+      (bloque) =>
+        String(bloque.dia || "").toLowerCase() === dia.toLowerCase() &&
+        String(bloque.hora_inicio || "").slice(0, 5) === inicio,
+    );
 
   const totalCompetencias = useMemo(() => {
     if (!consolidado?.areas) return 0;
@@ -144,6 +187,11 @@ export default function DetalleHijoPage() {
       0,
     );
   }, [consolidado]);
+
+  const periodoSeleccionado = useMemo(
+    () => periodos.find((periodo) => String(periodo.id) === periodoId),
+    [periodos, periodoId],
+  );
 
   return (
     <PermissionGuard
@@ -160,7 +208,7 @@ export default function DetalleHijoPage() {
       <div className="space-y-6">
         <Link
           href="/dashboard/padre/mis-hijos"
-          className="inline-flex items-center text-sm text-blue-600 hover:text-blue-700"
+          className="inline-flex items-center text-sm text-[#04ADBF] hover:text-[#038a99]"
         >
           ← Volver a mis hijos
         </Link>
@@ -196,7 +244,7 @@ export default function DetalleHijoPage() {
               onClick={() => setPestanaActiva(pestana.clave)}
               className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
                 pestanaActiva === pestana.clave
-                  ? "bg-blue-600 text-white"
+                  ? "bg-[#04ADBF] text-white"
                   : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
               }`}
             >
@@ -208,9 +256,19 @@ export default function DetalleHijoPage() {
         {pestanaActiva === "calificaciones" && (
           <Card>
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-              <h2 className="text-lg font-semibold text-gray-800">
-                Calificaciones por competencia
-              </h2>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-800">
+                  Calificaciones por competencia
+                </h2>
+                {periodoSeleccionado?.fecha_inicio && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Del {formatearFechaCorta(periodoSeleccionado.fecha_inicio)}{
+                      " "
+                    }
+                    al {formatearFechaCorta(periodoSeleccionado.fecha_fin)}
+                  </p>
+                )}
+              </div>
               <select
                 value={periodoId}
                 onChange={(evento) => setPeriodoId(evento.target.value)}
@@ -346,7 +404,12 @@ export default function DetalleHijoPage() {
                           className="border-t border-gray-100"
                         >
                           <td className="px-3 py-2 text-gray-700">
-                            {registro.fecha}
+                            <span className="block">
+                              {formatearFecha(registro.fecha)}
+                            </span>
+                            <span className="block text-xs text-gray-500">
+                              {formatearFechaCorta(registro.fecha)}
+                            </span>
                           </td>
                           <td className="px-3 py-2 text-gray-700">
                             {registro.materia?.nombre || "—"}
@@ -380,7 +443,8 @@ export default function DetalleHijoPage() {
               Horario de {hijo?.nombre_completo || "el estudiante"}
             </h2>
             <p className="text-sm text-gray-600 mb-4">
-              {hijo?.seccion || "Sin sección asignada"}
+              {hijo?.seccion || "Sin sección asignada"} · cada bloque dura 45
+              minutos (hora académica)
             </p>
 
             {bloques.length === 0 ? (
@@ -389,34 +453,75 @@ export default function DetalleHijoPage() {
                 message="Todavía no hay un horario registrado para esta sección."
               />
             ) : (
-              <div className="space-y-4">
-                {bloquesPorDia.map(([dia, lista]) => (
-                  <div key={dia} className="border border-gray-200 rounded-lg">
-                    <div className="bg-gray-50 px-4 py-2 font-semibold text-gray-800">
-                      {dia}
-                    </div>
-                    <ul className="divide-y divide-gray-100">
-                      {lista.map((bloque) => (
-                        <li
-                          key={bloque.id}
-                          className="px-4 py-2 flex flex-wrap items-center justify-between gap-2"
+              <div className="overflow-x-auto">
+                <table className="min-w-full border-collapse text-sm">
+                  <thead>
+                    <tr>
+                      <th className="sticky left-0 z-10 w-24 border border-gray-200 bg-gray-100 px-2 py-2 text-left text-xs font-bold uppercase text-gray-600">
+                        Hora
+                      </th>
+                      {DIAS_SEMANA.map((dia) => (
+                        <th
+                          key={dia}
+                          className="min-w-[130px] border border-gray-200 bg-[#04ADBF] px-2 py-2 text-center text-xs font-bold uppercase text-white"
                         >
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">
-                              {bloque.materia}
-                            </p>
-                            <p className="text-xs text-gray-600">
-                              {bloque.docente || "Docente por asignar"}
-                            </p>
-                          </div>
-                          <span className="text-sm text-gray-700 font-mono">
-                            {bloque.hora_inicio} - {bloque.hora_fin}
-                          </span>
-                        </li>
+                          {dia}
+                        </th>
                       ))}
-                    </ul>
-                  </div>
-                ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filasHorario.map((franja) =>
+                      franja.tipo === "receso" ? (
+                        <tr key={franja.inicio} className="bg-gray-50">
+                          <td className="sticky left-0 z-10 border border-gray-200 bg-gray-100 px-2 py-1 text-[11px] font-semibold text-gray-500">
+                            {rangoHorario(franja.inicio, franja.fin)}
+                          </td>
+                          <td
+                            colSpan={DIAS_SEMANA.length}
+                            className="border border-gray-200 px-2 py-1 text-center text-[11px] font-semibold uppercase tracking-wide text-gray-500"
+                          >
+                            Recreo
+                          </td>
+                        </tr>
+                      ) : (
+                        <tr key={franja.inicio}>
+                          <td className="sticky left-0 z-10 border border-gray-200 bg-gray-50 px-2 py-2 align-top">
+                            <span className="block text-[11px] font-bold uppercase text-gray-700">
+                              {franja.etiqueta}
+                            </span>
+                            <span className="block text-[11px] text-gray-500">
+                              {rangoHorario(franja.inicio, franja.fin)}
+                            </span>
+                          </td>
+                          {DIAS_SEMANA.map((dia) => {
+                            const bloque = bloqueEnCelda(dia, franja.inicio);
+
+                            return (
+                              <td
+                                key={`${dia}-${franja.inicio}`}
+                                className="border border-gray-200 p-1 align-top"
+                              >
+                                {bloque && (
+                                  <div className="h-full rounded-md border-l-4 border-[#04ADBF] bg-[#04ADBF]/10 p-2">
+                                    <span className="block text-xs font-bold leading-tight text-gray-900">
+                                      {bloque.materia || "Curso"}
+                                    </span>
+                                    {bloque.docente && (
+                                      <span className="mt-0.5 block text-[10px] text-gray-600">
+                                        {bloque.docente}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ),
+                    )}
+                  </tbody>
+                </table>
               </div>
             )}
           </Card>

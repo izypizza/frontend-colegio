@@ -2,10 +2,12 @@
 
 import { Alert, Button, Card, SelectBuscable } from "@/src/components/ui";
 import { PermissionGuard } from "@/src/components/auth";
+import { useAuth } from "@/src/features/auth";
 import { UserRole } from "@/src/types";
 import { useErrorHandler } from "@/src/hooks/useErrorHandler";
 import {
   calificacionCompetenciaService,
+  docentePortalService,
   libroNotasService,
   materiaService,
   periodoService,
@@ -17,11 +19,14 @@ const listaDe = (respuesta: any): any[] =>
   Array.isArray(respuesta) ? respuesta : respuesta?.data || [];
 
 export default function LibroDeNotasPage() {
+  const { user } = useAuth();
+  const esDocente = user?.role === UserRole.DOCENTE;
   const { error, setError, handleError } = useErrorHandler();
 
   const [periodos, setPeriodos] = useState<any[]>([]);
   const [secciones, setSecciones] = useState<any[]>([]);
   const [materias, setMaterias] = useState<any[]>([]);
+  const [asignaciones, setAsignaciones] = useState<any[]>([]);
 
   const [periodoId, setPeriodoId] = useState("");
   const [gradoNombre, setGradoNombre] = useState("");
@@ -42,9 +47,40 @@ export default function LibroDeNotasPage() {
   const requiereConclusion = (nivel: string) => nivel === "B" || nivel === "C";
 
   useEffect(() => {
+    if (!user) return;
+
     const cargar = async () => {
       try {
         setCargando(true);
+
+        if (esDocente) {
+          const respuestaAsignaciones =
+            await docentePortalService.misAsignaciones();
+          const listaAsignaciones = respuestaAsignaciones.asignaciones || [];
+          setAsignaciones(listaAsignaciones);
+
+          const periodosPropios = new Map<number, any>();
+          listaAsignaciones.forEach((asignacion: any) => {
+            if (asignacion.periodo_academico) {
+              periodosPropios.set(
+                asignacion.periodo_academico.id,
+                asignacion.periodo_academico,
+              );
+            }
+          });
+
+          const listaPeriodos = Array.from(periodosPropios.values());
+          setPeriodos(listaPeriodos);
+
+          const activo =
+            listaPeriodos.find((periodo: any) => periodo.estado === "activo") ||
+            listaPeriodos[0];
+
+          if (activo) setPeriodoId(String(activo.id));
+
+          return;
+        }
+
         const [respuestaPeriodos, respuestaSecciones, respuestaMaterias] =
           await Promise.all([
             periodoService.getAll({ all: true }),
@@ -70,27 +106,86 @@ export default function LibroDeNotasPage() {
     };
 
     cargar();
-  }, []);
+  }, [user, esDocente]);
+
+  const seccionesDisponibles = useMemo(() => {
+    if (!esDocente) return secciones;
+
+    const mapa = new Map<number, any>();
+
+    asignaciones.forEach((asignacion: any) => {
+      if (
+        !periodoId ||
+        String(asignacion.periodo_academico_id) !== periodoId ||
+        !asignacion.seccion
+      ) {
+        return;
+      }
+
+      if (!mapa.has(asignacion.seccion_id)) {
+        mapa.set(asignacion.seccion_id, asignacion.seccion);
+      }
+    });
+
+    return Array.from(mapa.values());
+  }, [asignaciones, esDocente, periodoId, secciones]);
+
+  const materiasDisponibles = useMemo(() => {
+    if (!esDocente) return materias;
+
+    const mapa = new Map<number, any>();
+
+    asignaciones.forEach((asignacion: any) => {
+      if (!periodoId || String(asignacion.periodo_academico_id) !== periodoId) {
+        return;
+      }
+
+      if (seccionId && String(asignacion.seccion_id) !== seccionId) return;
+
+      if (asignacion.materia && !mapa.has(asignacion.materia_id)) {
+        mapa.set(asignacion.materia_id, asignacion.materia);
+      }
+    });
+
+    return Array.from(mapa.values());
+  }, [asignaciones, esDocente, periodoId, seccionId, materias]);
 
   const grados = useMemo(() => {
     const nombres = new Set<string>();
-    secciones.forEach((seccion) => {
+    seccionesDisponibles.forEach((seccion) => {
       if (seccion.grado?.nombre) nombres.add(seccion.grado.nombre);
     });
     return Array.from(nombres).sort();
-  }, [secciones]);
+  }, [seccionesDisponibles]);
 
   const seccionesFiltradas = useMemo(
     () =>
       gradoNombre
-        ? secciones.filter((seccion) => seccion.grado?.nombre === gradoNombre)
-        : secciones,
-    [secciones, gradoNombre],
+        ? seccionesDisponibles.filter(
+            (seccion) => seccion.grado?.nombre === gradoNombre,
+          )
+        : seccionesDisponibles,
+    [seccionesDisponibles, gradoNombre],
   );
 
   const consultar = async () => {
     if (!seccionId || !materiaId || !periodoId) {
       setError("Elige periodo, sección y curso para ver el libro de notas.");
+      return;
+    }
+
+    if (
+      esDocente &&
+      !asignaciones.some(
+        (asignacion: any) =>
+          String(asignacion.seccion_id) === seccionId &&
+          String(asignacion.materia_id) === materiaId &&
+          String(asignacion.periodo_academico_id) === periodoId,
+      )
+    ) {
+      setError(
+        "No tienes asignado ese curso en esta sección durante el periodo elegido.",
+      );
       return;
     }
 
@@ -213,7 +308,11 @@ export default function LibroDeNotasPage() {
               </label>
               <select
                 value={periodoId}
-                onChange={(evento) => setPeriodoId(evento.target.value)}
+                onChange={(evento) => {
+                  setPeriodoId(evento.target.value);
+                  setSeccionId("");
+                  setMateriaId("");
+                }}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Seleccionar periodo</option>
@@ -243,7 +342,10 @@ export default function LibroDeNotasPage() {
             <SelectBuscable
               label="Sección"
               valor={seccionId}
-              onChange={setSeccionId}
+              onChange={(valor) => {
+                setSeccionId(valor);
+                setMateriaId("");
+              }}
               vacio="Seleccionar sección"
               placeholder="Buscar por grado o sección"
               opciones={seccionesFiltradas.map((seccion) => ({
@@ -259,7 +361,7 @@ export default function LibroDeNotasPage() {
               onChange={setMateriaId}
               vacio="Seleccionar curso"
               placeholder="Buscar curso"
-              opciones={materias.map((materia) => ({
+              opciones={materiasDisponibles.map((materia) => ({
                 valor: materia.id,
                 etiqueta: materia.nombre,
               }))}

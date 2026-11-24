@@ -7,13 +7,34 @@ import {
   USER_KEY,
 } from "@/src/config/constants";
 
+/**
+ * Ventana muy corta para reutilizar una lectura idéntica. Sirve para absorber
+ * montajes dobles y llamadas simultáneas de varios componentes, sin que un
+ * formulario muestre datos viejos. Cualquier escritura limpia toda la caché.
+ */
+const VIGENCIA_LECTURA_MS = 3000;
+
 class ApiClient {
   private baseURL: string;
   private timeout: number;
+  private cacheLecturas = new Map<
+    string,
+    { expira: number; datos: unknown }
+  >();
+  private solicitudesEnVuelo = new Map<string, Promise<unknown>>();
 
   constructor(baseURL: string = API_BASE_URL, timeout: number = API_TIMEOUT) {
     this.baseURL = baseURL;
     this.timeout = timeout;
+  }
+
+  /**
+   * Evita que dos componentes pidan lo mismo al mismo tiempo y que una lectura
+   * idéntica se repita en ráfaga (montajes dobles, sidebar + página, etc.).
+   */
+  private limpiarLecturas(): void {
+    this.cacheLecturas.clear();
+    this.solicitudesEnVuelo.clear();
   }
 
   private getHeaders(includeAuth: boolean = true): HeadersInit {
@@ -122,26 +143,62 @@ class ApiClient {
       ...fetchOptions
     } = options;
     const url = `${this.baseURL}${endpoint}`;
+    const metodo = (fetchOptions.method || "GET").toUpperCase();
+    const esLectura = metodo === "GET" || metodo === "HEAD";
+    const cacheable = esLectura && responseType === "json";
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    if (!esLectura) {
+      this.limpiarLecturas();
+    } else if (cacheable) {
+      const guardado = this.cacheLecturas.get(url);
+      if (guardado && guardado.expira > Date.now()) {
+        return guardado.datos as T;
+      }
+
+      const pendiente = this.solicitudesEnVuelo.get(url);
+      if (pendiente) {
+        return (await pendiente) as T;
+      }
+    }
+
+    const ejecutar = (async (): Promise<T> => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+      try {
+        const response = await fetch(url, {
+          ...fetchOptions,
+          credentials: "include",
+          headers: this.getHeaders(true),
+          signal: controller.signal,
+        });
+
+        return await this.handleResponse<T>(response, responseType);
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") {
+          throw new Error("La solicitud ha excedido el tiempo de espera");
+        }
+        throw error;
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    })();
+
+    if (!cacheable) {
+      return ejecutar;
+    }
+
+    this.solicitudesEnVuelo.set(url, ejecutar);
 
     try {
-      const response = await fetch(url, {
-        ...fetchOptions,
-        credentials: "include",
-        headers: this.getHeaders(true),
-        signal: controller.signal,
+      const resultado = await ejecutar;
+      this.cacheLecturas.set(url, {
+        expira: Date.now() + VIGENCIA_LECTURA_MS,
+        datos: resultado,
       });
-
-      return await this.handleResponse<T>(response, responseType);
-    } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") {
-        throw new Error("La solicitud ha excedido el tiempo de espera");
-      }
-      throw error;
+      return resultado;
     } finally {
-      clearTimeout(timeoutId);
+      this.solicitudesEnVuelo.delete(url);
     }
   }
 
@@ -190,6 +247,7 @@ class ApiClient {
     if (typeof window !== "undefined") {
       localStorage.setItem(TOKEN_KEY, token);
     }
+    this.limpiarLecturas();
   }
 
   setRefreshToken(token: string): void {
@@ -204,6 +262,7 @@ class ApiClient {
       localStorage.removeItem(REFRESH_TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
     }
+    this.limpiarLecturas();
   }
 }
 

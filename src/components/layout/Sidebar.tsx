@@ -221,7 +221,6 @@ const menuItems: MenuItem[] = [
       UserRole.ADMIN,
       UserRole.AUXILIAR,
       UserRole.DOCENTE,
-      UserRole.PADRE,
       UserRole.ESTUDIANTE,
     ],
     modulo: "horarios",
@@ -806,6 +805,27 @@ const menuItems: MenuItem[] = [
     ),
   },
   {
+    label: "Horario de mis hijos",
+    href: "/dashboard/padre/horarios",
+    roles: [UserRole.PADRE],
+    modulo: "horarios",
+    icon: (
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
+      </svg>
+    ),
+  },
+  {
     label: "Calificaciones de Hijos",
     href: "/dashboard/padre/calificaciones",
     roles: [UserRole.PADRE],
@@ -887,10 +907,25 @@ const ORDEN_SECCIONES = [
   "Mi cuenta",
 ];
 
+const ALIAS_DE_RUTA: Record<string, string> = {
+  "/dashboard/padre/hijos": "/dashboard/padre/mis-hijos",
+};
+
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const pathname = usePathname();
   const { user } = useAuth();
   const { modulos, loading: modulosLoading } = useModulosActivos();
+
+  const esItemActivo = (href: string) => {
+    if (!pathname) return false;
+    if (pathname === href || pathname.startsWith(`${href}/`)) return true;
+
+    return Object.entries(ALIAS_DE_RUTA).some(
+      ([prefijo, destino]) =>
+        destino === href &&
+        (pathname === prefijo || pathname.startsWith(`${prefijo}/`)),
+    );
+  };
 
   // Filtrar items del menú según el rol del usuario y módulos activos
   const visibleMenuItems = menuItems.filter((item) => {
@@ -1014,7 +1049,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 )}
                 <ul className="space-y-1.5 sm:space-y-2">
                   {seccion.items.map((item) => {
-                    const isActive = pathname === item.href;
+                    const isActive = esItemActivo(item.href);
                     return (
                       <li key={item.href}>
                         <Link
