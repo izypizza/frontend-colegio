@@ -117,7 +117,9 @@ export default function AsistenciasPage() {
     observaciones: "",
   });
   const [seccionModal, setSeccionModal] = useState("");
-  const [estudiantesSeccion, setEstudiantesSeccion] = useState<Estudiante[]>([]);
+  const [estudiantesSeccion, setEstudiantesSeccion] = useState<Estudiante[]>(
+    [],
+  );
   const [cargandoEstudiantes, setCargandoEstudiantes] = useState(false);
   const [guardando, setGuardando] = useState(false);
 
@@ -439,7 +441,11 @@ export default function AsistenciasPage() {
         });
         setSuccess("Asistencia actualizada correctamente");
       } else {
-        if (!formData.estudiante_id || !formData.materia_id || !formData.fecha) {
+        if (
+          !formData.estudiante_id ||
+          !formData.materia_id ||
+          !formData.fecha
+        ) {
           setError("Completa sección, estudiante, curso y fecha.");
           return;
         }
@@ -579,7 +585,11 @@ export default function AsistenciasPage() {
       label: "Acciones",
       render: (_valor: unknown, asistencia: Asistencia) => (
         <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" size="sm" onClick={() => handleEdit(asistencia)}>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => handleEdit(asistencia)}
+          >
             Editar
           </Button>
 
@@ -633,7 +643,8 @@ export default function AsistenciasPage() {
             <h1 className="text-2xl font-bold text-gray-800">Asistencias</h1>
             <p className="text-gray-600 mt-1">
               Elige grado, sección y fecha para acotar la lista. Los filtros se
-              aplican sobre todos los registros, no solo sobre la página visible.
+              aplican sobre todos los registros, no solo sobre la página
+              visible.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -784,7 +795,11 @@ export default function AsistenciasPage() {
               <Button variant="secondary" onClick={closeModal}>
                 Cancelar
               </Button>
-              <Button variant="primary" onClick={handleSubmit} disabled={guardando}>
+              <Button
+                variant="primary"
+                onClick={handleSubmit}
+                disabled={guardando}
+              >
                 {guardando ? "Guardando..." : "Guardar"}
               </Button>
             </>
@@ -994,7 +1009,9 @@ export default function AsistenciasPage() {
               </label>
               <textarea
                 value={motivoJustificacion}
-                onChange={(evento) => setMotivoJustificacion(evento.target.value)}
+                onChange={(evento) =>
+                  setMotivoJustificacion(evento.target.value)
+                }
                 className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#04ADBF]"
                 rows={3}
                 maxLength={500}

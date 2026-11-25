@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { prestamoLibroService, libroService } from "@/src/lib/services";
 import { Button } from "@/src/components/ui/Button";
 import { Card } from "@/src/components/ui/Card";
@@ -8,6 +8,7 @@ import { Modal } from "@/src/components/ui/Modal";
 import { Table } from "@/src/components/ui/Table";
 import { Alert } from "@/src/components/ui/Alert";
 import { Pagination } from "@/src/components/ui/Pagination";
+import { SelectBuscable } from "@/src/components/ui/SelectBuscable";
 import { useErrorHandler } from "@/src/hooks/useErrorHandler";
 import { useModalState } from "@/src/hooks/useModalState";
 import { usePagination } from "@/src/hooks/usePagination";
@@ -104,18 +105,52 @@ export default function PrestamosPage() {
   }, [currentPage, perPage, user]);
 
   useAutoRefresh(() => loadData(true), {
-    intervaloMs: 20000,
+    intervaloMs: 60000,
     activo: Boolean(user && ["admin", "bibliotecario"].includes(user.role)),
   });
+
+  // El catálogo de libros solo se necesita al registrar un préstamo; antes se
+  // recargaba completo en cada carga y también cada 20 segundos.
+  useEffect(() => {
+    if (!showModal) return;
+
+    const cargarLibrosDisponibles = async () => {
+      try {
+        const respuesta = await libroService.getAll({ all: true });
+        const lista = Array.isArray(respuesta)
+          ? respuesta
+          : respuesta?.data || [];
+
+        setLibrosDisponibles(
+          lista.filter(
+            (libro: Libro) => libro.disponible && libro.cantidad_disponible > 0,
+          ),
+        );
+      } catch (err) {
+        handleError(err, "No se pudieron cargar los libros disponibles");
+      }
+    };
+
+    cargarLibrosDisponibles();
+  }, [showModal]);
+
+  const opcionesLibros = useMemo(
+    () =>
+      librosDisponibles.map((libro) => ({
+        valor: libro.id,
+        etiqueta: libro.titulo,
+        detalle: libro.autor,
+      })),
+    [librosDisponibles],
+  );
 
   const loadData = async (silencioso = false) => {
     try {
       if (!silencioso) {
         setLoading(true);
       }
-      const [prestamosData, librosData, resumenData] = (await Promise.all([
+      const [prestamosData, resumenData] = (await Promise.all([
         prestamoLibroService.getAll({ page: currentPage, per_page: perPage }),
-        libroService.getAll({ all: true }),
         prestamoLibroService.reportes(),
       ])) as any[];
 
@@ -140,17 +175,6 @@ export default function PrestamosPage() {
       }
 
       setResumen(resumenData);
-      const disponibles = Array.isArray(librosData)
-        ? librosData.filter(
-            (libro: Libro) => libro.disponible && libro.cantidad_disponible > 0,
-          )
-        : librosData?.data
-          ? librosData.data.filter(
-              (libro: Libro) =>
-                libro.disponible && libro.cantidad_disponible > 0,
-            )
-          : [];
-      setLibrosDisponibles(disponibles);
     } catch (err: any) {
       if (!silencioso) {
         handleError(err, "Error al cargar los datos");
@@ -477,26 +501,17 @@ export default function PrestamosPage() {
                 onClose={() => setError(null)}
               />
             )}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Libro *
-              </label>
-              <select
-                value={formData.libro_id}
-                onChange={(e) =>
-                  setFormData({ ...formData, libro_id: e.target.value })
-                }
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
-                required
-              >
-                <option value="">Seleccionar libro</option>
-                {librosDisponibles.map((libro) => (
-                  <option key={libro.id} value={libro.id}>
-                    {libro.titulo} - {libro.autor}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <SelectBuscable
+              label="Libro"
+              opciones={opcionesLibros}
+              valor={formData.libro_id}
+              onChange={(valor) =>
+                setFormData({ ...formData, libro_id: valor })
+              }
+              vacio="Seleccionar libro"
+              placeholder="Buscar por título o autor"
+              required
+            />
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

@@ -7,7 +7,6 @@ import {
   GrillaHorario,
   Input,
   Modal,
-  Pagination,
   SelectBuscable,
   Table,
 } from "@/src/components/ui";
@@ -58,11 +57,10 @@ export default function HorariosPage() {
   const [horarios, setHorarios] = useState<Horario[]>([]);
   const [secciones, setSecciones] = useState<Seccion[]>([]);
   const [materias, setMaterias] = useState<Materia[]>([]);
-  const [cargando, setCargando] = useState(true);
+  const [cargandoCatalogos, setCargandoCatalogos] = useState(true);
+  const [cargandoHorario, setCargandoHorario] = useState(false);
   const [vista, setVista] = useState<"calendario" | "lista">("calendario");
   const [seccionSeleccionada, setSeccionSeleccionada] = useState("");
-  const [paginaLista, setPaginaLista] = useState(1);
-  const [porPagina] = useState(25);
   const [formulario, setFormulario] = useState({
     seccion_id: "",
     materia_id: "",
@@ -76,55 +74,84 @@ export default function HorariosPage() {
   const { isOpen, editingItem, openCreate, openEdit, close } =
     useModalState<Horario>();
 
-  const cargarHorarios = useCallback(async () => {
-    try {
-      setCargando(true);
-
-      const respuestaHorarios = await horarioService.getAll({ all: true });
-
-      const lista: Horario[] = Array.isArray(respuestaHorarios)
-        ? respuestaHorarios
-        : respuestaHorarios.data;
-
-      setHorarios(lista);
-
-      if (esGestor) {
-        const [respuestaSecciones, respuestaMaterias] = await Promise.all([
-          seccionService.getAll({ all: true, filtros: { solo_conteo: true } }),
-          materiaService.getAll({ all: true }),
-        ]);
-
-        setSecciones(
-          Array.isArray(respuestaSecciones)
-            ? respuestaSecciones
-            : respuestaSecciones.data,
-        );
-        setMaterias(
-          Array.isArray(respuestaMaterias)
-            ? respuestaMaterias
-            : respuestaMaterias.data,
-        );
-        return;
-      }
-
-      const seccionesUnicas = new Map<number, Seccion>();
-      lista.forEach((horario) => {
-        if (horario.seccion) {
-          seccionesUnicas.set(horario.seccion_id, horario.seccion);
-        }
-      });
-      setSecciones(Array.from(seccionesUnicas.values()));
-    } catch (err) {
-      handleError(err, "Error al cargar los horarios");
-    } finally {
-      setCargando(false);
+  const cargarCatalogos = async () => {
+    if (!esGestor) {
+      setCargandoCatalogos(false);
+      return;
     }
-  }, [esGestor, handleError]);
+
+    try {
+      setCargandoCatalogos(true);
+
+      const [respuestaSecciones, respuestaMaterias] = await Promise.all([
+        seccionService.getAll({ all: true, filtros: { solo_conteo: true } }),
+        materiaService.getAll({ all: true }),
+      ]);
+
+      setSecciones(
+        Array.isArray(respuestaSecciones)
+          ? respuestaSecciones
+          : respuestaSecciones.data,
+      );
+      setMaterias(
+        Array.isArray(respuestaMaterias)
+          ? respuestaMaterias
+          : respuestaMaterias.data,
+      );
+    } catch (err) {
+      handleError(err, "No se pudieron cargar las secciones");
+    } finally {
+      setCargandoCatalogos(false);
+    }
+  };
+
+  const cargarHorarios = useCallback(
+    async (seccionId: string) => {
+      try {
+        setCargandoHorario(true);
+
+        const respuesta = await horarioService.getAll({
+          all: true,
+          filtros: esGestor && seccionId ? { seccion_id: seccionId } : {},
+        });
+
+        const lista = Array.isArray(respuesta) ? respuesta : respuesta.data;
+        setHorarios(lista);
+
+        if (!esGestor) {
+          const unicas = new Map<number, Seccion>();
+
+          lista.forEach((horario) => {
+            if (horario.seccion) {
+              unicas.set(horario.seccion_id, horario.seccion);
+            }
+          });
+
+          setSecciones(Array.from(unicas.values()));
+        }
+      } catch (err) {
+        handleError(err, "Error al cargar el horario");
+      } finally {
+        setCargandoHorario(false);
+      }
+    },
+    [esGestor, handleError],
+  );
 
   useEffect(() => {
     if (!user) return;
-    cargarHorarios();
-  }, [user, cargarHorarios]);
+
+    cargarCatalogos();
+  }, [user, esGestor]);
+
+  useEffect(() => {
+    if (esGestor && !seccionSeleccionada) {
+      setHorarios([]);
+      return;
+    }
+
+    cargarHorarios(seccionSeleccionada);
+  }, [seccionSeleccionada, cargarHorarios, esGestor]);
 
   const opcionesSecciones = useMemo(
     () =>
@@ -145,14 +172,15 @@ export default function HorariosPage() {
     [materias],
   );
 
-  const horariosFiltrados = useMemo(() => {
-    const lista = seccionSeleccionada
-      ? horarios.filter(
-          (horario) => String(horario.seccion_id) === seccionSeleccionada,
-        )
-      : horarios;
+  const bloquesVisibles = useMemo(() => {
+    const base =
+      esGestor || !seccionSeleccionada
+        ? horarios
+        : horarios.filter(
+            (horario) => String(horario.seccion_id) === seccionSeleccionada,
+          );
 
-    return [...lista].sort((a, b) => {
+    return [...base].sort((a, b) => {
       const ordenDia =
         DIAS_SEMANA.indexOf(a.dia as (typeof DIAS_SEMANA)[number]) -
         DIAS_SEMANA.indexOf(b.dia as (typeof DIAS_SEMANA)[number]);
@@ -163,19 +191,7 @@ export default function HorariosPage() {
         normalizarHora(b.hora_inicio),
       );
     });
-  }, [horarios, seccionSeleccionada]);
-
-  const totalPaginasLista = Math.max(
-    1,
-    Math.ceil(horariosFiltrados.length / porPagina),
-  );
-
-  const paginaActualLista = Math.min(paginaLista, totalPaginasLista);
-
-  const horariosDeLaPagina = horariosFiltrados.slice(
-    (paginaActualLista - 1) * porPagina,
-    paginaActualLista * porPagina,
-  );
+  }, [horarios, seccionSeleccionada, esGestor]);
 
   const colorMateria = (materiaId: number) =>
     COLORES_MATERIA[materiaId % COLORES_MATERIA.length];
@@ -210,7 +226,7 @@ export default function HorariosPage() {
     try {
       await horarioService.delete(horario.id);
       handleSuccess("Bloque de horario eliminado.");
-      cargarHorarios();
+      cargarHorarios(seccionSeleccionada);
     } catch (err) {
       handleError(err, "No se pudo eliminar el bloque");
     }
@@ -248,7 +264,7 @@ export default function HorariosPage() {
       }
 
       close();
-      cargarHorarios();
+      cargarHorarios(String(datos.seccion_id));
     } catch (err) {
       handleError(err, "No se pudo guardar el bloque");
     }
@@ -307,12 +323,16 @@ export default function HorariosPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-800">Horario</h1>
             <p className="text-gray-600 mt-1">
-              Cada bloque dura 45 minutos: son las horas académicas del colegio,
-              no horas cronológicas.
+              Elige una sección y verás su horario. Cada bloque dura 45 minutos:
+              son las horas académicas del colegio, no horas cronológicas.
             </p>
           </div>
           {permissions.canCreate && (
-            <Button variant="primary" onClick={abrirCrear}>
+            <Button
+              variant="primary"
+              onClick={abrirCrear}
+              disabled={!seccionSeleccionada}
+            >
               + Nuevo bloque
             </Button>
           )}
@@ -336,11 +356,8 @@ export default function HorariosPage() {
                 label="Sección"
                 opciones={opcionesSecciones}
                 valor={seccionSeleccionada}
-                onChange={(valor) => {
-                  setSeccionSeleccionada(valor);
-                  setPaginaLista(1);
-                }}
-                vacio="Todas las secciones"
+                onChange={setSeccionSeleccionada}
+                vacio="Elegir sección"
                 placeholder="Buscar sección..."
               />
             </div>
@@ -372,73 +389,60 @@ export default function HorariosPage() {
           </div>
         </Card>
 
-        {cargando ? (
+        {cargandoCatalogos ? (
+          <Card>
+            <p className="py-10 text-center text-gray-600">Cargando...</p>
+          </Card>
+        ) : esGestor && !seccionSeleccionada ? (
+          <Card>
+            <Alert
+              type="info"
+              message="Elige una sección para consultar su horario. Cada franja admite un solo curso, por eso el horario se ve por sección y no todo junto."
+            />
+          </Card>
+        ) : cargandoHorario ? (
           <Card>
             <p className="py-10 text-center text-gray-600">
               Cargando horario...
             </p>
           </Card>
-        ) : horariosFiltrados.length === 0 ? (
+        ) : bloquesVisibles.length === 0 ? (
           <Card>
             <Alert
               type="warning"
-              message={
-                seccionSeleccionada
-                  ? "Esta sección todavía no tiene bloques de horario."
-                  : "Todavía no hay bloques de horario registrados."
-              }
+              message="Esta sección todavía no tiene bloques de horario."
             />
           </Card>
         ) : vista === "calendario" ? (
           <Card>
-            {!seccionSeleccionada && opcionesSecciones.length > 1 ? (
-              <Alert
-                type="info"
-                message="Elige una sección para ver el calendario: cada franja admite un solo curso, así que el calendario muestra una sección a la vez. En la vista de lista puedes revisar todas juntas."
-              />
-            ) : (
-              <GrillaHorario
-                bloques={horariosFiltrados}
-                onSeleccionar={esGestor ? abrirEditar : undefined}
-                claseBloque={(horario) => colorMateria(horario.materia_id)}
-                renderBloque={(horario) => (
-                  <>
-                    <span className="block text-xs font-bold leading-tight">
-                      {horario.materia?.nombre || "Curso"}
+            <GrillaHorario
+              bloques={bloquesVisibles}
+              onSeleccionar={esGestor ? abrirEditar : undefined}
+              claseBloque={(horario) => colorMateria(horario.materia_id)}
+              renderBloque={(horario) => (
+                <>
+                  <span className="block text-xs font-bold leading-tight">
+                    {horario.materia?.nombre || "Curso"}
+                  </span>
+                  {esGestor && (
+                    <span className="mt-0.5 block truncate text-[10px] text-gray-600">
+                      {horario.seccion?.grado?.nombre}{" "}
+                      {horario.seccion?.nombre}
                     </span>
-                    {esGestor && (
-                      <span className="mt-0.5 block truncate text-[10px] text-gray-600">
-                        {horario.seccion?.grado?.nombre}{" "}
-                        {horario.seccion?.nombre}
-                      </span>
-                    )}
-                  </>
-                )}
-              />
-            )}
+                  )}
+                </>
+              )}
+            />
           </Card>
         ) : (
-          <>
-            <Card>
-              <Table
-                columns={columnas}
-                data={horariosDeLaPagina}
-                onEdit={permissions.canEdit ? abrirEditar : undefined}
-                onDelete={permissions.canDelete ? eliminarHorario : undefined}
-              />
-            </Card>
-
-            <Pagination
-              currentPage={paginaActualLista}
-              lastPage={totalPaginasLista}
-              total={horariosFiltrados.length}
-              perPage={porPagina}
-              onPageChange={(pagina) => {
-                setPaginaLista(pagina);
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
+          <Card>
+            <Table
+              columns={columnas}
+              data={bloquesVisibles}
+              onEdit={permissions.canEdit ? abrirEditar : undefined}
+              onDelete={permissions.canDelete ? eliminarHorario : undefined}
             />
-          </>
+          </Card>
         )}
 
         <Modal

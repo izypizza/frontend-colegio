@@ -74,6 +74,10 @@ export default function CalificacionesPage() {
 
   const [calificaciones, setCalificaciones] = useState<Calificacion[]>([]);
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
+  const [estudianteElegido, setEstudianteElegido] = useState<Estudiante | null>(
+    null,
+  );
+  const [buscandoEstudiantes, setBuscandoEstudiantes] = useState(false);
   const [materias, setMaterias] = useState<Materia[]>([]);
   const [periodos, setPeriodos] = useState<PeriodoAcademico[]>([]);
   const [estadisticas, setEstadisticas] = useState<any>(null);
@@ -115,6 +119,40 @@ export default function CalificacionesPage() {
       fetchEstadisticas();
     }
   }, [filterPeriodo]);
+
+  // La búsqueda de estudiantes se resuelve en el servidor: antes se traían los
+  // ~1000 del colegio solo para filtrarlos en el navegador.
+  useEffect(() => {
+    const esGestor = user?.role === "admin" || user?.role === "auxiliar";
+
+    if (!esGestor || !isModalOpen) return;
+
+    const termino = busquedaEstudiante.trim();
+
+    if (termino.length < 2) {
+      setEstudiantes([]);
+      return;
+    }
+
+    const temporizador = setTimeout(async () => {
+      try {
+        setBuscandoEstudiantes(true);
+        const respuesta = await estudianteService.getAll({
+          all: true,
+          filtros: { buscar: termino },
+        });
+        setEstudiantes(
+          Array.isArray(respuesta) ? respuesta : respuesta?.data || [],
+        );
+      } catch (err) {
+        handleError(err, "No se pudieron buscar estudiantes");
+      } finally {
+        setBuscandoEstudiantes(false);
+      }
+    }, 350);
+
+    return () => clearTimeout(temporizador);
+  }, [busquedaEstudiante, isModalOpen, user]);
 
   const fetchEstadisticas = async () => {
     if (user?.role !== "admin" && user?.role !== "auxiliar") return;
@@ -176,25 +214,20 @@ export default function CalificacionesPage() {
         setPeriodos(obtenerPeriodosVigentes(periodosData));
       } else if (user?.role === "admin" || user?.role === "auxiliar") {
         // Admin/Auxiliar usan endpoints generales con paginación
-        const [
-          calificacionesData,
-          estudiantesData,
-          materiasData,
-          periodosData,
-        ] = await Promise.all([
-          calificacionService.buscar({
-            page: currentPage,
-            per_page: perPage,
-            buscar: searchTerm.trim() || undefined,
-            materia_id: filterMateria ? parseInt(filterMateria) : undefined,
-            periodo_academico_id: filterPeriodo
-              ? parseInt(filterPeriodo)
-              : undefined,
-          }),
-          estudianteService.getAll({ all: true }),
-          materiaService.getAll({ all: true }),
-          periodoService.getAll({ all: true }),
-        ]);
+        const [calificacionesData, materiasData, periodosData] =
+          await Promise.all([
+            calificacionService.buscar({
+              page: currentPage,
+              per_page: perPage,
+              buscar: searchTerm.trim() || undefined,
+              materia_id: filterMateria ? parseInt(filterMateria) : undefined,
+              periodo_academico_id: filterPeriodo
+                ? parseInt(filterPeriodo)
+                : undefined,
+            }),
+            materiaService.getAll({ all: true }),
+            periodoService.getAll({ all: true }),
+          ]);
 
         // Manejar respuesta paginada
         if (
@@ -215,11 +248,6 @@ export default function CalificacionesPage() {
           setCalificaciones(calificacionesArray);
         }
 
-        setEstudiantes(
-          Array.isArray(estudiantesData)
-            ? estudiantesData
-            : estudiantesData?.data || [],
-        );
         setMaterias(
           Array.isArray(materiasData) ? materiasData : materiasData?.data || [],
         );
@@ -236,6 +264,7 @@ export default function CalificacionesPage() {
 
   const handleCreate = () => {
     setEditingItem(null);
+    setEstudianteElegido(null);
     setFormData({
       estudiante_id: "",
       materia_id: "",
@@ -248,6 +277,7 @@ export default function CalificacionesPage() {
 
   const handleEdit = (item: Calificacion) => {
     setEditingItem(item);
+    setEstudianteElegido((item.estudiante as Estudiante) ?? null);
     setFormData({
       estudiante_id: item.estudiante_id.toString(),
       materia_id: item.materia_id.toString(),
@@ -349,10 +379,6 @@ export default function CalificacionesPage() {
         })
         .slice(0, 8)
     : [];
-
-  const estudianteElegido = (estudiantes || []).find(
-    (estudiante) => String(estudiante.id) === formData.estudiante_id,
-  );
 
   const calificacionesFiltradas = listadoPaginadoEnServidor
     ? calificaciones
@@ -649,9 +675,10 @@ export default function CalificacionesPage() {
                       </span>
                       <button
                         type="button"
-                        onClick={() =>
-                          setFormData({ ...formData, estudiante_id: "" })
-                        }
+                        onClick={() => {
+                          setFormData({ ...formData, estudiante_id: "" });
+                          setEstudianteElegido(null);
+                        }}
                         className="text-xs font-semibold text-blue-700 hover:underline"
                       >
                         Cambiar
@@ -670,7 +697,9 @@ export default function CalificacionesPage() {
                         <div className="mt-2 max-h-56 overflow-y-auto rounded-lg border border-gray-200">
                           {estudiantesSugeridos.length === 0 ? (
                             <p className="px-3 py-2 text-sm text-gray-500">
-                              Sin coincidencias
+                              {buscandoEstudiantes
+                                ? "Buscando..."
+                                : "Sin coincidencias"}
                             </p>
                           ) : (
                             estudiantesSugeridos.map((estudiante) => (
@@ -682,6 +711,7 @@ export default function CalificacionesPage() {
                                     ...formData,
                                     estudiante_id: String(estudiante.id),
                                   });
+                                  setEstudianteElegido(estudiante);
                                   setBusquedaEstudiante("");
                                 }}
                                 className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
