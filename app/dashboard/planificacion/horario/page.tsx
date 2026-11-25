@@ -426,8 +426,7 @@ export default function HorariosPage() {
                   </span>
                   {esGestor && (
                     <span className="mt-0.5 block truncate text-[10px] text-gray-600">
-                      {horario.seccion?.grado?.nombre}{" "}
-                      {horario.seccion?.nombre}
+                      {horario.seccion?.grado?.nombre} {horario.seccion?.nombre}
                     </span>
                   )}
                 </>

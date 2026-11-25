@@ -802,6 +802,9 @@ export const docentePortalService = {
       "/docente/mis-estudiantes",
     );
   },
+  misPadres: async () => {
+    return await apiClient.get<{ padres: any[] }>("/docente/mis-padres");
+  },
   registrarAsistencia: async (data: any) => {
     return await apiClient.post("/docente/registrar-asistencia", data);
   },
