@@ -91,7 +91,9 @@ export default function PrestamosPage() {
     prestamos_devueltos: 0,
     prestamos_vencidos: 0,
   });
-  const [librosDisponibles, setLibrosDisponibles] = useState<Libro[]>([]);  const [ejemplaresDisponibles, setEjemplaresDisponibles] = useState<any[]>([]);  const [estudiantesDisponibles, setEstudiantesDisponibles] = useState<any[]>(
+  const [librosDisponibles, setLibrosDisponibles] = useState<Libro[]>([]);
+  const [ejemplaresDisponibles, setEjemplaresDisponibles] = useState<any[]>([]);
+  const [estudiantesDisponibles, setEstudiantesDisponibles] = useState<any[]>(
     [],
   );
   const [busquedaEstudiante, setBusquedaEstudiante] = useState("");
