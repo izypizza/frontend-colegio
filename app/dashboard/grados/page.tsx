@@ -42,7 +42,10 @@ export default function GradosYSeccionesPage() {
 
   const [grados, setGrados] = useState<Grado[]>([]);
   const [secciones, setSecciones] = useState<Seccion[]>([]);
-  const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
+  const [estudiantesSeccion, setEstudiantesSeccion] = useState<Estudiante[]>(
+    [],
+  );
+  const [cargandoEstudiantes, setCargandoEstudiantes] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const [editingGrado, setEditingGrado] = useState<Grado | null>(null);
@@ -71,15 +74,13 @@ export default function GradosYSeccionesPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [gradosData, seccionesData, estudiantesData] = await Promise.all([
+      const [gradosData, seccionesData] = await Promise.all([
         gradoService.getAll({ all: true }),
         seccionService.getAll({ all: true }),
-        estudianteService.getAll({ all: true }),
       ]);
 
       setGrados(Array.isArray(gradosData) ? gradosData : []);
       setSecciones(Array.isArray(seccionesData) ? seccionesData : []);
-      setEstudiantes(Array.isArray(estudiantesData) ? estudiantesData : []);
     } catch (err) {
       handleError(err, "Error al cargar los datos");
     } finally {
@@ -181,18 +182,30 @@ export default function GradosYSeccionesPage() {
     setViewMode("secciones");
   };
 
-  const verEstudiantes = (seccion: Seccion) => {
+  const verEstudiantes = async (seccion: Seccion) => {
     setSelectedSeccion(seccion);
+    setEstudiantesSeccion([]);
     openEstudiantesModal();
+
+    try {
+      setCargandoEstudiantes(true);
+      const respuesta = await estudianteService.getAll({
+        all: true,
+        filtros: { seccion_id: seccion.id },
+      });
+      setEstudiantesSeccion(Array.isArray(respuesta) ? respuesta : []);
+    } catch (err) {
+      handleError(err, "No se pudieron cargar los estudiantes de la sección");
+    } finally {
+      setCargandoEstudiantes(false);
+    }
   };
 
   const seccionesDelGrado = selectedGrado
     ? secciones.filter((s) => s.grado_id === selectedGrado.id)
     : [];
 
-  const estudiantesDeSeccion = selectedSeccion
-    ? estudiantes.filter((e) => e.seccion_id === selectedSeccion.id)
-    : [];
+  const estudiantesDeSeccion = estudiantesSeccion;
 
   // Filtrado
   const gradosFiltrados = grados.filter((grado) =>
@@ -212,7 +225,10 @@ export default function GradosYSeccionesPage() {
   const stats = {
     totalGrados: grados.length,
     totalSecciones: secciones.length,
-    totalEstudiantes: estudiantes.length,
+    totalEstudiantes: secciones.reduce(
+      (sum, seccion) => sum + (seccion.estudiantes_count || 0),
+      0,
+    ),
     primaria: grados.filter((g) => g.nivel?.toLowerCase() === "primaria")
       .length,
     secundaria: grados.filter((g) => g.nivel?.toLowerCase() === "secundaria")
@@ -330,10 +346,9 @@ export default function GradosYSeccionesPage() {
                 const seccionesCount = secciones.filter(
                   (s) => s.grado_id === grado.id,
                 ).length;
-                const estudiantesCount = estudiantes.filter((e) => {
-                  const seccion = secciones.find((s) => s.id === e.seccion_id);
-                  return seccion?.grado_id === grado.id;
-                }).length;
+                const estudiantesCount = secciones
+                  .filter((s) => s.grado_id === grado.id)
+                  .reduce((sum, s) => sum + (s.estudiantes_count || 0), 0);
                 const nivel = grado.nivel || "Sin especificar";
 
                 return (
@@ -500,9 +515,7 @@ export default function GradosYSeccionesPage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {seccionesDelGrado.map((seccion) => {
-                  const estudiantesCount = estudiantes.filter(
-                    (e) => e.seccion_id === seccion.id,
-                  ).length;
+                  const estudiantesCount = seccion.estudiantes_count || 0;
                   const capacidad = seccion.capacidad_maxima || 0;
                   const porcentajeOcupacion =
                     capacidad > 0 ? (estudiantesCount / capacidad) * 100 : 0;
@@ -772,7 +785,11 @@ export default function GradosYSeccionesPage() {
           size="xl"
         >
           <div className="space-y-4">
-            {estudiantesDeSeccion.length === 0 ? (
+            {cargandoEstudiantes ? (
+              <div className="text-center py-8 text-gray-500">
+                Cargando estudiantes...
+              </div>
+            ) : estudiantesDeSeccion.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 No hay estudiantes matriculados en esta sección
               </div>

@@ -137,6 +137,7 @@ export interface Seccion {
   capacidad_maxima?: number;
   turno?: string;
   grado?: Grado;
+  estudiantes_count?: number;
   created_at: string;
   updated_at: string;
 }

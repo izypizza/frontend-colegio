@@ -26,6 +26,7 @@ class CrudService<T> {
     page?: number;
     per_page?: number;
     all?: boolean;
+    filtros?: Record<string, string | number | boolean>;
   }): Promise<
     | T[]
     | {
@@ -44,6 +45,10 @@ class CrudService<T> {
       if (params?.page) queryParams.page = params.page;
       if (params?.per_page) queryParams.per_page = params.per_page;
     }
+
+    Object.entries(params?.filtros ?? {}).forEach(([clave, valor]) => {
+      queryParams[clave] = String(valor);
+    });
 
     const response = await apiClient.get<
       | T[]
