@@ -39,7 +39,7 @@ export default function AsignacionesPage() {
       const [listaDocentes, listaMaterias, listaSecciones] = await Promise.all([
         docenteService.getAll({ all: true }),
         materiaService.getAll({ all: true }),
-        seccionService.getAll({ all: true }),
+        seccionService.getAll({ all: true, filtros: { solo_conteo: true } }),
       ]);
 
       setDocentes(

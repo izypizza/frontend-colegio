@@ -80,7 +80,7 @@ export default function EstudiantesPage() {
           page: pageToFetch,
           per_page: perPageToFetch,
         }),
-        seccionService.getAll({ all: true }),
+        seccionService.getAll({ all: true, filtros: { solo_conteo: true } }),
       ]);
 
       // Manejar respuesta paginada

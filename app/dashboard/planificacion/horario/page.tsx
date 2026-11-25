@@ -90,7 +90,7 @@ export default function HorariosPage() {
 
       if (esGestor) {
         const [respuestaSecciones, respuestaMaterias] = await Promise.all([
-          seccionService.getAll({ all: true }),
+          seccionService.getAll({ all: true, filtros: { solo_conteo: true } }),
           materiaService.getAll({ all: true }),
         ]);
 

@@ -168,7 +168,10 @@ export default function MatriculasPage() {
 
   const cargarSecciones = useCallback(async () => {
     try {
-      const respuesta = await seccionService.getAll({ all: true });
+      const respuesta = await seccionService.getAll({
+        all: true,
+        filtros: { solo_conteo: true },
+      });
       setSecciones(Array.isArray(respuesta) ? respuesta : respuesta.data);
     } catch (err) {
       handleError(err, "No se pudieron cargar las secciones");
