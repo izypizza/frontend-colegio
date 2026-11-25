@@ -84,7 +84,10 @@ export default function LibroDeNotasPage() {
         const [respuestaPeriodos, respuestaSecciones, respuestaMaterias] =
           await Promise.all([
             periodoService.getAll({ all: true }),
-            seccionService.getAll({ all: true, filtros: { solo_conteo: true } }),
+            seccionService.getAll({
+              all: true,
+              filtros: { solo_conteo: true },
+            }),
             materiaService.getAll({ all: true }),
           ]);
 
