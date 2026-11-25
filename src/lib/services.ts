@@ -681,6 +681,19 @@ export const prestamoLibroService = {
   getAll: async (params?: { page?: number; per_page?: number }) => {
     return await apiClient.get<any>("/prestamos", { params });
   },
+  estudiantesDisponibles: async (buscar = "") => {
+    const consulta = new URLSearchParams();
+    if (buscar.trim()) consulta.set("buscar", buscar.trim());
+
+    return await apiClient.get<{ estudiantes: any[] }>(
+      `/prestamos/estudiantes?${consulta.toString()}`,
+    );
+  },
+  ejemplaresDisponibles: async (libroId: number) => {
+    return await apiClient.get<{ ejemplares: any[] }>(
+      `/prestamos/ejemplares?libro_id=${libroId}`,
+    );
+  },
   aprobar: (id: number) => apiClient.post(`/prestamos/${id}/aprobar`),
   rechazar: (id: number, motivo: string) =>
     apiClient.post(`/prestamos/${id}/rechazar`, { motivo }),

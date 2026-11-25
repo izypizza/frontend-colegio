@@ -240,7 +240,9 @@ export default function ChatPage() {
               </>
             ) : (
               <>
-                <li>• Puedes iniciar conversaciones con los docentes de tus hijos</li>
+                <li>
+                  • Puedes iniciar conversaciones con los docentes de tus hijos
+                </li>
                 <li>• Haz clic en "Ver Chat" para enviar y recibir mensajes</li>
                 <li>• Mantén una comunicación respetuosa y constructiva</li>
               </>

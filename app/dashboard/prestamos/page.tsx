@@ -9,6 +9,7 @@ import { Table } from "@/src/components/ui/Table";
 import { Alert } from "@/src/components/ui/Alert";
 import { Pagination } from "@/src/components/ui/Pagination";
 import { SelectBuscable } from "@/src/components/ui/SelectBuscable";
+import { Input } from "@/src/components/ui/Input";
 import { useErrorHandler } from "@/src/hooks/useErrorHandler";
 import { useModalState } from "@/src/hooks/useModalState";
 import { usePagination } from "@/src/hooks/usePagination";
@@ -33,6 +34,8 @@ const prestamoEstaAtrasado = (prestamo: Prestamo): boolean => {
 interface Prestamo {
   id: number;
   libro_id: number;
+  ejemplar_id?: number | null;
+  ejemplar?: { id: number; codigo: string; estado: string } | null;
   user_id: number;
   fecha_prestamo: string;
   fecha_devolucion: string | null;
@@ -88,10 +91,14 @@ export default function PrestamosPage() {
     prestamos_devueltos: 0,
     prestamos_vencidos: 0,
   });
-  const [librosDisponibles, setLibrosDisponibles] = useState<Libro[]>([]);
+  const [librosDisponibles, setLibrosDisponibles] = useState<Libro[]>([]);  const [ejemplaresDisponibles, setEjemplaresDisponibles] = useState<any[]>([]);  const [estudiantesDisponibles, setEstudiantesDisponibles] = useState<any[]>(
+    [],
+  );
+  const [busquedaEstudiante, setBusquedaEstudiante] = useState("");
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     libro_id: "",
+    ejemplar_id: "",
     user_id: "",
     fecha_devolucion: "",
   });
@@ -109,8 +116,27 @@ export default function PrestamosPage() {
     activo: Boolean(user && ["admin", "bibliotecario"].includes(user.role)),
   });
 
-  // El catálogo de libros solo se necesita al registrar un préstamo; antes se
-  // recargaba completo en cada carga y también cada 20 segundos.
+  useEffect(() => {
+    if (!showModal) return;
+
+    const temporizador = setTimeout(
+      async () => {
+        try {
+          const respuesta =
+            await prestamoLibroService.estudiantesDisponibles(
+              busquedaEstudiante,
+            );
+          setEstudiantesDisponibles(respuesta.estudiantes || []);
+        } catch (err) {
+          handleError(err, "No se pudieron cargar los estudiantes");
+        }
+      },
+      busquedaEstudiante.trim() ? 350 : 0,
+    );
+
+    return () => clearTimeout(temporizador);
+  }, [showModal, busquedaEstudiante]);
+
   useEffect(() => {
     if (!showModal) return;
 
@@ -134,14 +160,60 @@ export default function PrestamosPage() {
     cargarLibrosDisponibles();
   }, [showModal]);
 
+  const opcionesEstudiantes = useMemo(
+    () =>
+      estudiantesDisponibles.map((estudiante) => ({
+        valor: estudiante.user_id,
+        etiqueta: estudiante.nombre_completo,
+        detalle: [
+          estudiante.dni ? `DNI ${estudiante.dni}` : null,
+          estudiante.seccion,
+        ]
+          .filter(Boolean)
+          .join(" · "),
+      })),
+    [estudiantesDisponibles],
+  );
+
   const opcionesLibros = useMemo(
     () =>
       librosDisponibles.map((libro) => ({
         valor: libro.id,
         etiqueta: libro.titulo,
-        detalle: libro.autor,
+        detalle: `${libro.autor} · ${libro.cantidad_disponible} disponible(s)`,
       })),
     [librosDisponibles],
+  );
+
+  useEffect(() => {
+    if (!formData.libro_id) {
+      setEjemplaresDisponibles([]);
+      setFormData((previo) => ({ ...previo, ejemplar_id: "" }));
+      return;
+    }
+
+    const cargarEjemplares = async () => {
+      try {
+        const respuesta = await prestamoLibroService.ejemplaresDisponibles(
+          parseInt(formData.libro_id),
+        );
+        setEjemplaresDisponibles(respuesta.ejemplares || []);
+      } catch (err) {
+        handleError(err, "No se pudieron cargar los ejemplares disponibles");
+      }
+    };
+
+    cargarEjemplares();
+  }, [formData.libro_id]);
+
+  const opcionesEjemplares = useMemo(
+    () =>
+      ejemplaresDisponibles.map((ejemplar) => ({
+        valor: ejemplar.id,
+        etiqueta: ejemplar.codigo,
+        detalle: "Disponible",
+      })),
+    [ejemplaresDisponibles],
   );
 
   const loadData = async (silencioso = false) => {
@@ -191,6 +263,9 @@ export default function PrestamosPage() {
     try {
       const data = {
         libro_id: Number(formData.libro_id),
+        ejemplar_id: formData.ejemplar_id
+          ? Number(formData.ejemplar_id)
+          : undefined,
         user_id: Number(formData.user_id),
         fecha_devolucion: formData.fecha_devolucion,
       };
@@ -235,9 +310,12 @@ export default function PrestamosPage() {
   const resetForm = () => {
     setFormData({
       libro_id: "",
+      ejemplar_id: "",
       user_id: "",
       fecha_devolucion: "",
     });
+    setEjemplaresDisponibles([]);
+    setBusquedaEstudiante("");
   };
 
   const prestamosFiltrados = prestamos.filter((prestamo) => {
@@ -267,6 +345,12 @@ export default function PrestamosPage() {
       label: "Autor",
       render: (value: unknown, prestamo: Prestamo) =>
         prestamo?.libro?.autor || "-",
+    },
+    {
+      key: "ejemplar",
+      label: "Ejemplar",
+      render: (value: unknown, prestamo: Prestamo) =>
+        prestamo.ejemplar?.codigo || "Por asignar",
     },
     {
       key: "usuario",
@@ -506,29 +590,53 @@ export default function PrestamosPage() {
               opciones={opcionesLibros}
               valor={formData.libro_id}
               onChange={(valor) =>
-                setFormData({ ...formData, libro_id: valor })
+                setFormData({
+                  ...formData,
+                  libro_id: valor,
+                  ejemplar_id: "",
+                })
               }
               vacio="Seleccionar libro"
               placeholder="Buscar por título o autor"
               required
             />
 
+            {formData.libro_id && opcionesEjemplares.length > 0 && (
+              <SelectBuscable
+                label="Ejemplar"
+                opciones={opcionesEjemplares}
+                valor={formData.ejemplar_id}
+                onChange={(valor) =>
+                  setFormData({ ...formData, ejemplar_id: valor })
+                }
+                vacio="Asignar automáticamente"
+                placeholder="Buscar código de ejemplar"
+              />
+            )}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                ID de Usuario *
+                Estudiante *
               </label>
-              <input
-                type="number"
-                value={formData.user_id}
-                onChange={(e) =>
-                  setFormData({ ...formData, user_id: e.target.value })
+              <Input
+                placeholder="Buscar por nombre o DNI"
+                value={busquedaEstudiante}
+                onChange={(evento) =>
+                  setBusquedaEstudiante(evento.target.value)
                 }
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
-                required
               />
-              <p className="text-sm text-gray-500 mt-1">
-                Ingrese el ID del usuario que solicita el préstamo
-              </p>
+              <SelectBuscable
+                label=""
+                opciones={opcionesEstudiantes}
+                valor={formData.user_id}
+                onChange={(valor) =>
+                  setFormData({ ...formData, user_id: valor })
+                }
+                vacio="Seleccionar estudiante"
+                placeholder="Buscar estudiante"
+                required
+                className="mt-2"
+              />
             </div>
 
             <div>
